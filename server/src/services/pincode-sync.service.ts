@@ -225,6 +225,18 @@ export async function runLiveSync(trigger: "cron" | "manual", triggeredByUserId?
       resource: { kind: "pincodeSyncLog", id: String(log._id) },
       metadata: { trigger, error: (err as Error).message },
     });
+    // Fan out to the configured platform alert channels (email / Slack).
+    try {
+      const { dispatchPlatformAlert } = await import("@/services/platform-alerts.service.js");
+      await dispatchPlatformAlert({
+        severity: "critical",
+        event: "pincode.sync.failed",
+        title: "India Post sync failed",
+        body: `The ${trigger} pincode sync failed: ${(err as Error).message}`,
+      });
+    } catch {
+      /* alert dispatch is best-effort — never masks the original failure */
+    }
     logger.error({ err: (err as Error).message }, "pincode live sync failed");
     throw err;
   } finally {

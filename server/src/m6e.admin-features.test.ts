@@ -8,6 +8,7 @@ import { onboardCompany } from "@/services/company-onboard.service.js";
 import { PERMISSIONS } from "@/shared/permissions.js";
 import { PLATFORM_ROLES } from "@/shared/roles.js";
 import { clearCollections, startMemoryDb, stopMemoryDb } from "@/test/helpers.js";
+import { clearEmails, recentEmails } from "@/services/email.service.js";
 
 const PW = "Sup3rSecret!pw";
 const ADMIN = "root@postpin.test";
@@ -178,5 +179,54 @@ describe("M6e — platform settings (scalar + array + nested)", () => {
     const t = (await login(ADMIN))!;
     const res = await app.inject({ method: "PATCH", url: "/v1/admin/settings/does.not.exist", headers: auth(t), payload: { x: 1 } });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("M6e — notification channels (platform alerts)", () => {
+  it("returns defaults, validates, and delivers a test email through the configured channel", async () => {
+    const t = (await login(ADMIN))!;
+
+    const def = await app.inject({ method: "GET", url: "/v1/admin/notifications/config", headers: auth(t) });
+    const cfg = (def.json() as { config: { email: { enabled: boolean }; events: Record<string, boolean> } }).config;
+    expect(cfg.email.enabled).toBe(false);
+    expect(cfg.events["pincode.sync.failed"]).toBe(true);
+
+    // Enabling email with no recipients is rejected.
+    const bad = await app.inject({ method: "PATCH", url: "/v1/admin/notifications/config", headers: auth(t), payload: { email: { enabled: true } } });
+    expect(bad.statusCode).toBe(400);
+
+    // Invalid recipient rejected.
+    const badEmail = await app.inject({ method: "PATCH", url: "/v1/admin/notifications/config", headers: auth(t), payload: { email: { recipients: ["not-an-email"] } } });
+    expect(badEmail.statusCode).toBe(400);
+
+    // Valid: enable email with a recipient, lower the bar to info.
+    const ok = await app.inject({
+      method: "PATCH",
+      url: "/v1/admin/notifications/config",
+      headers: auth(t),
+      payload: { email: { enabled: true, recipients: ["ops@postpin.dev"], minSeverity: "info" } },
+    });
+    expect(ok.statusCode).toBe(200);
+
+    // Test send actually delivers (captured in the dev inbox).
+    clearEmails();
+    const test = await app.inject({ method: "POST", url: "/v1/admin/notifications/test", headers: auth(t) });
+    expect((test.json() as { result: { email: boolean } }).result.email).toBe(true);
+    expect(recentEmails().some((m) => m.to === "ops@postpin.dev")).toBe(true);
+  });
+
+  it("rejects enabling Slack without a webhook and a bad webhook URL", async () => {
+    const t = (await login(ADMIN))!;
+    const noHook = await app.inject({ method: "PATCH", url: "/v1/admin/notifications/config", headers: auth(t), payload: { slack: { enabled: true } } });
+    expect(noHook.statusCode).toBe(400);
+    const badHook = await app.inject({ method: "PATCH", url: "/v1/admin/notifications/config", headers: auth(t), payload: { slack: { webhookUrl: "ftp://nope" } } });
+    expect(badHook.statusCode).toBe(400);
+  });
+
+  it("denies a non-permitted user (403)", async () => {
+    await onboardCompany({ companyName: "N Co", ownerName: "O", ownerEmail: "n@n.test", password: PW, emailVerified: true });
+    const t = (await login("n@n.test"))!;
+    const res = await app.inject({ method: "GET", url: "/v1/admin/notifications/config", headers: auth(t) });
+    expect(res.statusCode).toBe(403);
   });
 });

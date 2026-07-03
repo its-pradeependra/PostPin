@@ -286,6 +286,39 @@ export async function adminRoutes(appBase: FastifyInstance) {
     async (req) => admin.updatePlatformSetting(req.params.key, req.body as Record<string, unknown>),
   );
 
+  // ── Notification channels (platform alerts) ───────────────────────────────
+  app.get("/notifications/config", { preHandler: guard("settings:write") }, async () => {
+    const { getNotificationConfig } = await import("@/services/platform-alerts.service.js");
+    return { config: await getNotificationConfig() };
+  });
+  const channelPatch = z
+    .object({
+      enabled: z.boolean().optional(),
+      minSeverity: z.enum(["info", "notice", "warning", "critical"]).optional(),
+    })
+    .passthrough();
+  app.patch(
+    "/notifications/config",
+    {
+      preHandler: guard("settings:write"),
+      schema: {
+        body: z.object({
+          email: channelPatch.extend({ recipients: z.array(z.string().max(120)).max(20).optional() }).optional(),
+          slack: channelPatch.extend({ webhookUrl: z.string().max(500).optional() }).optional(),
+          events: z.record(z.boolean()).optional(),
+        }),
+      },
+    },
+    async (req) => {
+      const { updateNotificationConfig } = await import("@/services/platform-alerts.service.js");
+      return { config: await updateNotificationConfig(req.body) };
+    },
+  );
+  app.post("/notifications/test", { preHandler: guard("settings:write") }, async () => {
+    const { sendTestAlert } = await import("@/services/platform-alerts.service.js");
+    return { result: await sendTestAlert() };
+  });
+
   // ── Rate-cards overview (M6c, read-only) ──────────────────────────────────
   app.get("/rate-cards", { preHandler: guard("tenant:read") }, async () => admin.adminRateCardsOverview());
 

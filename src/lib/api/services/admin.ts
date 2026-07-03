@@ -546,6 +546,34 @@ export function updatePlatformSetting(key: string, value: Record<string, unknown
   return apiFetch<{ key: string; value: Record<string, unknown> }>(`/admin/settings/${encodeURIComponent(key)}`, { method: "PATCH", body: value });
 }
 
+/* ── Notification channels (platform alerts) ──────────────────────── */
+
+export type AlertSeverity = "info" | "notice" | "warning" | "critical";
+
+export interface NotificationConfig {
+  email: { enabled: boolean; recipients: string[]; minSeverity: AlertSeverity };
+  slack: { enabled: boolean; webhookUrl: string; minSeverity: AlertSeverity };
+  events: Record<string, boolean>;
+}
+
+export interface NotificationConfigPatch {
+  email?: Partial<NotificationConfig["email"]>;
+  slack?: Partial<NotificationConfig["slack"]>;
+  events?: Record<string, boolean>;
+}
+
+export function getNotificationConfig() {
+  return apiFetch<{ config: NotificationConfig }>("/admin/notifications/config").then((r) => r.config);
+}
+
+export function updateNotificationConfig(patch: NotificationConfigPatch) {
+  return apiFetch<{ config: NotificationConfig }>("/admin/notifications/config", { method: "PATCH", body: patch }).then((r) => r.config);
+}
+
+export function sendTestNotification() {
+  return apiFetch<{ result: { email: boolean; slack: boolean; skipped: string[] } }>("/admin/notifications/test", { method: "POST" }).then((r) => r.result);
+}
+
 /* ── Rate-cards overview (M6c, read-only) ─────────────────────────── */
 
 export interface AdminRateCardsOverview {
