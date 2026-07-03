@@ -1,5 +1,5 @@
 import { ZONE_PRICING } from "@/data/zones.data.js";
-import { PincodeModel, ZoneModel } from "@/models/index.js";
+import { PincodeModel, RateCardModel, ZoneModel } from "@/models/index.js";
 
 export interface ZonePricing {
   baseChargePaise: number;
@@ -46,6 +46,105 @@ export async function getZonePricing(code: string): Promise<ZonePricing> {
   return zonePricingCache.get(code) ?? zonePricingCache.get("roi") ?? ZONE_PRICING[code] ?? ZONE_PRICING["roi"]!;
 }
 
+// ── Assigned rate card → keyed pricing ──────────────────────────────────────
+export interface CardSlab {
+  zoneCode: string;
+  fromWeightG?: number;
+  toWeightG?: number | null;
+  baseChargePaise?: number;
+  stepWeightG?: number;
+  stepChargePaise?: number;
+}
+export interface CardLike {
+  slabs?: CardSlab[];
+}
+
+/** Freight (paise) for a zone+weight from a rate card's slabs, or null if the
+ * card has no slab for the zone. Shared by the engine and admin simulation. */
+export function cardFreightPaise(card: CardLike, zoneCode: string, chargeableGrams: number): number | null {
+  const slabs = (card.slabs ?? [])
+    .filter((s) => s.zoneCode === zoneCode)
+    .sort((a, b) => (a.fromWeightG ?? 0) - (b.fromWeightG ?? 0));
+  if (slabs.length === 0) return null;
+  let slab = slabs.find((s) => chargeableGrams >= (s.fromWeightG ?? 0) && (s.toWeightG == null || chargeableGrams < s.toWeightG));
+  if (!slab) slab = slabs[slabs.length - 1]!;
+  const step = slab.stepWeightG || 500;
+  const base = slab.baseChargePaise ?? 0;
+  // Open-ended slab → charge per step over the first bucket; closed band → flat base.
+  const overageUnits = slab.toWeightG == null ? Math.max(0, Math.ceil((chargeableGrams - Math.max(slab.fromWeightG ?? 0, 500)) / step)) : 0;
+  return base + overageUnits * (slab.stepChargePaise ?? 0);
+}
+
+let cardCache = new Map<string, { card: CardLike | null; at: number }>();
+const CARD_TTL_MS = 15_000;
+
+export function invalidateCardCache(companyId?: string): void {
+  if (companyId) cardCache.delete(companyId);
+  else cardCache = new Map();
+}
+
+async function activeCardFor(companyId: string): Promise<CardLike | null> {
+  const hit = cardCache.get(companyId);
+  if (hit && Date.now() - hit.at < CARD_TTL_MS) return hit.card;
+  const card = (await RateCardModel.findOne({ companyId, status: "active", isDefault: true, isDeleted: false })
+    .select("slabs")
+    .lean()) as CardLike | null;
+  cardCache.set(companyId, { card: card ?? null, at: Date.now() });
+  return card ?? null;
+}
+
+export interface CardSimInput {
+  weightGrams: number;
+  zoneCode: string;
+  service?: ServiceLevel;
+  cod?: boolean;
+  declaredValuePaise?: number;
+}
+
+/** Preview a card's price for a zone+weight without touching pincodes — powers
+ * the admin "simulate" action. Returns null if the card doesn't price the zone. */
+export function simulateCardQuote(card: CardLike, input: CardSimInput): RateResultDTO | null {
+  const zone = input.zoneCode;
+  const svc = SERVICE[input.service ?? "surface"];
+  const chargeable = Math.max(input.weightGrams, 0);
+  const freight = cardFreightPaise(card, zone, chargeable);
+  if (freight == null) return null;
+
+  const basePaise = Math.round((freight * svc.multBps) / 10_000);
+  const fuelPaise = Math.round((basePaise * DEFAULTS.fuelBps) / 10_000);
+  const breakdown: RateBreakdownLine[] = [
+    { label: "Rate card freight", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
+    { label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: "12%" },
+  ];
+  let codPaise = 0;
+  if (input.cod) {
+    codPaise = DEFAULTS.codFlatPaise + Math.round(((input.declaredValuePaise ?? 0) * DEFAULTS.codPercentBps) / 10_000);
+    breakdown.push({ label: "COD handling", amount: toRupees(codPaise), hint: "₹35 + 1.5%" });
+  }
+  const subtotalPaise = basePaise + fuelPaise + codPaise;
+  const gstPaise = Math.round((subtotalPaise * DEFAULTS.gstBps) / 10_000);
+  breakdown.push({ label: "GST", amount: toRupees(gstPaise), hint: "18%" });
+  const totalPaise = subtotalPaise + gstPaise;
+  const zp = ZONE_PRICING[zone] ?? ZONE_PRICING["roi"]!;
+
+  return {
+    zone,
+    zoneLabel: ZONE_LABEL[zone] ?? zone,
+    service: input.service ?? "surface",
+    serviceLabel: svc.label,
+    chargeableWeightGrams: chargeable,
+    volumetricWeightGrams: 0,
+    etaDays: [Math.max(1, zp.etaDays[0] + svc.etaDelta), Math.max(1, zp.etaDays[1] + svc.etaDelta)],
+    currency: "INR",
+    breakdown,
+    total: toRupees(totalPaise),
+    totalPaise,
+    origin: { pincode: "", city: "", state: "" },
+    destination: { pincode: "", city: "", state: "" },
+    serviceable: true,
+  };
+}
+
 export type ServiceLevel = "surface" | "express" | "same_day";
 
 const SERVICE: Record<ServiceLevel, { label: string; multBps: number; etaDelta: number }> = {
@@ -76,6 +175,8 @@ export interface RateInput {
   service: ServiceLevel;
   cod?: boolean;
   declaredValuePaise?: number;
+  /** Keyed calls pass the caller's companyId so an assigned rate card prices the lane. */
+  companyId?: string;
 }
 
 interface PinMeta {
@@ -148,15 +249,32 @@ export async function calculateRate(input: RateInput): Promise<RateResultDTO> {
   const chargeableKg = Math.max(0.5, chargeable / 1000);
   const billableKg = Math.ceil(chargeableKg * 2) / 2;
 
-  const basePaise = Math.round((pricing.baseChargePaise * svc.multBps) / 10_000);
-  const weightPaise = Math.round((billableKg * pricing.perKgPaise * svc.multBps) / 10_000);
-  const fuelPaise = Math.round(((basePaise + weightPaise) * DEFAULTS.fuelBps) / 10_000);
+  // Keyed calls with an assigned (active + default) rate card price from that
+  // card's slabs; everyone else uses the zone pricing. Falls back cleanly when
+  // the caller has no card, so anonymous/unassigned pricing is unchanged.
+  let cardFreight: number | null = null;
+  if (input.companyId) {
+    const card = await activeCardFor(input.companyId);
+    if (card) cardFreight = cardFreightPaise(card, zone, chargeable);
+  }
 
-  const breakdown: RateBreakdownLine[] = [
-    { label: "Base charge", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
-    { label: "Weight charge", amount: toRupees(weightPaise), hint: `${billableKg.toFixed(2)} kg billable` },
-    { label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: "12%" },
-  ];
+  let basePaise: number;
+  let weightPaise: number;
+  const breakdown: RateBreakdownLine[] = [];
+  if (cardFreight != null) {
+    basePaise = Math.round((cardFreight * svc.multBps) / 10_000);
+    weightPaise = 0;
+    breakdown.push({ label: "Rate card freight", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` });
+  } else {
+    basePaise = Math.round((pricing.baseChargePaise * svc.multBps) / 10_000);
+    weightPaise = Math.round((billableKg * pricing.perKgPaise * svc.multBps) / 10_000);
+    breakdown.push(
+      { label: "Base charge", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
+      { label: "Weight charge", amount: toRupees(weightPaise), hint: `${billableKg.toFixed(2)} kg billable` },
+    );
+  }
+  const fuelPaise = Math.round(((basePaise + weightPaise) * DEFAULTS.fuelBps) / 10_000);
+  breakdown.push({ label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: "12%" });
 
   let codPaise = 0;
   if (input.cod) {

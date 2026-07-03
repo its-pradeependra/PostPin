@@ -1320,3 +1320,184 @@ export async function adminRateCardsOverview() {
     })),
   };
 }
+
+// ── Admin rate-card management (create / edit / assign / simulate) ────────────
+
+const RC_ZONES = ["within_city", "within_state", "metro", "roi", "ne_jk"] as const;
+
+export interface RateCardRowInput {
+  zone_code: string;
+  base_charge: number; // rupees, first 500g
+  per_500g: number; // rupees, each additional 500g
+}
+export interface AdminRateCardInput {
+  company_id: string;
+  name: string;
+  service_level?: "surface" | "air" | "express" | "same_day";
+  status?: "draft" | "active" | "archived";
+  rows: RateCardRowInput[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowsToSlabs(rows: RateCardRowInput[]): any[] {
+  return rows
+    .filter((r) => RC_ZONES.includes(r.zone_code as (typeof RC_ZONES)[number]))
+    .map((r) => ({
+      zoneCode: r.zone_code,
+      fromWeightG: 0,
+      toWeightG: null,
+      baseChargePaise: Math.round((r.base_charge ?? 0) * 100),
+      stepWeightG: 500,
+      stepChargePaise: Math.round((r.per_500g ?? 0) * 100),
+    }));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function adminRateCardDto(c: any, companyName?: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = RC_ZONES.map((code) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const slab = (c.slabs ?? []).find((s: any) => s.zoneCode === code);
+    return {
+      zone_code: code,
+      base_charge: slab ? rupees(slab.baseChargePaise ?? 0) : 0,
+      per_500g: slab ? rupees(slab.stepChargePaise ?? 0) : 0,
+    };
+  });
+  return {
+    id: String(c._id),
+    name: c.name,
+    code: c.code,
+    company_id: String(c.companyId),
+    company_name: companyName,
+    service_level: c.serviceLevel,
+    status: c.status,
+    is_default: Boolean(c.isDefault),
+    rows,
+    created_at: c.createdAt,
+    updated_at: c.updatedAt,
+  };
+}
+
+function slugCode(name: string): string {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24) || "card";
+  return `${base}-${Math.random().toString(36).slice(2, 5)}`;
+}
+
+export async function adminCreateRateCard(input: AdminRateCardInput) {
+  const ctx = getContext();
+  const { RateCardModel } = await import("@/models/index.js");
+  const company = await CompanyModel.findOne({ _id: input.company_id, deletedAt: null }).select("name").lean();
+  if (!company) throw AppError.badRequest("Unknown company", "invalid_company");
+
+  const doc = await RateCardModel.create({
+    companyId: new Types.ObjectId(input.company_id),
+    name: input.name.trim(),
+    code: slugCode(input.name),
+    serviceLevel: input.service_level ?? "surface",
+    status: input.status ?? "draft",
+    slabs: rowsToSlabs(input.rows ?? []),
+    createdBy: ctx.userId,
+  });
+  await writeAudit({
+    action: "ratecard.created",
+    category: "config",
+    severity: "notice",
+    actorId: ctx.userId,
+    companyId: doc.companyId,
+    resource: { kind: "rateCard", id: String(doc._id), name: doc.name },
+  });
+  return { card: adminRateCardDto(doc, (company as { name?: string }).name) };
+}
+
+export interface AdminRateCardPatch {
+  name?: string;
+  service_level?: "surface" | "air" | "express" | "same_day";
+  status?: "draft" | "active" | "archived";
+  rows?: RateCardRowInput[];
+}
+
+export async function adminUpdateRateCard(id: string, patch: AdminRateCardPatch) {
+  const ctx = getContext();
+  const { RateCardModel } = await import("@/models/index.js");
+  const { invalidateCardCache } = await import("@/services/rate-engine.service.js");
+  const doc = await RateCardModel.findOne({ _id: id, isDeleted: false });
+  if (!doc) throw AppError.notFound("Rate card not found");
+
+  if (patch.name !== undefined) doc.name = patch.name.trim();
+  if (patch.service_level !== undefined) doc.serviceLevel = patch.service_level;
+  if (patch.status !== undefined) doc.status = patch.status;
+  if (patch.rows !== undefined) doc.set("slabs", rowsToSlabs(patch.rows));
+  await doc.save();
+  invalidateCardCache(String(doc.companyId));
+
+  await writeAudit({
+    action: "ratecard.updated",
+    category: "config",
+    severity: "notice",
+    actorId: ctx.userId,
+    companyId: doc.companyId,
+    resource: { kind: "rateCard", id: String(doc._id), name: doc.name },
+  });
+  const company = await CompanyModel.findById(doc.companyId).select("name").lean();
+  return { card: adminRateCardDto(doc, (company as { name?: string } | null)?.name) };
+}
+
+/** Make a card the tenant's active, default card (demotes its siblings). */
+export async function adminAssignRateCard(id: string) {
+  const ctx = getContext();
+  const { RateCardModel } = await import("@/models/index.js");
+  const { invalidateCardCache } = await import("@/services/rate-engine.service.js");
+  const doc = await RateCardModel.findOne({ _id: id, isDeleted: false });
+  if (!doc) throw AppError.notFound("Rate card not found");
+
+  // Demote every other card for this company, then promote this one.
+  await RateCardModel.updateMany(
+    { companyId: doc.companyId, _id: { $ne: doc._id } },
+    { $set: { isDefault: false } },
+  );
+  doc.isDefault = true;
+  doc.status = "active";
+  await doc.save();
+  invalidateCardCache(String(doc.companyId));
+
+  await writeAudit({
+    action: "ratecard.assigned",
+    category: "config",
+    severity: "warning",
+    actorId: ctx.userId,
+    companyId: doc.companyId,
+    resource: { kind: "rateCard", id: String(doc._id), name: doc.name },
+  });
+  const company = await CompanyModel.findById(doc.companyId).select("name").lean();
+  return { card: adminRateCardDto(doc, (company as { name?: string } | null)?.name) };
+}
+
+export async function adminSimulateRateCard(
+  id: string,
+  input: { weight_grams: number; zone_code: string; service?: "surface" | "air" | "express" | "same_day"; cod?: boolean; declared_value?: number },
+) {
+  const { RateCardModel } = await import("@/models/index.js");
+  const { simulateCardQuote } = await import("@/services/rate-engine.service.js");
+  const doc = await RateCardModel.findOne({ _id: id, isDeleted: false }).lean();
+  if (!doc) throw AppError.notFound("Rate card not found");
+  const svc = input.service === "air" ? "surface" : input.service; // engine has no "air" tier
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = simulateCardQuote(doc as any, {
+    weightGrams: input.weight_grams,
+    zoneCode: input.zone_code,
+    service: (svc as "surface" | "express" | "same_day") ?? "surface",
+    cod: input.cod,
+    declaredValuePaise: input.declared_value != null ? Math.round(input.declared_value * 100) : undefined,
+  });
+  if (!result) throw AppError.badRequest("This card has no pricing for that zone", "zone_not_priced");
+  return { result };
+}
+
+/** Lightweight tenant picker for the admin rate-card create form. */
+export async function adminCompanyOptions(q?: string) {
+  const filter: Record<string, unknown> = { deletedAt: null };
+  if (q && q.trim()) filter.name = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const rows = await CompanyModel.find(filter).select("name status").sort({ name: 1 }).limit(50).lean();
+  return { companies: rows.map((c) => ({ id: String(c._id), name: c.name, status: c.status })) };
+}

@@ -319,8 +319,74 @@ export async function adminRoutes(appBase: FastifyInstance) {
     return { result: await sendTestAlert() };
   });
 
-  // ── Rate-cards overview (M6c, read-only) ──────────────────────────────────
+  // ── Rate-cards (overview + cross-tenant management) ───────────────────────
   app.get("/rate-cards", { preHandler: guard("tenant:read") }, async () => admin.adminRateCardsOverview());
+
+  app.get(
+    "/companies/options",
+    { preHandler: guard("tenant:read"), schema: { querystring: z.object({ q: z.string().max(60).optional() }) } },
+    async (req) => admin.adminCompanyOptions(req.query.q),
+  );
+
+  const rcRow = z.object({
+    zone_code: z.string().min(2).max(30),
+    base_charge: z.number().min(0).max(1_000_000),
+    per_500g: z.number().min(0).max(1_000_000),
+  });
+  app.post(
+    "/rate-cards",
+    {
+      preHandler: guard("pincode:config"),
+      schema: {
+        body: z.object({
+          company_id: z.string().min(6),
+          name: z.string().min(2).max(80),
+          service_level: z.enum(["surface", "air", "express", "same_day"]).optional(),
+          status: z.enum(["draft", "active", "archived"]).optional(),
+          rows: z.array(rcRow).max(10).default([]),
+        }),
+      },
+    },
+    async (req, reply) => reply.code(201).send(await admin.adminCreateRateCard(req.body)),
+  );
+  app.patch(
+    "/rate-cards/:id",
+    {
+      preHandler: guard("pincode:config"),
+      schema: {
+        params: z.object({ id: z.string().min(6) }),
+        body: z.object({
+          name: z.string().min(2).max(80).optional(),
+          service_level: z.enum(["surface", "air", "express", "same_day"]).optional(),
+          status: z.enum(["draft", "active", "archived"]).optional(),
+          rows: z.array(rcRow).max(10).optional(),
+        }),
+      },
+    },
+    async (req) => admin.adminUpdateRateCard(req.params.id, req.body),
+  );
+  app.post(
+    "/rate-cards/:id/assign",
+    { preHandler: guard("pincode:config"), schema: { params: z.object({ id: z.string().min(6) }) } },
+    async (req) => admin.adminAssignRateCard(req.params.id),
+  );
+  app.post(
+    "/rate-cards/:id/simulate",
+    {
+      preHandler: guard("tenant:read"),
+      schema: {
+        params: z.object({ id: z.string().min(6) }),
+        body: z.object({
+          weight_grams: z.number().int().min(1).max(1_000_000),
+          zone_code: z.string().min(2).max(30),
+          service: z.enum(["surface", "air", "express", "same_day"]).optional(),
+          cod: z.boolean().optional(),
+          declared_value: z.number().min(0).optional(),
+        }),
+      },
+    },
+    async (req) => admin.adminSimulateRateCard(req.params.id, req.body),
+  );
 
   // ── Support queue (cross-tenant) ──────────────────────────────────────────
   app.get(

@@ -52,6 +52,7 @@ export async function ratesRoutes(appBase: FastifyInstance) {
 
   app.post("/calculate", { preHandler: [apiKeyAuth], schema: { body: rateBody } }, async (req) => {
     const b = req.body;
+    const ctx = tryGetContext();
     const start = process.hrtime.bigint();
     const result = await calculateRate({
       origin: b.origin,
@@ -63,6 +64,7 @@ export async function ratesRoutes(appBase: FastifyInstance) {
       service: b.service as ServiceLevel,
       cod: b.cod,
       declaredValuePaise: b.declared_value != null ? Math.round(b.declared_value * 100) : undefined,
+      companyId: ctx?.companyId ? String(ctx.companyId) : undefined,
     });
     const engineMs = Number(process.hrtime.bigint() - start) / 1e6;
     logCall(req, "/v1/rates/calculate", 200, engineMs, {
