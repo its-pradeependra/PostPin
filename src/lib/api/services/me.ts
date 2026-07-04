@@ -7,6 +7,7 @@ export interface MeUser {
   role: string;
   permissions: string[];
   is_platform_staff: boolean;
+  avatar_url: string | null;
   locale: string;
   timezone: string;
 }

@@ -14,6 +14,7 @@ import { Icon } from "@/components/icons";
 import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import type { TicketCategory } from "@/lib/types";
 import { getTicket, replyToTicket } from "@/lib/api/services/tickets";
+import type { TicketAttachment } from "@/lib/types";
 import { ApiError } from "@/lib/api/errors";
 import { TicketThread } from "./ticket-thread";
 
@@ -32,7 +33,8 @@ export function TicketDetail({ ticketNumber }: { ticketNumber: string }) {
   const ticket = q.data;
 
   const replyM = useMutation({
-    mutationFn: (body: string) => replyToTicket(ticketNumber, body),
+    mutationFn: (vars: { body: string; attachments: TicketAttachment[] }) =>
+      replyToTicket(ticketNumber, vars.body, vars.attachments),
     onSuccess: (res) => {
       void qc.invalidateQueries({ queryKey: ["tickets"] });
       toast.success(res.reopened ? "Reply sent — ticket reopened" : "Reply sent", {
@@ -102,7 +104,7 @@ export function TicketDetail({ ticketNumber }: { ticketNumber: string }) {
               <div className="lg:col-span-2">
                 <TicketThread
                   ticket={ticket}
-                  onReply={(body) => replyM.mutateAsync(body).then(() => undefined)}
+                  onReply={(body, attachments) => replyM.mutateAsync({ body, attachments }).then(() => undefined)}
                   sending={replyM.isPending}
                 />
               </div>

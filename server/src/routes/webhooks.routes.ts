@@ -16,7 +16,10 @@ export async function webhooksRoutes(appBase: FastifyInstance) {
   // gates both reads and writes on `webhook:write`.
   const guard = [authenticate, requireTenant, requirePermission("webhook:write")];
 
-  app.get("/", { preHandler: guard }, async () => ({ webhooks: await webhooks.listWebhooks() }));
+  app.get("/", { preHandler: guard }, async () => ({
+    webhooks: await webhooks.listWebhooks(),
+    cap: webhooks.WEBHOOK_ENDPOINT_CAP,
+  }));
 
   app.post(
     "/",

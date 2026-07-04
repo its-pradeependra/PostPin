@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 import { getContext } from "@/context/request-context.js";
-import { isProd } from "@/config/env.js";
+import { isProd, isTest } from "@/config/env.js";
 import { hmacSha256, randomToken } from "@/lib/crypto.js";
 import { AppError } from "@/lib/errors.js";
 import { logger } from "@/lib/logger.js";
@@ -27,6 +27,7 @@ const DELIVERY_TIMEOUT_MS = 8_000;
  * we assert the concrete shape at the `.lean()` boundary. */
 interface WebhookLean {
   _id: Types.ObjectId;
+  companyId: Types.ObjectId;
   url: string;
   events: string[];
   status: "active" | "paused" | "disabled";
@@ -108,6 +109,8 @@ function assertDeliverable(rawUrl: string): void {
   if (blocked) throw AppError.badRequest("Endpoint host is not allowed");
 }
 
+export const WEBHOOK_ENDPOINT_CAP = MAX_ENDPOINTS;
+
 export async function listWebhooks() {
   const rows = await scopedRepo(WebhookModel).find().sort({ createdAt: -1 }).lean();
   return rows.map(toDto);
@@ -173,15 +176,15 @@ export async function deleteWebhook(id: string) {
   return { ok: true };
 }
 
-/** Recompute a webhook's rolling success-rate (%) from its recorded deliveries. */
-async function refreshSuccessRate(webhookId: Types.ObjectId): Promise<void> {
-  const repo = scopedRepo(WebhookDeliveryModel);
+/** Recompute a webhook's rolling success-rate (%) from its recorded deliveries.
+ * Context-free (keyed by the hook's own companyId) so cron paths can use it. */
+async function refreshSuccessRate(companyId: Types.ObjectId, webhookId: Types.ObjectId): Promise<void> {
   const [total, ok] = await Promise.all([
-    repo.countDocuments({ webhookId }),
-    repo.countDocuments({ webhookId, ok: true }),
+    WebhookDeliveryModel.countDocuments({ companyId, webhookId }),
+    WebhookDeliveryModel.countDocuments({ companyId, webhookId, ok: true }),
   ]);
   const rate = total === 0 ? 100 : Math.round((ok / total) * 100);
-  await scopedRepo(WebhookModel).findByIdAndUpdate(webhookId, { $set: { successRate: rate, lastDeliveryAt: new Date() } });
+  await WebhookModel.findOneAndUpdate({ _id: webhookId, companyId }, { $set: { successRate: rate, lastDeliveryAt: new Date() } });
 }
 
 /**
@@ -232,7 +235,8 @@ async function dispatch(webhook: WebhookLean, event: string, data: unknown, atte
   }
 
   const durationMs = Date.now() - started;
-  const record = await scopedRepo(WebhookDeliveryModel).create({
+  const record = await WebhookDeliveryModel.create({
+    companyId: webhook.companyId,
     webhookId: webhook._id,
     eventId,
     event,
@@ -246,10 +250,58 @@ async function dispatch(webhook: WebhookLean, event: string, data: unknown, atte
     error: error || undefined,
     createdAt: new Date(),
   });
-  await refreshSuccessRate(webhook._id).catch((err) =>
+  await refreshSuccessRate(webhook.companyId, webhook._id).catch((err) =>
     logger.warn({ err: (err as Error).message }, "webhook success-rate refresh failed"),
   );
   return deliveryDto(record);
+}
+
+// ── Real event emission ───────────────────────────────────────────────────────
+
+const MAX_ATTEMPTS = 3;
+const BACKOFF_MS = [0, 2_000, 10_000]; // per attempt (index 0 unused-ish)
+
+/** Deliver to one endpoint with retry + backoff. Never throws. */
+async function deliverWithRetry(webhook: WebhookLean, event: WebhookEvent, data: unknown): Promise<void> {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (attempt > 1) {
+      await new Promise((r) => setTimeout(r, isTest ? 1 : BACKOFF_MS[attempt - 1]));
+    }
+    try {
+      const delivery = await dispatch(webhook, event, data, attempt);
+      if (delivery.ok) return;
+    } catch (err) {
+      logger.warn({ err: (err as Error).message, event, url: webhook.url }, "webhook delivery attempt errored");
+    }
+  }
+}
+
+/**
+ * Emit a real product event to every ACTIVE endpoint of a company subscribed to
+ * it. Context-free and fire-and-forget safe — call sites use `void emit…`.
+ */
+export async function emitWebhookEvent(
+  companyId: Types.ObjectId | string | null | undefined,
+  event: WebhookEvent,
+  data: unknown,
+): Promise<void> {
+  if (!companyId) return;
+  try {
+    const hooks = (await WebhookModel.find({ companyId, status: "active", events: event }).lean()) as unknown as WebhookLean[];
+    await Promise.all(hooks.map((h) => deliverWithRetry(h, event, data)));
+  } catch (err) {
+    logger.warn({ err: (err as Error).message, event }, "webhook event emission failed");
+  }
+}
+
+/** Emit a platform-wide event (e.g. pincode sync) to every subscribed tenant. */
+export async function emitWebhookEventToAll(event: WebhookEvent, data: unknown): Promise<void> {
+  try {
+    const hooks = (await WebhookModel.find({ status: "active", events: event }).lean()) as unknown as WebhookLean[];
+    await Promise.all(hooks.map((h) => deliverWithRetry(h, event, data)));
+  } catch (err) {
+    logger.warn({ err: (err as Error).message, event }, "webhook broadcast failed");
+  }
 }
 
 /** Fire a synthetic `ping`-style test delivery to an endpoint on demand. */

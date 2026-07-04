@@ -60,6 +60,13 @@ export async function adminRoutes(appBase: FastifyInstance) {
     async (req) => admin.setTenantStatus(req.params.id, "activate"),
   );
 
+  // Impersonate a tenant (view their portal). Requires a fresh step-up token.
+  app.post(
+    "/tenants/:id/impersonate",
+    { preHandler: guard("admin:write"), schema: { params: z.object({ id: objectId }), body: z.object({ step_up_token: z.string().min(10) }) } },
+    async (req) => admin.impersonateTenant(req.params.id, req.body.step_up_token),
+  );
+
   // ── Audit logs ────────────────────────────────────────────────────────────
   app.get(
     "/audit-logs",
@@ -277,6 +284,20 @@ export async function adminRoutes(appBase: FastifyInstance) {
     { preHandler: guard("admin:write"), schema: { params: z.object({ id: objectId }), body: z.object({ role: z.string().min(2).max(40) }) } },
     async (req) => admin.updateStaffRole(req.params.id, req.body.role),
   );
+  app.post(
+    "/team/invite",
+    {
+      preHandler: guard("admin:write"),
+      schema: { body: z.object({ email: z.string().email(), name: z.string().min(2).max(120), role_key: z.string().min(2).max(40) }) },
+    },
+    async (req, reply) => reply.code(201).send(await admin.adminInviteStaff(req.body)),
+  );
+  app.post(
+    "/team/:id/remove",
+    { preHandler: guard("admin:write"), schema: { params: z.object({ id: objectId }) } },
+    async (req) => admin.adminRemoveStaff(req.params.id),
+  );
+  app.get("/roles/matrix", { preHandler: guard("admin:write", "tenant:read") }, async () => admin.adminRolePermissionMatrix());
 
   // ── Platform settings (M6c) ───────────────────────────────────────────────
   app.get("/settings", { preHandler: guard("settings:write") }, async () => admin.listPlatformSettings());
@@ -348,6 +369,11 @@ export async function adminRoutes(appBase: FastifyInstance) {
       },
     },
     async (req, reply) => reply.code(201).send(await admin.adminCreateRateCard(req.body)),
+  );
+  app.get(
+    "/rate-cards/:id",
+    { preHandler: guard("tenant:read"), schema: { params: z.object({ id: z.string().min(6) }) } },
+    async (req) => admin.adminGetRateCard(req.params.id),
   );
   app.patch(
     "/rate-cards/:id",

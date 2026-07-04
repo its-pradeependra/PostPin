@@ -17,12 +17,30 @@ export const metadata: Metadata = {
   description: site.description,
 };
 
-const STATS = [
-  { value: "1,57,238", label: "Pincodes synced from India Post" },
-  { value: "<50ms", label: "p99 rate response" },
-  { value: "99.9%", label: "Uptime SLA" },
-  { value: "5", label: "Shipping zones, fully configurable" },
-];
+/** Live platform stats, fetched server-side each hour. Falls back to honest
+ * floor values if the API is unreachable at render time. */
+async function fetchLandingStats(): Promise<{ pincodes: number | null; zones: number | null }> {
+  try {
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/v1";
+    const res = await fetch(`${base}/public/stats`, { next: { revalidate: 3600 } });
+    if (!res.ok) throw new Error(String(res.status));
+    const j = (await res.json()) as { data?: { pincodes?: number; zones?: unknown[] } };
+    return { pincodes: j.data?.pincodes ?? null, zones: j.data?.zones?.length ?? null };
+  } catch {
+    return { pincodes: null, zones: null };
+  }
+}
+
+const formatIN = (n: number) => n.toLocaleString("en-IN");
+
+function buildStats(live: { pincodes: number | null; zones: number | null }) {
+  return [
+    { value: live.pincodes ? formatIN(live.pincodes) : "19,000+", label: "Pincodes synced from India Post" },
+    { value: "<50ms", label: "p99 rate response" },
+    { value: "99.9%", label: "Uptime SLA" },
+    { value: String(live.zones ?? 5), label: "Shipping zones, fully configurable" },
+  ];
+}
 
 const STEPS = [
   { icon: "keys" as IconName, title: "Get your API key", body: "Sign up and generate a domain-restricted key in seconds. Live and test environments included." },
@@ -31,7 +49,7 @@ const STEPS = [
 ];
 
 const FEATURES = [
-  { icon: "sync" as IconName, title: "India Post auto-sync", body: "A nightly cron diffs the India Post pincode directory into your DB: new, updated and removed pincodes, with full sync logs and one-click rollback." },
+  { icon: "sync" as IconName, title: "India Post auto-sync", body: "A nightly sync pulls the official data.gov.in India Post directory: new and updated pincodes land automatically, with a full, audited log of every run." },
   { icon: "zones" as IconName, title: "Configurable zone engine", body: "Map states, districts and pincode ranges into unlimited zones. Deterministic origin × destination resolution, effective-dated for reproducible quotes." },
   { icon: "rateCard" as IconName, title: "Per-customer rate cards", body: "Build weight-slab rate cards per zone and assign negotiated pricing per company. Draft, simulate, then publish." },
   { icon: "shield" as IconName, title: "Keys, domains & IP control", body: "Restrict keys to domains (incl. wildcards), IP allowlists and referer/origin checks. Rotate and revoke instantly." },
@@ -123,7 +141,9 @@ const TESTIMONIALS = [
   { quote: "Per-customer rate cards let us onboard B2B clients with negotiated pricing without touching code.", name: "Karan Patel", role: "Founder, Gully Grocery" },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const live = await fetchLandingStats();
+  const STATS = buildStats(live);
   return (
     <>
       {/* ── Hero: "Wire Tap" API moment ── */}
@@ -183,7 +203,7 @@ export default function LandingPage() {
               {[
                 { icon: "zap" as IconName, title: "Real engine, real numbers", body: "Every quote here is the live /v1/rates response, never a mockup." },
                 { icon: "zones" as IconName, title: "Zones, COD, fuel & GST", body: "Billable weight, zone mapping and surcharges, itemised." },
-                { icon: "pin" as IconName, title: "1,57,000+ pincodes", body: "Serviceability for every Indian pincode, synced from India Post." },
+                { icon: "pin" as IconName, title: `${live.pincodes ? formatIN(live.pincodes) : "19,000+"} pincodes`, body: "Serviceability for every serviceable Indian pincode, synced from the official India Post directory." },
               ].map((f) => (
                 <li key={f.title} className="flex gap-3.5">
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
@@ -324,12 +344,12 @@ export default function LandingPage() {
               Your pincode master, always current.
             </h2>
             <p className="mt-4 max-w-lg text-white/85">
-              Every night at 00:30, Postpin pulls the India Post directory, diffs it against your
-              database, and inserts, updates or retires pincodes automatically, with full sync logs,
-              failure alerts and one-click rollback. No more stale CSVs.
+              Every night at 00:30 IST, Postpin pulls the official India Post directory, diffs it
+              against your database, and inserts or updates pincodes automatically — with a full,
+              audited log of every run and failure alerts to email or Slack. No more stale CSVs.
             </p>
             <div className="mt-6 flex flex-wrap gap-4 text-sm">
-              {["Nightly cron", "CSV import / export", "Rollback", "Sync webhooks"].map((x) => (
+              {["Nightly sync", "CSV import", "Audited sync logs", "Sync webhooks"].map((x) => (
                 <span key={x} className="flex items-center gap-1.5">
                   <Icon name="check" size={16} className="text-white" /> {x}
                 </span>
@@ -347,7 +367,7 @@ export default function LandingPage() {
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                { k: "Total pincodes", v: "1,57,238" },
+                { k: "Total pincodes", v: live.pincodes ? formatIN(live.pincodes) : "19,000+" },
                 { k: "New", v: "+12" },
                 { k: "Updated", v: "318" },
                 { k: "Removed", v: "3" },

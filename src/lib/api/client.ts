@@ -59,10 +59,12 @@ export interface ApiOptions extends Omit<RequestInit, "body"> {
 export async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   const { body, noRetry, headers: hdrs, method = "GET", ...rest } = opts;
 
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   const build = () => {
     const headers = new Headers(hdrs as HeadersInit | undefined);
     if (accessToken) headers.set("authorization", `Bearer ${accessToken}`);
-    if (body !== undefined && !headers.has("content-type")) headers.set("content-type", "application/json");
+    // FormData sets its own multipart content-type (with boundary) — don't override it.
+    if (body !== undefined && !isFormData && !headers.has("content-type")) headers.set("content-type", "application/json");
     if (method !== "GET" && method !== "HEAD") {
       const csrf = readCookie("pp_csrf");
       if (csrf) headers.set("x-csrf-token", csrf);
@@ -72,7 +74,7 @@ export async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<
       method,
       credentials: "include",
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
     });
   };
 

@@ -56,6 +56,37 @@ export async function apiKeyAuth(req: FastifyRequest, reply: FastifyReply): Prom
     if (included !== -1 && used > included && !hasOverage) {
       throw new AppError("quota_exceeded", "Monthly quota exceeded — upgrade your plan", 402);
     }
+
+    // Quota warning: notify the owner ONCE per period when usage crosses the
+    // company's warning threshold (default 80%). SETNX makes it idempotent.
+    if (included > 0) {
+      void (async () => {
+        const { CompanyModel } = await import("@/models/index.js");
+        const company = (await CompanyModel.findById(key.companyId).select("quotaWarningPct ownerUserId name").lean()) as {
+          quotaWarningPct?: number;
+          ownerUserId?: Types.ObjectId | null;
+          name?: string;
+        } | null;
+        const pctLimit = company?.quotaWarningPct ?? 80;
+        const usedPct = (used / included) * 100;
+        if (usedPct < pctLimit || !company?.ownerUserId) return;
+        const flag = await r.set(`quota_warned:${String(key.companyId)}:${period}`, "1", "EX", 60 * 60 * 24 * 40, "NX");
+        if (flag !== "OK") return; // already warned this period
+        const { createNotification } = await import("@/services/notification.service.js");
+        await createNotification({
+          recipientId: company.ownerUserId,
+          companyId: key.companyId,
+          kind: "usage",
+          type: "usage.threshold",
+          severity: "warning",
+          title: `You've used ${Math.floor(usedPct)}% of your monthly quota`,
+          body: `${used.toLocaleString("en-IN")} of ${included.toLocaleString("en-IN")} included calls used this period. Upgrade to avoid hitting the limit.`,
+          actionUrl: "/app/billing/plans",
+        });
+      })().catch(() => {
+        /* warning is best-effort — never blocks the call */
+      });
+    }
   }
 
   setContext({

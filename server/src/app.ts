@@ -57,6 +57,16 @@ export async function buildApp() {
   });
   await app.register(cookie);
   await app.register(sensible);
+
+  // Local-disk media uploads (avatars, ticket attachments).
+  const multipart = (await import("@fastify/multipart")).default;
+  const fastifyStatic = (await import("@fastify/static")).default;
+  const path = await import("node:path");
+  const fs = await import("node:fs");
+  const uploadRoot = path.isAbsolute(env.UPLOAD_DIR) ? env.UPLOAD_DIR : path.join(process.cwd(), env.UPLOAD_DIR);
+  fs.mkdirSync(uploadRoot, { recursive: true });
+  await app.register(multipart, { limits: { fileSize: env.MAX_UPLOAD_BYTES, files: 5 } });
+  await app.register(fastifyStatic, { root: uploadRoot, prefix: "/uploads/", decorateReply: false });
   // Per-route configs (config.rateLimit) become harmless no-ops when the plugin is absent.
   if (!isTest) {
     await app.register(rateLimit, { max: 300, timeWindow: "1 minute", global: false });

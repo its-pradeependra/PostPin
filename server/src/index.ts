@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger.js";
 import { connectRedis } from "@/lib/redis.js";
 import { assertScoped, registerIndexes } from "@/models/index.js";
 import { startPincodeSyncScheduler } from "@/services/pincode-sync.service.js";
+import { startSubscriptionSweeper } from "@/services/subscription-lifecycle.service.js";
 
 async function main() {
   await initJwt();
@@ -27,6 +28,8 @@ async function main() {
 
   // Nightly India Post directory sync (no-op when DATA_GOV_IN_API_KEY is absent).
   startPincodeSyncScheduler();
+  // Hourly subscription lifecycle sweep (cancel-at-period-end, expiry, rollover).
+  startSubscriptionSweeper();
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, async () => {

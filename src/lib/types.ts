@@ -45,6 +45,13 @@ export type TicketCategory =
   | "feature-request"
   | "other";
 
+export interface TicketAttachment {
+  url: string;
+  name: string;
+  mimetype: string;
+  size: number;
+}
+
 export interface TicketMessage {
   id: string;
   author: string;
@@ -52,6 +59,7 @@ export interface TicketMessage {
   avatar?: string;
   body: string;
   createdAt: string;
+  attachments?: TicketAttachment[];
 }
 
 export interface Ticket {

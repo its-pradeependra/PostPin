@@ -13,10 +13,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icons";
 import { calculateRate } from "@/lib/shipping";
+import { calculatePublicRate } from "@/lib/api/services/rates";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-// Truthful: every displayed value comes from the real engine, so it can never drift.
+// Truthful: the initial values come from the real engine (client port), and the
+// Send button replaces them with an actual live /v1/rates response.
 const RESULT = calculateRate({
   origin: "400001",
   destination: "110001",

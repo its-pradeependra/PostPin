@@ -253,10 +253,22 @@ export async function usageReport(days: number) {
   const companyIds = consumerRows.map((r: { _id: Types.ObjectId }) => r._id).filter(Boolean);
   const [companies, subs] = await Promise.all([
     CompanyModel.find({ _id: { $in: companyIds } }).select("name status").lean(),
-    SubscriptionModel.find({ companyId: { $in: companyIds }, status: "active" }).select("companyId planCode usage").lean(),
+    SubscriptionModel.find({ companyId: { $in: companyIds }, status: "active" }).select("companyId planCode usage currentPeriodStart").lean(),
   ]);
   const companyById = new Map(companies.map((c) => [String(c._id), c]));
   const subByCompany = new Map(subs.map((x) => [String(x.companyId), x]));
+  // Honest per-tenant quota usage: billable calls in each sub's CURRENT period
+  // from apiLogs (sub.usage.callsUsed is a dead zero — Redis holds the counter).
+  const periodUsed = new Map<string, number>(
+    await Promise.all(
+      subs.map(async (x) => {
+        const n = x.currentPeriodStart
+          ? await ApiLogModel.countDocuments({ companyId: x.companyId, billable: true, createdAt: { $gte: x.currentPeriodStart } })
+          : 0;
+        return [String(x.companyId), n] as [string, number];
+      }),
+    ),
+  );
 
   return {
     summary: {
@@ -290,7 +302,7 @@ export async function usageReport(days: number) {
         plan_code: sub?.planCode ?? "free",
         calls: r.calls,
         pct_of_total: totalCalls ? Math.round((r.calls / totalCalls) * 1000) / 10 : 0,
-        quota_pct: included > 0 ? Math.round(((sub?.usage?.callsUsed ?? 0) / included) * 1000) / 10 : 0,
+        quota_pct: included > 0 ? Math.round(((periodUsed.get(String(r._id)) ?? 0) / included) * 1000) / 10 : 0,
       };
     }),
   };
@@ -383,6 +395,11 @@ export async function tenantDetail(id: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sub = subRaw as any;
   const included = sub?.usage?.includedCalls ?? 0;
+  // Honest usage: count billable calls in the CURRENT period from apiLogs — the
+  // sub.usage.callsUsed field is a dead zero (real counting lives in Redis/apiLogs).
+  const periodCalls = sub?.currentPeriodStart
+    ? await ApiLogModel.countDocuments({ companyId: company._id, billable: true, createdAt: { $gte: sub.currentPeriodStart } })
+    : 0;
   return {
     company: {
       id: String(company._id),
@@ -401,9 +418,9 @@ export async function tenantDetail(id: string) {
           mrr: rupees(sub.priceSnapshotPaise ?? 0),
           interval: sub.interval,
           current_period_end: sub.currentPeriodEnd,
-          calls_used: sub.usage?.callsUsed ?? 0,
+          calls_used: periodCalls,
           included_calls: included,
-          quota_pct: included > 0 ? Math.round(((sub.usage?.callsUsed ?? 0) / included) * 1000) / 10 : 0,
+          quota_pct: included > 0 ? Math.round((periodCalls / included) * 1000) / 10 : 0,
         }
       : null,
     usage: { calls_30d: calls30, series: dayBuckets(14).map((d) => ({ date: d, calls: callsSeries.get(d) ?? 0 })) },
@@ -1257,6 +1274,173 @@ export async function updateStaffRole(id: string, roleKey: string) {
   return { ok: true, role: roleKey };
 }
 
+// ── Tenant impersonation (admin:write + step-up) ─────────────────────────────
+
+export async function impersonateTenant(companyId: string, stepUpToken: string) {
+  const ctx = getContext();
+  const { verifyPurposeToken, signAccessToken } = await import("@/lib/jwt.js");
+  const { randomToken } = await import("@/lib/crypto.js");
+  const { resolveRolePerms } = await import("@/services/rbac.service.js");
+  const { env } = await import("@/config/env.js");
+
+  // Step-up must be fresh and belong to the calling admin.
+  let payload;
+  try {
+    payload = await verifyPurposeToken(stepUpToken, "step_up");
+  } catch {
+    throw new AppError("step_up_required", "Re-authenticate to impersonate a tenant", 401);
+  }
+  if (String(payload.sub) !== String(ctx.userId)) {
+    throw new AppError("step_up_required", "Re-authenticate to impersonate a tenant", 401);
+  }
+
+  const company = await CompanyModel.findOne({ _id: companyId, deletedAt: null }).lean();
+  if (!company) throw AppError.notFound("Tenant not found");
+  if (company.status === "suspended") throw AppError.badRequest("Can't impersonate a suspended workspace", "workspace_suspended");
+  const owner = company.ownerUserId ? await UserModel.findById(company.ownerUserId).select("name email roleId permVersion status").lean() : null;
+  if (!owner || owner.status !== "active") throw AppError.badRequest("Tenant has no active owner to impersonate", "no_active_owner");
+
+  const { roleKey } = await resolveRolePerms(owner.roleId);
+  // Impersonation token: acts AS the tenant owner, records the real admin in `act`.
+  // Access-token only (no refresh cookie) so exiting simply restores the admin
+  // from their untouched session cookie.
+  const accessToken = await signAccessToken({
+    sub: String(owner._id),
+    companyId: String(company._id),
+    role: roleKey,
+    permVersion: owner.permVersion,
+    isPlatformStaff: false,
+    sid: `imp-${randomToken(8)}`,
+    amr: ["impersonation"],
+    act: String(ctx.userId),
+  });
+
+  await writeAudit({
+    action: "admin.impersonation_started",
+    category: "security",
+    severity: "critical",
+    actorId: ctx.userId,
+    companyId: company._id,
+    resource: { kind: "company", id: String(company._id), name: company.name },
+    metadata: { impersonated_user: String(owner._id), owner_email: owner.email },
+  });
+  // Ops alert: impersonation is the most sensitive admin action — always fan out.
+  void import("@/services/platform-alerts.service.js")
+    .then(({ dispatchPlatformAlert }) =>
+      dispatchPlatformAlert({
+        severity: "critical",
+        event: "security.alert",
+        title: `Tenant impersonation started — ${company.name}`,
+        body: `A platform admin began impersonating ${owner.email} (${company.name}).`,
+      }),
+    )
+    .catch(() => {});
+
+  return {
+    access_token: accessToken,
+    expires_in: env.ACCESS_TOKEN_TTL,
+    tenant: {
+      id: String(company._id),
+      name: company.name,
+      owner_name: owner.name,
+      owner_email: owner.email,
+    },
+  };
+}
+
+// ── Platform staff invites + role matrix (admin:write) ───────────────────────
+
+export async function adminInviteStaff(input: { email: string; name: string; role_key: string }) {
+  const ctx = getContext();
+  const { RoleModel } = await import("@/models/index.js");
+  const { randomToken, sha256, hashPassword } = await import("@/lib/crypto.js");
+  const { sendInviteEmail } = await import("@/services/email.service.js");
+
+  const email = input.email.toLowerCase().trim();
+  const existing = await UserModel.findOne({ email, isPlatformStaff: true }).select("_id").lean();
+  if (existing) throw AppError.badRequest("A staff member with this email already exists", "staff_exists");
+  const role = await RoleModel.findOne({ companyId: null, key: input.role_key, scope: "platform" });
+  if (!role) throw AppError.badRequest("Unknown platform role", "invalid_role");
+
+  const inviteToken = randomToken(32);
+  const placeholderHash = await hashPassword(randomToken(24)); // unusable until accepted
+  const user = await UserModel.create({
+    companyId: null,
+    email,
+    name: input.name.trim(),
+    passwordHash: placeholderHash,
+    roleId: role._id,
+    isPlatformStaff: true,
+    status: "invited",
+    passwordResetTokenHash: sha256(inviteToken),
+    passwordResetExpiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+    invitedByUserId: ctx.userId,
+  });
+  await sendInviteEmail(email, inviteToken, "Postpin Platform");
+  await writeAudit({
+    action: "admin.staff_invited",
+    category: "security",
+    severity: "warning",
+    actorId: ctx.userId,
+    resource: { kind: "user", id: String(user._id), name: email },
+    metadata: { role: input.role_key },
+  });
+  return { invited: true, id: String(user._id), email, role: input.role_key };
+}
+
+export async function adminRemoveStaff(id: string) {
+  const ctx = getContext();
+  const { RoleModel } = await import("@/models/index.js");
+  const user = await UserModel.findOne({ _id: id, isPlatformStaff: true });
+  if (!user) throw AppError.notFound("Staff member not found");
+  if (String(user._id) === String(ctx.userId)) throw AppError.badRequest("You can't remove yourself", "self_action");
+
+  const superRole = await RoleModel.findOne({ companyId: null, key: "super_admin" }).select("_id").lean();
+  if (superRole && String(user.roleId) === String(superRole._id)) {
+    const supers = await UserModel.countDocuments({ isPlatformStaff: true, roleId: superRole._id, status: "active" });
+    if (supers <= 1 && user.status === "active") throw AppError.badRequest("You can't remove the last super admin", "last_super_admin");
+  }
+  // Revoke sessions + hard-block, then soft-delete to free the unique email index.
+  await SessionModel.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
+  user.status = "disabled";
+  user.email = `deleted+${String(user._id)}@postpin.invalid`;
+  user.deletedAt = new Date();
+  user.isPlatformStaff = false;
+  await user.save();
+  await writeAudit({
+    action: "admin.staff_removed",
+    category: "security",
+    severity: "warning",
+    actorId: ctx.userId,
+    resource: { kind: "user", id, name: user.email },
+  });
+  return { ok: true };
+}
+
+/** The live per-role permission matrix (real roles × real permissions). */
+export async function adminRolePermissionMatrix() {
+  const { RoleModel, PermissionModel } = await import("@/models/index.js");
+  const [roles, perms] = await Promise.all([
+    RoleModel.find({ companyId: null, scope: "platform" }).sort({ name: 1 }).lean(),
+    PermissionModel.find({ scope: "platform" }).sort({ group: 1, key: 1 }).lean(),
+  ]);
+  const keyById = new Map(perms.map((p) => [String(p._id), p.key as string]));
+  return {
+    permissions: perms.map((p) => ({
+      key: p.key,
+      group: p.group ?? "General",
+      description: p.description ?? "",
+      is_dangerous: Boolean((p as { isDangerous?: boolean }).isDangerous),
+    })),
+    roles: roles.map((r) => ({
+      key: r.key,
+      name: r.name,
+      is_system: Boolean(r.isSystem),
+      permissions: ((r.permissionIds ?? []) as unknown[]).map((id) => keyById.get(String(id))).filter(Boolean) as string[],
+    })),
+  };
+}
+
 // ── M6c: Platform settings (settings:write) ─────────────────────────────────
 
 export async function listPlatformSettings() {
@@ -1278,6 +1462,11 @@ export async function updatePlatformSetting(key: string, value: Record<string, u
   const before = existing.value;
   existing.set("value", { ...(existing.value as Record<string, unknown>), ...value });
   await existing.save();
+  // Engine defaults are cached on the hot path — flush so edits price the next quote.
+  if (key === "engine.defaults") {
+    const { invalidateEngineDefaults } = await import("@/services/rate-engine.service.js");
+    invalidateEngineDefaults();
+  }
   await writeAudit({
     action: "settings.updated",
     category: "config",
@@ -1384,6 +1573,14 @@ function slugCode(name: string): string {
   return `${base}-${Math.random().toString(36).slice(2, 5)}`;
 }
 
+export async function adminGetRateCard(id: string) {
+  const { RateCardModel } = await import("@/models/index.js");
+  const doc = await RateCardModel.findOne({ _id: id, isDeleted: false }).lean();
+  if (!doc) throw AppError.notFound("Rate card not found");
+  const company = await CompanyModel.findById(doc.companyId).select("name").lean();
+  return { card: adminRateCardDto(doc, (company as { name?: string } | null)?.name) };
+}
+
 export async function adminCreateRateCard(input: AdminRateCardInput) {
   const ctx = getContext();
   const { RateCardModel } = await import("@/models/index.js");
@@ -1483,7 +1680,7 @@ export async function adminSimulateRateCard(
   if (!doc) throw AppError.notFound("Rate card not found");
   const svc = input.service === "air" ? "surface" : input.service; // engine has no "air" tier
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = simulateCardQuote(doc as any, {
+  const result = await simulateCardQuote(doc as any, {
     weightGrams: input.weight_grams,
     zoneCode: input.zone_code,
     service: (svc as "surface" | "express" | "same_day") ?? "surface",

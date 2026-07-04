@@ -28,6 +28,62 @@ export async function publicRoutes(appBase: FastifyInstance) {
   const app = appBase.withTypeProvider<ZodTypeProvider>();
   const rl = (max: number) => ({ rateLimit: { max, timeWindow: "1 minute" } });
 
+  // Marketing contact/sales form → email the platform team + audit trail.
+  app.post(
+    "/contact",
+    {
+      schema: {
+        body: z.object({
+          name: z.string().min(2).max(120),
+          email: z.string().email().max(160),
+          company: z.string().max(160).optional(),
+          topic: z.string().max(80).optional(),
+          message: z.string().min(10).max(5000),
+        }),
+      },
+      config: rl(5),
+    },
+    async (req) => {
+      const { sendMail } = await import("@/services/email.service.js");
+      const { writeAudit } = await import("@/services/audit.service.js");
+      const { getNotificationConfig } = await import("@/services/platform-alerts.service.js");
+      const { env } = await import("@/config/env.js");
+      const b = req.body;
+
+      // Deliver to the configured ops inbox(es); fall back to the seed admin.
+      let recipients: string[] = [];
+      try {
+        const cfg = await getNotificationConfig();
+        if (cfg.email.enabled && cfg.email.recipients.length > 0) recipients = cfg.email.recipients;
+      } catch {
+        /* fall through to seed admin */
+      }
+      if (recipients.length === 0) recipients = [env.SEED_ADMIN_EMAIL];
+
+      const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+      const subject = `[Postpin contact] ${b.topic ?? "New enquiry"} — ${b.name}`;
+      const text = `From: ${b.name} <${b.email}>${b.company ? `\nCompany: ${b.company}` : ""}\n\n${b.message}`;
+      await Promise.all(
+        recipients.map((to) =>
+          sendMail({
+            to,
+            subject,
+            text,
+            html: `<p><strong>${esc(b.name)}</strong> &lt;${esc(b.email)}&gt;${b.company ? ` · ${esc(b.company)}` : ""}</p><p>${esc(b.message).replace(/\n/g, "<br/>")}</p>`,
+          }),
+        ),
+      );
+      await writeAudit({
+        action: "contact.submitted",
+        category: "support",
+        actorEmail: b.email,
+        resource: { kind: "contact", name: b.name },
+        metadata: { topic: b.topic ?? null, company: b.company ?? null },
+      });
+      return { data: { received: true }, meta: meta(req) };
+    },
+  );
+
   app.post("/rates/calculate", { schema: { body: rateBody }, config: rl(30) }, async (req) => {
     const b = req.body;
     const start = process.hrtime.bigint();

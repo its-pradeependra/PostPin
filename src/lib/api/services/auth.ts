@@ -10,10 +10,23 @@ export interface AuthUser {
   isPlatformStaff: boolean;
 }
 
-export async function login(email: string, password: string): Promise<AuthUser> {
-  const res = await apiFetch<{ access_token: string; user: AuthUser }>("/auth/login", {
+export type LoginResult = { kind: "ok"; user: AuthUser } | { kind: "mfa"; mfaToken: string };
+
+export async function login(email: string, password: string): Promise<LoginResult> {
+  const res = await apiFetch<{ access_token?: string; user?: AuthUser; mfa_required?: boolean; mfa_token?: string }>(
+    "/auth/login",
+    { method: "POST", body: { email, password }, noRetry: true },
+  );
+  if (res.mfa_required && res.mfa_token) return { kind: "mfa", mfaToken: res.mfa_token };
+  setAccessToken(res.access_token!);
+  return { kind: "ok", user: res.user! };
+}
+
+/** Complete a 2FA login challenge with a TOTP or backup code. */
+export async function complete2faLogin(mfaToken: string, code: string): Promise<AuthUser> {
+  const res = await apiFetch<{ access_token: string; user: AuthUser }>("/auth/login/2fa", {
     method: "POST",
-    body: { email, password },
+    body: { mfa_token: mfaToken, code },
     noRetry: true,
   });
   setAccessToken(res.access_token);

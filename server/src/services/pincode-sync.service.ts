@@ -121,16 +121,36 @@ export async function applyDirectory(byPin: Map<string, CanonicalPin>, syncLogId
   return counts;
 }
 
-async function fetchPage(offset: number): Promise<{ records: DirectoryRecord[]; total: number }> {
+/** Transport knobs honored from the admin-editable `pincode.sync` setting. */
+interface FetchConfig {
+  retries: number; // extra attempts after the first
+  timeoutMs: number;
+}
+const DEFAULT_FETCH: FetchConfig = { retries: 3, timeoutMs: 120_000 };
+
+async function fetchConfig(): Promise<FetchConfig> {
+  try {
+    const s = await SettingsModel.findOne({ scope: "platform", key: "pincode.sync" }).lean();
+    const v = (s?.value ?? {}) as { retries?: number; timeoutMs?: number };
+    const retries = typeof v.retries === "number" ? Math.min(Math.max(Math.round(v.retries), 0), 10) : DEFAULT_FETCH.retries;
+    const timeoutMs = typeof v.timeoutMs === "number" ? Math.min(Math.max(Math.round(v.timeoutMs), 10_000), 300_000) : DEFAULT_FETCH.timeoutMs;
+    return { retries, timeoutMs };
+  } catch {
+    return DEFAULT_FETCH;
+  }
+}
+
+async function fetchPage(offset: number, cfg: FetchConfig = DEFAULT_FETCH): Promise<{ records: DirectoryRecord[]; total: number }> {
   const url = `${API_BASE}/${env.DATA_GOV_IN_PINCODE_RESOURCE}?api-key=${env.DATA_GOV_IN_API_KEY}&format=json&limit=${PAGE_SIZE}&offset=${offset}`;
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  const attempts = cfg.retries + 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(cfg.timeoutMs) });
       if (!res.ok) throw new Error(`data.gov.in HTTP ${res.status}`);
       const j = (await res.json()) as { records?: DirectoryRecord[]; total?: number };
       return { records: j.records ?? [], total: Number(j.total ?? 0) };
     } catch (e) {
-      if (attempt === 4) throw e;
+      if (attempt === attempts) throw e;
       await new Promise((r) => setTimeout(r, (isTest ? 1 : 3000) * attempt));
     }
   }
@@ -184,12 +204,13 @@ export async function runLiveSync(trigger: "cron" | "manual", triggeredByUserId?
     triggeredByUserId: triggeredByUserId ?? null,
   });
   try {
+    const cfg = await fetchConfig(); // retries/timeout from the admin-editable setting
     const byPin = new Map<string, CanonicalPin>();
-    const first = await fetchPage(0);
+    const first = await fetchPage(0, cfg);
     dedupeDirectory(first.records, byPin);
     let fetched = first.records.length;
     for (let offset = PAGE_SIZE; offset < first.total; offset += PAGE_SIZE) {
-      const page = await fetchPage(offset);
+      const page = await fetchPage(offset, cfg);
       if (page.records.length === 0) break;
       dedupeDirectory(page.records, byPin);
       fetched += page.records.length;
@@ -210,6 +231,13 @@ export async function runLiveSync(trigger: "cron" | "manual", triggeredByUserId?
       resource: { kind: "pincodeSyncLog", id: String(log._id) },
       metadata: { trigger, ...counts },
     });
+    // Notify every tenant endpoint subscribed to sync.completed (fire-and-forget).
+    try {
+      const { emitWebhookEventToAll } = await import("@/services/webhook.service.js");
+      void emitWebhookEventToAll("sync.completed", { trigger, sync_id: String(log._id), ...counts });
+    } catch {
+      /* webhook fan-out is best-effort */
+    }
     return { skipped: false as const, sync_id: String(log._id), counts };
   } catch (err) {
     log.status = "failed";
@@ -236,6 +264,13 @@ export async function runLiveSync(trigger: "cron" | "manual", triggeredByUserId?
       });
     } catch {
       /* alert dispatch is best-effort — never masks the original failure */
+    }
+    // Tenant webhook fan-out for sync.failed subscribers.
+    try {
+      const { emitWebhookEventToAll } = await import("@/services/webhook.service.js");
+      void emitWebhookEventToAll("sync.failed", { trigger, sync_id: String(log._id), error: (err as Error).message });
+    } catch {
+      /* best-effort */
     }
     logger.error({ err: (err as Error).message }, "pincode live sync failed");
     throw err;

@@ -3,10 +3,11 @@ import { getContext } from "@/context/request-context.js";
 import { env } from "@/config/env.js";
 import { hmacSha256, randomToken } from "@/lib/crypto.js";
 import { AppError } from "@/lib/errors.js";
-import { ApiKeyModel, PlanModel, SubscriptionModel } from "@/models/index.js";
+import { ApiKeyModel, CompanyModel, PlanModel, SubscriptionModel } from "@/models/index.js";
 import { scopedRepo } from "@/tenancy/scoped-repo.js";
 import { writeAudit } from "@/services/audit.service.js";
 import { createNotification } from "@/services/notification.service.js";
+import { emitWebhookEvent } from "@/services/webhook.service.js";
 
 type Mode = "live" | "test";
 
@@ -91,6 +92,19 @@ export async function createKey(input: { name: string; mode: Mode; allowedDomain
     body: `"${input.name}" is ready to use.`,
     actionUrl: "/app/keys",
   });
+  // Outbound webhook fan-out (fire-and-forget; secret is NEVER included).
+  void emitWebhookEvent(ctx.companyId, "key.created", {
+    key_id: String(doc._id),
+    name: input.name,
+    mode: input.mode,
+    prefix: fp.prefix,
+    last4: fp.last4,
+  });
+  // Advance the onboarding funnel on the tenant's first key.
+  void CompanyModel.findOneAndUpdate(
+    { _id: ctx.companyId, onboardingStep: "verified" },
+    { $set: { onboardingStep: "key_created" } },
+  ).catch(() => {});
   // The raw secret is returned exactly once.
   return { secret: raw, key: toDto(doc) };
 }
@@ -125,6 +139,12 @@ export async function revokeKey(id: string) {
     title: "API key revoked",
     body: "An API key on your account was revoked and can no longer be used.",
     actionUrl: "/app/keys",
+  });
+  void emitWebhookEvent(ctx.companyId, "key.revoked", {
+    key_id: id,
+    name: res.name,
+    prefix: res.prefix,
+    last4: res.last4,
   });
   return { ok: true };
 }

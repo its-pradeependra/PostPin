@@ -74,6 +74,7 @@ const WEBHOOK_EVENTS: { value: WebhookEvent; label: string; hint: string }[] = [
   { value: "sync.failed", label: "sync.failed", hint: "Pincode sync failed" },
 ];
 
+/** Fallback while the list loads — the real cap comes from the API response. */
 const PLAN_CAP = 10;
 
 /* ──────────────────────────────────────────────────────────────────
@@ -263,7 +264,9 @@ export default function WebhooksPage() {
   const hooksQ = useQuery({ queryKey: ["webhooks"], queryFn: listWebhooks });
   const deliveriesQ = useQuery({ queryKey: ["webhooks", "deliveries"], queryFn: () => listDeliveries(20) });
 
-  const hooks = hooksQ.data ?? [];
+  const hooks = hooksQ.data?.webhooks ?? [];
+  // Endpoint cap comes from the server — the single source of truth it enforces.
+  const cap = hooksQ.data?.cap ?? PLAN_CAP;
   const deliveries = deliveriesQ.data ?? [];
 
   const invalidateAll = () => {
@@ -337,13 +340,13 @@ export default function WebhooksPage() {
         description="Register HTTPS endpoints to receive signed event notifications from Postpin in real time."
       >
         <Badge variant="muted" className="tabular-nums" data-testid="webhook-cap-chip">
-          {hooks.length} / {PLAN_CAP} endpoints
+          {hooks.length} / {cap} endpoints
         </Badge>
         <Button
           variant="gradient"
           onClick={() => setCreateOpen(true)}
           className="group"
-          disabled={hooks.length >= PLAN_CAP}
+          disabled={hooks.length >= cap}
           data-testid="webhook-add-btn"
         >
           <Icon name="plus" trigger="group-hover" size={16} className="text-white" />

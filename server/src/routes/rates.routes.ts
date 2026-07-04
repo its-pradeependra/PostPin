@@ -54,24 +54,58 @@ export async function ratesRoutes(appBase: FastifyInstance) {
     const b = req.body;
     const ctx = tryGetContext();
     const start = process.hrtime.bigint();
-    const result = await calculateRate({
-      origin: b.origin,
-      destination: b.destination,
-      weightGrams: b.weight,
-      length: b.length,
-      width: b.width,
-      height: b.height,
-      service: b.service as ServiceLevel,
-      cod: b.cod,
-      declaredValuePaise: b.declared_value != null ? Math.round(b.declared_value * 100) : undefined,
-      companyId: ctx?.companyId ? String(ctx.companyId) : undefined,
-    });
+    let result;
+    try {
+      result = await calculateRate({
+        origin: b.origin,
+        destination: b.destination,
+        weightGrams: b.weight,
+        length: b.length,
+        width: b.width,
+        height: b.height,
+        service: b.service as ServiceLevel,
+        cod: b.cod,
+        declaredValuePaise: b.declared_value != null ? Math.round(b.declared_value * 100) : undefined,
+        companyId: ctx?.companyId ? String(ctx.companyId) : undefined,
+      });
+    } catch (err) {
+      // Failed keyed calls must still land in apiLogs — dashboards and billable
+      // counts otherwise under-report vs the Redis quota counter.
+      const engineMs = Number(process.hrtime.bigint() - start) / 1e6;
+      const statusCode = (err as { statusCode?: number }).statusCode ?? 500;
+      logCall(req, "/v1/rates/calculate", statusCode, engineMs, { origin: b.origin, destination: b.destination });
+      throw err;
+    }
     const engineMs = Number(process.hrtime.bigint() - start) / 1e6;
     logCall(req, "/v1/rates/calculate", 200, engineMs, {
       origin: result.origin.pincode,
       destination: result.destination.pincode,
       zone: result.zone,
     });
+    if (ctx?.companyId) {
+      // Outbound webhook fan-out for rate.calculated subscribers (fire-and-forget).
+      void import("@/services/webhook.service.js")
+        .then(({ emitWebhookEvent }) =>
+          emitWebhookEvent(ctx.companyId, "rate.calculated", {
+            origin: result.origin.pincode,
+            destination: result.destination.pincode,
+            zone: result.zone,
+            service: result.service,
+            total: result.total,
+            chargeable_weight_grams: result.chargeableWeightGrams,
+          }),
+        )
+        .catch(() => {});
+      // Advance the onboarding funnel on the tenant's first keyed call.
+      void import("@/models/index.js")
+        .then(({ CompanyModel }) =>
+          CompanyModel.findOneAndUpdate(
+            { _id: ctx.companyId, onboardingStep: "key_created" },
+            { $set: { onboardingStep: "first_call" } },
+          ),
+        )
+        .catch(() => {});
+    }
     return {
       data: result,
       meta: { request_id: String(req.id), api_version: "v1", cached: false, engine_ms: Math.round(engineMs * 100) / 100 },

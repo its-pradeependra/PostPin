@@ -103,27 +103,28 @@ export interface CardSimInput {
 
 /** Preview a card's price for a zone+weight without touching pincodes — powers
  * the admin "simulate" action. Returns null if the card doesn't price the zone. */
-export function simulateCardQuote(card: CardLike, input: CardSimInput): RateResultDTO | null {
+export async function simulateCardQuote(card: CardLike, input: CardSimInput): Promise<RateResultDTO | null> {
   const zone = input.zoneCode;
   const svc = SERVICE[input.service ?? "surface"];
   const chargeable = Math.max(input.weightGrams, 0);
   const freight = cardFreightPaise(card, zone, chargeable);
   if (freight == null) return null;
 
+  const DEFAULTS = await getEngineDefaults();
   const basePaise = Math.round((freight * svc.multBps) / 10_000);
   const fuelPaise = Math.round((basePaise * DEFAULTS.fuelBps) / 10_000);
   const breakdown: RateBreakdownLine[] = [
     { label: "Rate card freight", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
-    { label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: "12%" },
+    { label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: pct(DEFAULTS.fuelBps) },
   ];
   let codPaise = 0;
   if (input.cod) {
     codPaise = DEFAULTS.codFlatPaise + Math.round(((input.declaredValuePaise ?? 0) * DEFAULTS.codPercentBps) / 10_000);
-    breakdown.push({ label: "COD handling", amount: toRupees(codPaise), hint: "₹35 + 1.5%" });
+    breakdown.push({ label: "COD handling", amount: toRupees(codPaise), hint: `₹${Math.round(DEFAULTS.codFlatPaise) / 100} + ${pct(DEFAULTS.codPercentBps)}` });
   }
   const subtotalPaise = basePaise + fuelPaise + codPaise;
   const gstPaise = Math.round((subtotalPaise * DEFAULTS.gstBps) / 10_000);
-  breakdown.push({ label: "GST", amount: toRupees(gstPaise), hint: "18%" });
+  breakdown.push({ label: "GST", amount: toRupees(gstPaise), hint: pct(DEFAULTS.gstBps) });
   const totalPaise = subtotalPaise + gstPaise;
   const zp = ZONE_PRICING[zone] ?? ZONE_PRICING["roi"]!;
 
@@ -161,9 +162,45 @@ const ZONE_LABEL: Record<string, string> = {
   ne_jk: "Special / Remote",
 };
 
-// Engine defaults (mirror the seeded `engine.defaults` platform setting).
-const DEFAULTS = { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000 };
+// Built-in fallback when the `engine.defaults` platform setting is absent.
+const FALLBACK_DEFAULTS = { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000 };
+export type EngineDefaults = typeof FALLBACK_DEFAULTS;
 const SPECIAL_PREFIXES = ["19", "18", "74", "79", "78", "73"];
+
+// DB-backed engine defaults, cached like zone pricing. Admin edits to the
+// `engine.defaults` setting call invalidateEngineDefaults() and take effect on
+// the next quote — no restart needed.
+let engineDefaultsCache: EngineDefaults | null = null;
+let engineDefaultsAt = 0;
+const ENGINE_DEFAULTS_TTL_MS = 30_000;
+
+export function invalidateEngineDefaults(): void {
+  engineDefaultsCache = null;
+}
+
+const numOr = (v: unknown, fallback: number) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : fallback);
+
+export async function getEngineDefaults(): Promise<EngineDefaults> {
+  if (engineDefaultsCache && Date.now() - engineDefaultsAt < ENGINE_DEFAULTS_TTL_MS) return engineDefaultsCache;
+  try {
+    const { SettingsModel } = await import("@/models/index.js");
+    const s = await SettingsModel.findOne({ scope: "platform", key: "engine.defaults" }).lean();
+    const v = (s?.value ?? {}) as Partial<Record<keyof EngineDefaults, unknown>>;
+    engineDefaultsCache = {
+      gstBps: numOr(v.gstBps, FALLBACK_DEFAULTS.gstBps),
+      fuelBps: numOr(v.fuelBps, FALLBACK_DEFAULTS.fuelBps),
+      codFlatPaise: numOr(v.codFlatPaise, FALLBACK_DEFAULTS.codFlatPaise),
+      codPercentBps: numOr(v.codPercentBps, FALLBACK_DEFAULTS.codPercentBps),
+      volumetricDivisor: numOr(v.volumetricDivisor, FALLBACK_DEFAULTS.volumetricDivisor) || FALLBACK_DEFAULTS.volumetricDivisor,
+    };
+    engineDefaultsAt = Date.now();
+    return engineDefaultsCache;
+  } catch {
+    return FALLBACK_DEFAULTS; // DB unavailable → seed values, uncached
+  }
+}
+
+const pct = (bps: number) => `${Math.round(bps) / 100}%`;
 
 export interface RateInput {
   origin: string;
@@ -239,7 +276,11 @@ export interface RateResultDTO {
 }
 
 export async function calculateRate(input: RateInput): Promise<RateResultDTO> {
-  const [oMeta, dMeta] = await Promise.all([resolvePincode(input.origin), resolvePincode(input.destination)]);
+  const [oMeta, dMeta, DEFAULTS] = await Promise.all([
+    resolvePincode(input.origin),
+    resolvePincode(input.destination),
+    getEngineDefaults(),
+  ]);
   const zone = classifyZone(input.origin, input.destination, oMeta, dMeta);
   const pricing = await getZonePricing(zone);
   const svc = SERVICE[input.service];
@@ -274,17 +315,17 @@ export async function calculateRate(input: RateInput): Promise<RateResultDTO> {
     );
   }
   const fuelPaise = Math.round(((basePaise + weightPaise) * DEFAULTS.fuelBps) / 10_000);
-  breakdown.push({ label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: "12%" });
+  breakdown.push({ label: "Fuel surcharge", amount: toRupees(fuelPaise), hint: pct(DEFAULTS.fuelBps) });
 
   let codPaise = 0;
   if (input.cod) {
     codPaise = DEFAULTS.codFlatPaise + Math.round(((input.declaredValuePaise ?? 0) * DEFAULTS.codPercentBps) / 10_000);
-    breakdown.push({ label: "COD handling", amount: toRupees(codPaise), hint: "₹35 + 1.5%" });
+    breakdown.push({ label: "COD handling", amount: toRupees(codPaise), hint: `₹${Math.round(DEFAULTS.codFlatPaise) / 100} + ${pct(DEFAULTS.codPercentBps)}` });
   }
 
   const subtotalPaise = basePaise + weightPaise + fuelPaise + codPaise;
   const gstPaise = Math.round((subtotalPaise * DEFAULTS.gstBps) / 10_000);
-  breakdown.push({ label: "GST", amount: toRupees(gstPaise), hint: "18%" });
+  breakdown.push({ label: "GST", amount: toRupees(gstPaise), hint: pct(DEFAULTS.gstBps) });
   const totalPaise = subtotalPaise + gstPaise;
 
   const etaLow = Math.max(1, pricing.etaDays[0] + svc.etaDelta);

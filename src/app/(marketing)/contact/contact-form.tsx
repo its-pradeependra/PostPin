@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { toast } from "sonner";
+import { submitContactForm } from "@/lib/api/services/public";
+import { ApiError } from "@/lib/api/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,12 +114,27 @@ export function ContactForm() {
     }
 
     setSubmitting(true);
-    // No backend — simulate the network round-trip then confirm.
-    window.setTimeout(() => {
-      setSubmitting(false);
-      toast.success("Thanks — we'll reply within 1 business day.");
-      resetForm();
-    }, 700);
+    const volumeLabel = VOLUME_OPTIONS.find((o) => o.value === volume)?.label ?? volume;
+    const interestLabel = INTEREST_OPTIONS.find((o) => o.value === interest)?.label ?? interest;
+    submitContactForm({
+      name: name.trim(),
+      email: email.trim(),
+      company: company.trim() || undefined,
+      topic: interestLabel,
+      message: `${message.trim()}\n\n— Monthly volume: ${volumeLabel}`,
+    })
+      .then(() => {
+        toast.success("Thanks — we'll reply within 1 business day.");
+        resetForm();
+      })
+      .catch((err) => {
+        toast.error(
+          err instanceof ApiError && err.status === 429
+            ? "Too many messages — please try again in a minute."
+            : "Couldn't send your message right now. Please email us directly at support@postpin.dev.",
+        );
+      })
+      .finally(() => setSubmitting(false));
   }
 
   return (

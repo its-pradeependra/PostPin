@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Icon } from "@/components/icons";
 import { useSession } from "@/components/providers/session-provider";
-import { login as apiLogin } from "@/lib/api/services/auth";
+import { complete2faLogin, login as apiLogin } from "@/lib/api/services/auth";
 import { ApiError } from "@/lib/api/errors";
 
 function LoginForm() {
@@ -27,8 +27,17 @@ function LoginForm() {
   const [remember, setRemember] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Two-factor challenge (set when the account has TOTP enabled).
+  const [mfaToken, setMfaToken] = React.useState<string | null>(null);
+  const [mfaCode, setMfaCode] = React.useState("");
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  async function finishLogin(user: { isPlatformStaff: boolean }) {
+    await refresh();
+    toast.success("Logged in", { description: "Welcome back to Postpin." });
+    router.push(next || (user.isPlatformStaff ? "/admin" : "/app"));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,12 +54,13 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const user = await apiLogin(email, password);
-      await refresh();
-      toast.success("Logged in", { description: "Welcome back to Postpin." });
-      // Platform staff land in the admin portal; tenants in the app (unless a
-      // deep-link ?next= was requested).
-      router.push(next || (user.isPlatformStaff ? "/admin" : "/app"));
+      const res = await apiLogin(email, password);
+      if (res.kind === "mfa") {
+        setMfaToken(res.mfaToken);
+        setLoading(false);
+        return;
+      }
+      await finishLogin(res.user);
     } catch (err) {
       if (err instanceof ApiError && err.code === "email_unverified") {
         router.push(`/verify-email?email=${encodeURIComponent(email)}`);
@@ -65,6 +75,100 @@ function LoginForm() {
       }
       setLoading(false);
     }
+  }
+
+  async function handleMfaSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!mfaToken || mfaCode.trim().length < 4) {
+      setError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const user = await complete2faLogin(mfaToken, mfaCode.trim());
+      await finishLogin(user);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "mfa_challenge_invalid") {
+        setError("Your 2FA session expired — sign in again.");
+        setMfaToken(null);
+        setMfaCode("");
+      } else {
+        setError(err instanceof ApiError ? err.message : "That code is incorrect.");
+      }
+      setLoading(false);
+    }
+  }
+
+  // ── Two-factor step ──────────────────────────────────────────────
+  if (mfaToken) {
+    return (
+      <div className="space-y-6" data-testid="login-2fa-card">
+        <div className="space-y-2 text-center">
+          <h1 className="font-display text-2xl font-bold tracking-tight">Two-factor authentication</h1>
+          <p className="text-sm text-muted-foreground">
+            Enter the 6-digit code from your authenticator app, or a backup code.
+          </p>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" data-testid="login-2fa-error-alert">
+            <Icon name="shield" size={16} />
+            <AlertTitle>Couldn&apos;t verify</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleMfaSubmit} className="space-y-4" noValidate>
+          <div className="space-y-1.5">
+            <Label htmlFor="login-2fa-code">Authentication code</Label>
+            <Input
+              id="login-2fa-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              placeholder="123456"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              disabled={loading}
+              className="text-center font-mono text-lg tracking-[0.3em]"
+              data-testid="login-2fa-code-input"
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="gradient"
+            size="lg"
+            className="group w-full"
+            disabled={loading}
+            data-testid="login-2fa-submit-btn"
+          >
+            {loading ? (
+              <>
+                <Icon name="sync" trigger="loop" size={16} className="text-white" /> Verifying…
+              </>
+            ) : (
+              <>
+                Verify
+                <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+              </>
+            )}
+          </Button>
+          <button
+            type="button"
+            onClick={() => {
+              setMfaToken(null);
+              setMfaCode("");
+              setError(null);
+            }}
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+            data-testid="login-2fa-back-btn"
+          >
+            Back to sign in
+          </button>
+        </form>
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Icon } from "@/components/icons";
+import { FooterStatusPill } from "@/components/layout/footer-status-pill";
 import { marketingFooter, site } from "@/lib/site";
 
 const testId = (value: string) =>
@@ -18,14 +19,6 @@ export function MarketingFooter() {
             </p>
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <Link
-                href="#"
-                aria-label="GitHub"
-                data-testid="footer-github-link"
-                className="group grid size-9 place-items-center rounded-lg border border-border transition-colors hover:bg-accent"
-              >
-                <Icon name="github" trigger="group-hover" size={17} />
-              </Link>
-              <Link
                 href={`mailto:${site.email}`}
                 aria-label="Email"
                 data-testid="footer-email-link"
@@ -33,15 +26,7 @@ export function MarketingFooter() {
               >
                 <Icon name="mail" trigger="group-hover" size={17} />
               </Link>
-              <Link
-                href="/status"
-                aria-label="Status"
-                data-testid="footer-status-link"
-                className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-accent"
-              >
-                <span className="size-2 rounded-full bg-success" />
-                All systems operational
-              </Link>
+              <FooterStatusPill />
             </div>
           </div>
 

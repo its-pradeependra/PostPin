@@ -19,8 +19,24 @@ const ZONE_MAP: Record<string, { id: FeZone; label: string }> = {
 };
 const DISPLAY_ORDER = ["within_city", "within_state", "metro", "roi", "ne_jk"];
 
-// Engine surcharge/tax defaults (mirror rate-engine.service DEFAULTS), as %/₹.
+// Engine surcharge/tax defaults — fallback only; live values come from the
+// DB-backed engine defaults so admin edits reflect here too.
 const SURCHARGES = { codFlat: 35, codPercent: 1.5, fuelPercent: 12, gstPercent: 18 };
+
+async function liveSurcharges(): Promise<typeof SURCHARGES> {
+  try {
+    const { getEngineDefaults } = await import("@/services/rate-engine.service.js");
+    const d = await getEngineDefaults();
+    return {
+      codFlat: Math.round(d.codFlatPaise) / 100,
+      codPercent: d.codPercentBps / 100,
+      fuelPercent: d.fuelBps / 100,
+      gstPercent: d.gstBps / 100,
+    };
+  } catch {
+    return SURCHARGES;
+  }
+}
 
 const rupees = (paise: number) => Math.round(paise) / 100;
 
@@ -47,14 +63,14 @@ function standardRows() {
   });
 }
 
-function standardCard(effectiveFrom: string) {
+async function standardCard(effectiveFrom: string) {
   return {
     id: "standard",
     name: "Standard rate card",
     assignedTo: "Default — all shipments",
     status: "published" as const,
     currency: "INR" as const,
-    ...SURCHARGES,
+    ...(await liveSurcharges()),
     rows: standardRows(),
     effectiveFrom,
     updatedAt: effectiveFrom,
@@ -140,7 +156,7 @@ export async function listRateCards() {
   const effectiveFrom = new Date(created).toISOString();
   const custom = await scopedRepo(RateCardModel).find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
   return {
-    cards: [standardCard(effectiveFrom), ...custom.map(customCardDto)],
+    cards: [await standardCard(effectiveFrom), ...custom.map(customCardDto)],
     zones: zoneDtos(),
   };
 }

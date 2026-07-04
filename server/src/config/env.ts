@@ -51,6 +51,12 @@ const schema = z.object({
 
   SEED_ADMIN_EMAIL: z.string().email().default("admin@postpin.dev"),
   SEED_ADMIN_PASSWORD: z.string().min(8).default("ChangeMe_Admin#2026"),
+
+  // Local-disk media uploads (avatars, ticket attachments). Files are written
+  // under UPLOAD_DIR and served at `${API_PUBLIC_URL}/uploads/...`.
+  UPLOAD_DIR: z.string().default("uploads"),
+  API_PUBLIC_URL: z.string().default(""),
+  MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(5 * 1024 * 1024),
 });
 
 function load() {

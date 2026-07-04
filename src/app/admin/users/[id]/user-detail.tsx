@@ -45,11 +45,25 @@ import {
 import {
   activateTenant,
   getTenantDetail,
+  impersonateTenant,
   suspendTenant,
   type TenantDetail,
 } from "@/lib/api/services/admin";
 import { forgotPassword } from "@/lib/api/services/auth";
+import { stepUp } from "@/lib/api/services/account";
+import { enterImpersonation } from "@/lib/api/impersonation";
 import { ApiError } from "@/lib/api/errors";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import {
   formatCurrency,
   formatNumber,
@@ -167,6 +181,7 @@ function DetailBody({
 }) {
   const { company, owner, subscription, usage, keys, invoices, activity } = detail;
   const suspended = company.status === "suspended";
+  const [impersonateOpen, setImpersonateOpen] = React.useState(false);
 
   const usageData = usage.series.map((p) => ({
     label: formatDate(p.date, "short"),
@@ -232,6 +247,16 @@ function DetailBody({
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>Manage tenant</DropdownMenuLabel>
                 <DropdownMenuItem
+                  disabled={suspended || !owner}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setImpersonateOpen(true);
+                  }}
+                  data-testid="user-detail-impersonate-item"
+                >
+                  <Icon name="users" size={16} /> Impersonate tenant
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   disabled={!owner || resetPending}
                   onSelect={() => owner && onResetPassword(owner.email)}
                   data-testid="user-detail-reset-password-item"
@@ -279,6 +304,13 @@ function DetailBody({
           </div>
         </CardContent>
       </Card>
+
+      <ImpersonateDialog
+        open={impersonateOpen}
+        onOpenChange={setImpersonateOpen}
+        companyId={company.id}
+        tenantName={company.name}
+      />
 
       {suspended && (
         <div
@@ -545,3 +577,101 @@ function DetailBody({
     </div>
   );
 }
+
+/* ── Impersonation step-up dialog ─────────────────────────────────── */
+function ImpersonateDialog({
+  open,
+  onOpenChange,
+  companyId,
+  tenantName,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  companyId: string;
+  tenantName: string;
+}) {
+  const router = useRouter();
+  const [password, setPassword] = React.useState("");
+  const [code, setCode] = React.useState("");
+
+  const goM = useMutation({
+    mutationFn: async () => {
+      const step = await stepUp(password, code || undefined);
+      return impersonateTenant(companyId, step.step_up_token);
+    },
+    onSuccess: (res) => {
+      enterImpersonation(res.access_token, { tenantName: res.tenant.name, tenantId: res.tenant.id });
+      toast.success(`Now viewing as ${res.tenant.name}`);
+      onOpenChange(false);
+      router.push("/app");
+    },
+    onError: (e) => {
+      if (e instanceof ApiError && (e.code === "invalid_password" || e.code === "invalid_totp")) {
+        toast.error(e.message);
+      } else {
+        toast.error(e instanceof ApiError ? e.message : "Couldn't start impersonation");
+      }
+    },
+  });
+
+  React.useEffect(() => {
+    if (!open) {
+      setPassword("");
+      setCode("");
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" data-testid="impersonate-dialog">
+        <DialogHeader>
+          <DialogTitle>Impersonate {tenantName}</DialogTitle>
+          <DialogDescription>
+            Confirm your password to view this tenant&apos;s portal as their owner. This is
+            audited. You can exit anytime from the banner.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="impersonate-password">Your password</Label>
+            <Input
+              id="impersonate-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              data-testid="impersonate-password-input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="impersonate-code">2FA code (if enabled)</Label>
+            <Input
+              id="impersonate-code"
+              inputMode="numeric"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="123456"
+              className="font-mono"
+              data-testid="impersonate-code-input"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="impersonate-cancel-btn">
+            Cancel
+          </Button>
+          <Button
+            variant="gradient"
+            disabled={goM.isPending || password.length < 1}
+            onClick={() => goM.mutate()}
+            data-testid="impersonate-confirm-btn"
+          >
+            <Icon name="users" trigger="group-hover" size={16} className="text-white" />
+            {goM.isPending ? "Verifying…" : "Impersonate"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

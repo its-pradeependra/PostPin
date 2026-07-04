@@ -20,7 +20,8 @@ export type AccessClaims = {
   permVersion: number;
   isPlatformStaff: boolean;
   sid: string; // session id
-  amr: string[]; // auth methods (pwd, otp)
+  amr: string[]; // auth methods (pwd, otp, impersonation)
+  act?: string; // actor — the real admin userId when this token is an impersonation
 };
 
 export async function signAccessToken(claims: AccessClaims): Promise<string> {
@@ -41,6 +42,29 @@ export async function verifyAccessToken(token: string): Promise<AccessClaims & J
     audience: env.JWT_AUDIENCE,
   });
   return payload as AccessClaims & JWTPayload;
+}
+
+/** Sign a short-lived, single-purpose token (MFA challenge, step-up, impersonation). */
+export async function signPurposeToken(
+  purpose: string,
+  claims: Record<string, unknown>,
+  ttlSeconds: number,
+): Promise<string> {
+  if (!privateKey) throw new Error("JWT not initialized — call initJwt() first");
+  return new SignJWT({ ...claims, purpose })
+    .setProtectedHeader({ alg: ALG, kid: env.JWT_KID })
+    .setIssuedAt()
+    .setIssuer(env.JWT_ISSUER)
+    .setAudience(env.JWT_AUDIENCE)
+    .setExpirationTime(`${ttlSeconds}s`)
+    .sign(privateKey);
+}
+
+export async function verifyPurposeToken(token: string, purpose: string): Promise<JWTPayload> {
+  if (!publicKey) throw new Error("JWT not initialized — call initJwt() first");
+  const { payload } = await jwtVerify(token, publicKey, { issuer: env.JWT_ISSUER, audience: env.JWT_AUDIENCE });
+  if (payload.purpose !== purpose) throw new Error("wrong_token_purpose");
+  return payload;
 }
 
 /** JWKS document for `/.well-known/jwks.json`. */

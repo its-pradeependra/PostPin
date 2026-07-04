@@ -529,6 +529,36 @@ export function updateStaffRole(id: string, role: string) {
   return apiFetch<{ ok: boolean; role: string }>(`/admin/team/${id}/role`, { method: "PATCH", body: { role } });
 }
 
+export function inviteStaff(input: { email: string; name: string; role_key: string }) {
+  return apiFetch<{ invited: boolean; id: string; email: string; role: string }>("/admin/team/invite", { method: "POST", body: input });
+}
+
+export function removeStaff(id: string) {
+  return apiFetch<{ ok: boolean }>(`/admin/team/${id}/remove`, { method: "POST" });
+}
+
+export interface RoleMatrix {
+  permissions: Array<{ key: string; group: string; description: string; is_dangerous: boolean }>;
+  roles: Array<{ key: string; name: string; is_system: boolean; permissions: string[] }>;
+}
+
+export function getRoleMatrix() {
+  return apiFetch<RoleMatrix>("/admin/roles/matrix");
+}
+
+export interface ImpersonationResult {
+  access_token: string;
+  expires_in: number;
+  tenant: { id: string; name: string; owner_name: string; owner_email: string };
+}
+
+export function impersonateTenant(companyId: string, stepUpToken: string) {
+  return apiFetch<ImpersonationResult>(`/admin/tenants/${companyId}/impersonate`, {
+    method: "POST",
+    body: { step_up_token: stepUpToken },
+  });
+}
+
 /* ── Platform settings (M6c) ──────────────────────────────────────── */
 
 export interface PlatformSetting {
@@ -583,4 +613,83 @@ export interface AdminRateCardsOverview {
 
 export function getAdminRateCards() {
   return apiFetch<AdminRateCardsOverview>("/admin/rate-cards");
+}
+
+export const RATE_CARD_ZONES = [
+  { code: "within_city", label: "Local" },
+  { code: "within_state", label: "Regional" },
+  { code: "metro", label: "Metro" },
+  { code: "roi", label: "National" },
+  { code: "ne_jk", label: "Special / Remote" },
+] as const;
+
+export interface RateCardRow {
+  zone_code: string;
+  base_charge: number;
+  per_500g: number;
+}
+
+export interface AdminRateCard {
+  id: string;
+  name: string;
+  code: string;
+  company_id: string;
+  company_name?: string;
+  service_level: string;
+  status: "draft" | "active" | "archived";
+  is_default: boolean;
+  rows: RateCardRow[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyOption {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export function adminCompanyOptions(q?: string) {
+  return apiFetch<{ companies: CompanyOption[] }>(`/admin/companies/options${q ? `?q=${encodeURIComponent(q)}` : ""}`).then((r) => r.companies);
+}
+
+export function adminGetRateCard(id: string) {
+  return apiFetch<{ card: AdminRateCard }>(`/admin/rate-cards/${id}`).then((r) => r.card);
+}
+
+export function adminCreateRateCard(input: {
+  company_id: string;
+  name: string;
+  service_level?: string;
+  status?: string;
+  rows: RateCardRow[];
+}) {
+  return apiFetch<{ card: AdminRateCard }>("/admin/rate-cards", { method: "POST", body: input }).then((r) => r.card);
+}
+
+export function adminUpdateRateCard(
+  id: string,
+  patch: { name?: string; service_level?: string; status?: string; rows?: RateCardRow[] },
+) {
+  return apiFetch<{ card: AdminRateCard }>(`/admin/rate-cards/${id}`, { method: "PATCH", body: patch }).then((r) => r.card);
+}
+
+export function adminAssignRateCard(id: string) {
+  return apiFetch<{ card: AdminRateCard }>(`/admin/rate-cards/${id}/assign`, { method: "POST" }).then((r) => r.card);
+}
+
+export interface RateSimResult {
+  zone: string;
+  zoneLabel: string;
+  serviceLabel: string;
+  total: number;
+  breakdown: Array<{ label: string; amount: number; hint?: string }>;
+  etaDays: [number, number];
+}
+
+export function adminSimulateRateCard(
+  id: string,
+  input: { weight_grams: number; zone_code: string; service?: string; cod?: boolean; declared_value?: number },
+) {
+  return apiFetch<{ result: RateSimResult }>(`/admin/rate-cards/${id}/simulate`, { method: "POST", body: input }).then((r) => r.result);
 }

@@ -34,8 +34,8 @@ export interface WebhookDeliveryDto {
   at: string;
 }
 
-export async function listWebhooks(): Promise<WebhookDto[]> {
-  return (await apiFetch<{ webhooks: WebhookDto[] }>("/webhooks")).webhooks;
+export async function listWebhooks(): Promise<{ webhooks: WebhookDto[]; cap: number }> {
+  return apiFetch<{ webhooks: WebhookDto[]; cap: number }>("/webhooks");
 }
 
 export function createWebhook(input: { url: string; events: string[]; description?: string }) {

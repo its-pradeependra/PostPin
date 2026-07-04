@@ -2,13 +2,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { type AppInstance, buildApp } from "@/app.js";
 import { initJwt } from "@/lib/jwt.js";
 import { hashPassword } from "@/lib/crypto.js";
-import { PermissionModel, PlanModel, RoleModel, SettingsModel, UserModel, ZoneModel } from "@/models/index.js";
+import { AuditLogModel, PermissionModel, PlanModel, RoleModel, SettingsModel, UserModel, ZoneModel } from "@/models/index.js";
 import { SEED_ZONES } from "@/data/zones.data.js";
 import { onboardCompany } from "@/services/company-onboard.service.js";
 import { PERMISSIONS } from "@/shared/permissions.js";
 import { PLATFORM_ROLES } from "@/shared/roles.js";
 import { clearCollections, startMemoryDb, stopMemoryDb } from "@/test/helpers.js";
 import { clearEmails, recentEmails } from "@/services/email.service.js";
+import { authenticator } from "otplib";
 
 const PW = "Sup3rSecret!pw";
 const ADMIN = "root@postpin.test";
@@ -228,5 +229,233 @@ describe("M6e — notification channels (platform alerts)", () => {
     const t = (await login("n@n.test"))!;
     const res = await app.inject({ method: "GET", url: "/v1/admin/notifications/config", headers: auth(t) });
     expect(res.statusCode).toBe(403);
+  });
+});
+
+describe("M6e — rate-cards admin (create / assign / simulate)", () => {
+  it("creates a card, assigns it, and the tenant's keyed quote prices from it", async () => {
+    const adminT = (await login(ADMIN))!;
+    const { companyId } = await onboardCompany({ companyName: "Cards Co", ownerName: "Owner", ownerEmail: "c@cards.test", password: PW, emailVerified: true });
+    const tenantT = (await login("c@cards.test"))!;
+
+    // Baseline keyed quote (no assigned card → zone pricing).
+    const keyRes = await app.inject({ method: "POST", url: "/v1/keys", headers: auth(tenantT), payload: { name: "Prod Key", mode: "test" } });
+    expect(keyRes.statusCode).toBe(201);
+    const secret = (keyRes.json() as { secret: string }).secret;
+    const q0 = await app.inject({
+      method: "POST",
+      url: "/v1/rates/calculate",
+      headers: { authorization: `Bearer ${secret}` },
+      payload: { origin: "302001", destination: "302015", weight: 1000, service: "surface" },
+    });
+    expect(q0.statusCode, q0.body).toBe(200);
+    const baseTotal = (q0.json() as { data: { zone: string; total: number } }).data;
+    expect(baseTotal.zone).toBe("within_city");
+
+    // Admin creates a distinctive within_city card for this tenant.
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/admin/rate-cards",
+      headers: auth(adminT),
+      payload: {
+        company_id: String(companyId),
+        name: "Peak Card",
+        rows: [{ zone_code: "within_city", base_charge: 500, per_500g: 100 }],
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const cardId = (created.json() as { card: { id: string; status: string } }).card.id;
+
+    // Simulate the card (1kg within_city) before assigning.
+    const sim = await app.inject({
+      method: "POST",
+      url: `/v1/admin/rate-cards/${cardId}/simulate`,
+      headers: auth(adminT),
+      payload: { weight_grams: 1000, zone_code: "within_city", service: "surface" },
+    });
+    expect(sim.statusCode).toBe(200);
+    expect((sim.json() as { result: { total: number } }).result.total).toBeGreaterThan(baseTotal.total);
+
+    // Assign → active + default.
+    const assigned = await app.inject({ method: "POST", url: `/v1/admin/rate-cards/${cardId}/assign`, headers: auth(adminT) });
+    expect(assigned.statusCode).toBe(200);
+    expect((assigned.json() as { card: { is_default: boolean; status: string } }).card).toMatchObject({ is_default: true, status: "active" });
+
+    // Same keyed lane now prices from the assigned card (much higher).
+    const q1 = await app.inject({
+      method: "POST",
+      url: "/v1/rates/calculate",
+      headers: { authorization: `Bearer ${secret}` },
+      payload: { origin: "302001", destination: "302015", weight: 1000, service: "surface" },
+    });
+    const cardTotal = (q1.json() as { data: { total: number; breakdown: Array<{ label: string }> } }).data;
+    expect(cardTotal.total).toBeGreaterThan(baseTotal.total);
+    expect(cardTotal.breakdown.some((l) => l.label === "Rate card freight")).toBe(true);
+  });
+
+  it("rejects create for an unknown company and simulate for an unpriced zone", async () => {
+    const adminT = (await login(ADMIN))!;
+    const badCo = await app.inject({
+      method: "POST",
+      url: "/v1/admin/rate-cards",
+      headers: auth(adminT),
+      payload: { company_id: "60a0000000000000000000aa", name: "Ghost", rows: [] },
+    });
+    expect(badCo.statusCode).toBe(400);
+
+    const { companyId } = await onboardCompany({ companyName: "Sim Co", ownerName: "O", ownerEmail: "s@sim.test", password: PW, emailVerified: true });
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/admin/rate-cards",
+      headers: auth(adminT),
+      payload: { company_id: String(companyId), name: "Only Metro", rows: [{ zone_code: "metro", base_charge: 80, per_500g: 20 }] },
+    });
+    const cardId = (created.json() as { card: { id: string } }).card.id;
+    const sim = await app.inject({
+      method: "POST",
+      url: `/v1/admin/rate-cards/${cardId}/simulate`,
+      headers: auth(adminT),
+      payload: { weight_grams: 1000, zone_code: "within_city", service: "surface" },
+    });
+    expect(sim.statusCode).toBe(400);
+    expect((sim.json() as { error: { code: string } }).error.code).toBe("zone_not_priced");
+  });
+
+  it("denies a tenant user from managing rate cards (403)", async () => {
+    await onboardCompany({ companyName: "RC Co", ownerName: "O", ownerEmail: "rc@rc.test", password: PW, emailVerified: true });
+    const t = (await login("rc@rc.test"))!;
+    const res = await app.inject({ method: "POST", url: "/v1/admin/rate-cards", headers: auth(t), payload: { company_id: "60a0000000000000000000aa", name: "Nope", rows: [] } });
+    expect(res.statusCode).toBe(403);
+  });
+});
+
+describe("M6e — staff invites + role matrix", () => {
+  it("invites a staff member who accepts and can log in", async () => {
+    const t = (await login(ADMIN))!;
+    clearEmails();
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/admin/team/invite",
+      headers: auth(t),
+      payload: { email: "newadmin@postpin.test", name: "New Admin", role_key: "support_admin" },
+    });
+    expect(res.statusCode).toBe(201);
+
+    // Grab the invite token from the captured email and accept.
+    const mail = recentEmails().find((m) => m.to === "newadmin@postpin.test");
+    expect(mail).toBeTruthy();
+    const token = /token=([^\s&"]+)/.exec(mail!.text)?.[1];
+    expect(token).toBeTruthy();
+
+    const accepted = await app.inject({
+      method: "POST",
+      url: "/v1/auth/accept-invite",
+      payload: { token, name: "New Admin", password: "Str0ng!Passw0rd" },
+    });
+    expect(accepted.statusCode).toBe(200);
+
+    const staffLogin = await app.inject({ method: "POST", url: "/v1/auth/login", payload: { email: "newadmin@postpin.test", password: "Str0ng!Passw0rd" } });
+    expect(staffLogin.statusCode).toBe(200);
+    expect((staffLogin.json() as { user: { role: string } }).user.role).toBe("support_admin");
+  });
+
+  it("rejects a duplicate staff email and an unknown role", async () => {
+    const t = (await login(ADMIN))!;
+    const dup = await app.inject({ method: "POST", url: "/v1/admin/team/invite", headers: auth(t), payload: { email: ADMIN, name: "Dup", role_key: "support_admin" } });
+    expect(dup.statusCode).toBe(400);
+    const badRole = await app.inject({ method: "POST", url: "/v1/admin/team/invite", headers: auth(t), payload: { email: "x@postpin.test", name: "X", role_key: "nope" } });
+    expect(badRole.statusCode).toBe(400);
+  });
+
+  it("returns the live role → permission matrix", async () => {
+    const t = (await login(ADMIN))!;
+    const res = await app.inject({ method: "GET", url: "/v1/admin/roles/matrix", headers: auth(t) });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { roles: Array<{ key: string; permissions: string[] }>; permissions: Array<{ key: string }> };
+    const superRole = body.roles.find((r) => r.key === "super_admin");
+    expect(superRole!.permissions).toContain("admin:write");
+    expect(body.permissions.length).toBeGreaterThan(5);
+  });
+});
+
+describe("M6e — tenant impersonation (step-up)", () => {
+  it("re-auths, impersonates a tenant, and the token acts as the tenant owner", async () => {
+    const adminT = (await login(ADMIN))!;
+    const { companyId } = await onboardCompany({ companyName: "Imp Co", ownerName: "Owner Person", ownerEmail: "owner@imp.test", password: PW, emailVerified: true });
+
+    // Impersonation without step-up is refused.
+    const noStep = await app.inject({ method: "POST", url: `/v1/admin/tenants/${String(companyId)}/impersonate`, headers: auth(adminT), payload: { step_up_token: "not-a-real-token" } });
+    expect(noStep.statusCode).toBe(401);
+
+    // Step-up re-auth.
+    const step = await app.inject({ method: "POST", url: "/v1/auth/step-up", headers: auth(adminT), payload: { password: PW } });
+    expect(step.statusCode).toBe(200);
+    const stepUpToken = (step.json() as { step_up_token: string }).step_up_token;
+
+    // Impersonate.
+    const imp = await app.inject({ method: "POST", url: `/v1/admin/tenants/${String(companyId)}/impersonate`, headers: auth(adminT), payload: { step_up_token: stepUpToken } });
+    expect(imp.statusCode).toBe(200);
+    const body = imp.json() as { access_token: string; tenant: { name: string; owner_email: string } };
+    expect(body.tenant).toMatchObject({ name: "Imp Co", owner_email: "owner@imp.test" });
+
+    // The impersonation token authenticates AS the tenant owner.
+    const me = await app.inject({ method: "GET", url: "/v1/auth/me", headers: { authorization: `Bearer ${body.access_token}` } });
+    const meBody = me.json() as { user: { email: string; is_platform_staff: boolean }; company: { name: string } | null };
+    expect(meBody.user.email).toBe("owner@imp.test");
+    expect(meBody.user.is_platform_staff).toBe(false);
+    expect(meBody.company?.name).toBe("Imp Co");
+
+    // A critical audit records who impersonated whom.
+    const audit = await AuditLogModel.findOne({ action: "admin.impersonation_started" }).lean();
+    expect(audit).toMatchObject({ severity: "critical" });
+  });
+
+  it("denies a tenant user from impersonating (403) and rejects another admin's step-up token", async () => {
+    await onboardCompany({ companyName: "Nope Co", ownerName: "O", ownerEmail: "o@nope.test", password: PW, emailVerified: true });
+    const tenantT = (await login("o@nope.test"))!;
+    const res = await app.inject({ method: "POST", url: "/v1/admin/tenants/60a0000000000000000000aa/impersonate", headers: auth(tenantT), payload: { step_up_token: "x".repeat(20) } });
+    expect(res.statusCode).toBe(403);
+  });
+});
+
+describe("M6e — two-factor (TOTP)", () => {
+  function secretFromOtpauth(otpauth: string): string {
+    return /secret=([^&]+)/.exec(otpauth)![1]!;
+  }
+
+  it("enrolls TOTP, then requires a second factor at login", async () => {
+    const t = (await login(ADMIN))!;
+
+    // Setup → enable with a real code.
+    const setup = await app.inject({ method: "POST", url: "/v1/auth/2fa/setup", headers: auth(t) });
+    expect(setup.statusCode).toBe(200);
+    const { otpauth } = setup.json() as { otpauth: string; qr_data_url: string };
+    const secret = secretFromOtpauth(otpauth);
+
+    const enable = await app.inject({ method: "POST", url: "/v1/auth/2fa/enable", headers: auth(t), payload: { code: authenticator.generate(secret) } });
+    expect(enable.statusCode).toBe(200);
+    const backup = (enable.json() as { backup_codes: string[] }).backup_codes;
+    expect(backup.length).toBeGreaterThan(0);
+
+    // Password login now returns an MFA challenge, not tokens.
+    const pw = await app.inject({ method: "POST", url: "/v1/auth/login", payload: { email: ADMIN, password: PW } });
+    const challenge = pw.json() as { mfa_required?: boolean; mfa_token?: string; access_token?: string };
+    expect(challenge.mfa_required).toBe(true);
+    expect(challenge.access_token).toBeUndefined();
+
+    // A wrong code fails.
+    const bad = await app.inject({ method: "POST", url: "/v1/auth/login/2fa", payload: { mfa_token: challenge.mfa_token, code: "000000" } });
+    expect(bad.statusCode).toBe(401);
+
+    // The real code completes login.
+    const good = await app.inject({ method: "POST", url: "/v1/auth/login/2fa", payload: { mfa_token: challenge.mfa_token, code: authenticator.generate(secret) } });
+    expect(good.statusCode).toBe(200);
+    expect((good.json() as { access_token: string }).access_token).toBeTruthy();
+
+    // A backup code also works as a second factor.
+    const pw2 = await app.inject({ method: "POST", url: "/v1/auth/login", payload: { email: ADMIN, password: PW } });
+    const ch2 = pw2.json() as { mfa_token: string };
+    const viaBackup = await app.inject({ method: "POST", url: "/v1/auth/login/2fa", payload: { mfa_token: ch2.mfa_token, code: backup[0] } });
+    expect(viaBackup.statusCode).toBe(200);
   });
 });

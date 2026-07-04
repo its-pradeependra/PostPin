@@ -231,7 +231,8 @@ export default function PincodeSyncSettingsPage() {
                         data-testid="sync-settings-source-input"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Live India Post sync is coming soon — CSV import is the supported path.
+                        Live sync pulls the official data.gov.in Department of Posts directory —
+                        nightly at the scheduled IST time, or on demand from Pincode Master.
                       </p>
                     </div>
                   </CardContent>
@@ -466,8 +467,9 @@ export default function PincodeSyncSettingsPage() {
                   </CardContent>
                   <CardFooter>
                     <p className="text-xs text-muted-foreground">
-                      Live India Post sync is coming soon — CSV import from the Pincode Master
-                      page is the supported path today.
+                      This pipeline runs nightly against the official India Post directory; use
+                      “Run live sync” on Pincode Master for an on-demand pass, or CSV import for
+                      one-off corrections.
                     </p>
                   </CardFooter>
                 </Card>

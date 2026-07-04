@@ -103,6 +103,22 @@ export async function authRoutes(appBase: FastifyInstance) {
     { schema: { body: z.object({ email: z.string().email(), password: z.string().min(1) }) }, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const r = await auth.login({ email: req.body.email, password: req.body.password, ip: req.ip, userAgent: ua(req) });
+      if ("mfaRequired" in r) {
+        return reply.send({ mfa_required: true, mfa_token: r.mfaToken });
+      }
+      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt);
+      return reply.send({ access_token: r.accessToken, token_type: "Bearer", expires_in: r.expiresIn, user: r.user });
+    },
+  );
+
+  app.post(
+    "/login/2fa",
+    {
+      schema: { body: z.object({ mfa_token: z.string().min(10), code: z.string().min(4).max(20) }) },
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    },
+    async (req, reply) => {
+      const r = await auth.completeMfaLogin({ mfaToken: req.body.mfa_token, code: req.body.code, ip: req.ip, userAgent: ua(req) });
       setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt);
       return reply.send({ access_token: r.accessToken, token_type: "Bearer", expires_in: r.expiresIn, user: r.user });
     },
@@ -176,6 +192,77 @@ export async function authRoutes(appBase: FastifyInstance) {
       return auth.updateProfile(ctx.userId!, req.body);
     },
   );
+
+  // ── Two-factor (TOTP) ──────────────────────────────────────────────────────
+  app.get("/2fa/status", { preHandler: [authenticate] }, async () => {
+    const { UserModel } = await import("@/models/index.js");
+    const { mfaStatus } = await import("@/services/mfa.service.js");
+    const user = await UserModel.findById(getContext().userId).select("mfa").lean();
+    return mfaStatus(user ?? {});
+  });
+  app.post("/2fa/setup", { preHandler: [authenticate] }, async () => {
+    const { beginTotpSetup } = await import("@/services/mfa.service.js");
+    return beginTotpSetup(getContext().userId!);
+  });
+  app.post(
+    "/2fa/enable",
+    { preHandler: [authenticate], schema: { body: z.object({ code: z.string().min(6).max(10) }) } },
+    async (req) => {
+      const { enableTotp } = await import("@/services/mfa.service.js");
+      return enableTotp(getContext().userId!, req.body.code);
+    },
+  );
+  app.post(
+    "/2fa/disable",
+    { preHandler: [authenticate], schema: { body: z.object({ code: z.string().min(6).max(20) }) } },
+    async (req) => {
+      const { disableTotp } = await import("@/services/mfa.service.js");
+      return disableTotp(getContext().userId!, req.body.code);
+    },
+  );
+
+  // ── Step-up re-auth (for sensitive admin actions) ──────────────────────────
+  app.post(
+    "/step-up",
+    { preHandler: [authenticate], schema: { body: z.object({ password: z.string().min(1), code: z.string().min(4).max(20).optional() }) } },
+    async (req) => {
+      const r = await auth.stepUp({ userId: getContext().userId!, password: req.body.password, code: req.body.code });
+      return { step_up_token: r.stepUpToken, expires_in: r.expiresIn };
+    },
+  );
+
+  // ── Avatar (local-disk media) ──────────────────────────────────────────────
+  app.post("/avatar", { preHandler: [authenticate] }, async (req, reply) => {
+    const { UserModel } = await import("@/models/index.js");
+    const { saveUpload, deleteByUrl, IMAGE_MIMES } = await import("@/services/upload.service.js");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await (req as any).file();
+    if (!data) return reply.code(400).send({ error: { code: "no_file", message: "No file uploaded" } });
+    const buffer = await data.toBuffer();
+    if (data.file.truncated) {
+      return reply.code(400).send({ error: { code: "file_too_large", message: "Image is too large" } });
+    }
+    const userId = String(getContext().userId);
+    const saved = saveUpload({ buffer, mimetype: data.mimetype, originalName: data.filename, category: "avatars", ownerId: userId, allowed: IMAGE_MIMES });
+    const user = await UserModel.findById(userId);
+    if (!user) return reply.code(404).send({ error: { code: "not_found", message: "User not found" } });
+    if (user.avatarUrl) deleteByUrl(user.avatarUrl);
+    user.avatarUrl = saved.url;
+    await user.save();
+    return { avatar_url: saved.url };
+  });
+
+  app.delete("/avatar", { preHandler: [authenticate] }, async () => {
+    const { UserModel } = await import("@/models/index.js");
+    const { deleteByUrl } = await import("@/services/upload.service.js");
+    const user = await UserModel.findById(getContext().userId);
+    if (user?.avatarUrl) {
+      deleteByUrl(user.avatarUrl);
+      user.avatarUrl = null;
+      await user.save();
+    }
+    return { avatar_url: null };
+  });
 
   app.post(
     "/change-password",

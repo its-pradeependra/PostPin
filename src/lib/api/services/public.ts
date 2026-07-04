@@ -32,6 +32,21 @@ export function getPublicStats() {
   return apiFetch<{ data: PublicStats }>("/public/stats").then((r) => r.data);
 }
 
+/* ── Contact / sales form ─────────────────────────────────────────── */
+
+export interface ContactInput {
+  name: string;
+  email: string;
+  company?: string;
+  topic?: string;
+  message: string;
+}
+
+/** Delivers the enquiry to the platform team's inbox (rate-limited server-side). */
+export function submitContactForm(input: ContactInput) {
+  return apiFetch<{ data: { received: boolean } }>("/public/contact", { method: "POST", body: input }).then((r) => r.data);
+}
+
 /* ── Public plans (pricing page, landing strip, signup chip) ──────── */
 
 export interface PublicPlan {

@@ -56,6 +56,7 @@ function messageDto(r: any, users: Map<string, UserLite>) {
     authorRole: r.authorRole === "requester" ? ("customer" as const) : ("agent" as const),
     body: r.body,
     createdAt: r.createdAt,
+    attachments: (r.attachments ?? []) as TicketAttachment[],
   };
 }
 
@@ -102,6 +103,7 @@ export async function getTicket(ticketNumber: string) {
     authorRole: "customer" as const,
     body: t.body as string,
     createdAt: t.createdAt,
+    attachments: (t.attachments ?? []) as TicketAttachment[],
   };
   const messages = [rootMessage, ...replies.map((r) => messageDto(r, users))];
   return ticketDto(t, users, cName, messages);
@@ -113,11 +115,19 @@ function makeTicketNumber(): string {
   return `PP-${year}-${n}`;
 }
 
+export interface TicketAttachment {
+  url: string;
+  name: string;
+  mimetype: string;
+  size: number;
+}
+
 export async function createTicket(input: {
   subject: string;
   category: TicketCategory;
   priority: TicketPriority;
   body: string;
+  attachments?: TicketAttachment[];
 }) {
   const ctx = getContext();
   let created: unknown = null;
@@ -133,6 +143,7 @@ export async function createTicket(input: {
         priority: input.priority,
         status: "open",
         channel: "portal",
+        attachments: input.attachments ?? [],
       });
     } catch (e) {
       const err = e as { code?: number };
@@ -159,7 +170,7 @@ export async function createTicket(input: {
   return { ticket: ticketDto(doc, users, cName) };
 }
 
-export async function replyToTicket(ticketNumber: string, body: string) {
+export async function replyToTicket(ticketNumber: string, body: string, attachments: TicketAttachment[] = []) {
   const ctx = getContext();
   const ticket = await scopedRepo(TicketModel).findOne({ ticketNumber, isDeleted: false });
   if (!ticket) throw AppError.notFound("Ticket not found");
@@ -170,6 +181,7 @@ export async function replyToTicket(ticketNumber: string, body: string) {
     authorRole: "requester",
     body,
     isInternal: false,
+    attachments,
   });
 
   const reopened = REOPENABLE.includes(ticket.status as TicketStatus);

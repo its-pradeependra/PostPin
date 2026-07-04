@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { SettingsNav } from "./settings-nav";
 import { useSession } from "@/components/providers/session-provider";
-import { updateProfile } from "@/lib/api/services/account";
+import { removeAvatar, updateProfile, uploadAvatar } from "@/lib/api/services/account";
 import { ApiError } from "@/lib/api/errors";
 import { Icon } from "@/components/icons";
 import {
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -83,6 +83,40 @@ export default function ProfileSettingsPage() {
   });
   const saving = saveM.isPending;
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const MAX_AVATAR_BYTES = 5_000_000;
+  const uploadM = useMutation({
+    mutationFn: (file: File) => uploadAvatar(file),
+    onSuccess: async () => {
+      await refresh();
+      toast.success("Photo updated", { description: "Your new profile photo is live." });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't upload the photo"),
+  });
+  const removeAvatarM = useMutation({
+    mutationFn: removeAvatar,
+    onSuccess: async () => {
+      await refresh();
+      toast("Photo removed");
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't remove the photo"),
+  });
+
+  function onAvatarPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp|gif)$/.test(file.type)) {
+      toast.error("Choose a PNG, JPG, WebP or GIF image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error(`"${file.name}" is ${(file.size / 1e6).toFixed(1)} MB — the limit is 5 MB.`);
+      return;
+    }
+    uploadM.mutate(file);
+  }
+
   function save() {
     if (name.trim().length < 2) {
       toast.error("Name must be at least 2 characters.");
@@ -126,37 +160,47 @@ export default function ProfileSettingsPage() {
           <CardContent className="space-y-6">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <Avatar className="size-20 ring-2 ring-border">
+                {user?.avatar_url && <AvatarImage src={user.avatar_url} alt={name} />}
                 <AvatarFallback className="text-lg">{initials(name || "U")}</AvatarFallback>
               </Avatar>
               <div className="space-y-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={onAvatarPick}
+                  data-testid="profile-avatar-file-input"
+                />
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="group"
-                    onClick={() =>
-                      toast.success("Avatar updated", {
-                        description: "Your new profile photo is live.",
-                      })
-                    }
+                    disabled={uploadM.isPending}
+                    onClick={() => fileRef.current?.click()}
                     data-testid="profile-avatar-upload-btn"
                   >
-                    <Icon name="upload" trigger="group-hover" size={15} /> Upload photo
+                    <Icon name="upload" trigger="group-hover" size={15} />{" "}
+                    {uploadM.isPending ? "Uploading…" : "Upload photo"}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="group text-muted-foreground"
-                    onClick={() => toast("Avatar removed")}
-                    data-testid="profile-avatar-remove-btn"
-                  >
-                    <Icon name="trash" trigger="group-hover" size={15} /> Remove
-                  </Button>
+                  {user?.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="group text-muted-foreground"
+                      disabled={removeAvatarM.isPending}
+                      onClick={() => removeAvatarM.mutate()}
+                      data-testid="profile-avatar-remove-btn"
+                    >
+                      <Icon name="trash" trigger="group-hover" size={15} /> Remove
+                    </Button>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  JPG, PNG or GIF · up to 2&nbsp;MB. A square image works best.
+                  JPG, PNG, WebP or GIF · up to 5&nbsp;MB. A square image works best.
                 </p>
               </div>
             </div>

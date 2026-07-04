@@ -1,7 +1,14 @@
 import { apiFetch } from "@/lib/api/client";
-import type { Ticket, TicketCategory, TicketPriority, TicketStatus, TicketMessage } from "@/lib/types";
+import type { Ticket, TicketAttachment, TicketCategory, TicketPriority, TicketStatus, TicketMessage } from "@/lib/types";
 
-export type { Ticket, TicketMessage };
+export type { Ticket, TicketMessage, TicketAttachment };
+
+/** Upload a ticket attachment; returns metadata to attach to a ticket/reply. */
+export function uploadTicketAttachment(file: File): Promise<TicketAttachment> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch<{ attachment: TicketAttachment }>("/tickets/uploads", { method: "POST", body: fd }).then((r) => r.attachment);
+}
 
 export function listTickets(status?: TicketStatus | "all"): Promise<Ticket[]> {
   const qs = status && status !== "all" ? `?status=${status}` : "";
@@ -17,13 +24,14 @@ export function createTicket(input: {
   category: TicketCategory;
   priority: TicketPriority;
   body: string;
+  attachments?: TicketAttachment[];
 }): Promise<Ticket> {
   return apiFetch<{ ticket: Ticket }>("/tickets", { method: "POST", body: input }).then((r) => r.ticket);
 }
 
-export function replyToTicket(id: string, body: string): Promise<{ message: TicketMessage; reopened: boolean }> {
+export function replyToTicket(id: string, body: string, attachments: TicketAttachment[] = []): Promise<{ message: TicketMessage; reopened: boolean }> {
   return apiFetch<{ message: TicketMessage; reopened: boolean }>(`/tickets/${encodeURIComponent(id)}/replies`, {
     method: "POST",
-    body: { body },
+    body: { body, attachments },
   });
 }

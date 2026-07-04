@@ -12,6 +12,7 @@ const userSchema = new Schema(
     phone: String,
     roleId: { type: Schema.Types.ObjectId, ref: "Role", required: true },
     isPlatformStaff: { type: Boolean, default: false },
+    avatarUrl: { type: String, default: null },
     status: {
       type: String,
       enum: ["invited", "active", "suspended", "disabled"],

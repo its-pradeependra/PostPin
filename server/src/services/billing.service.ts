@@ -146,7 +146,9 @@ export async function createCheckout(input: { planCode: string; interval: "month
     couponCode = v.code;
   }
   const discountedBase = Math.max(0, basePaise - discountPaise);
-  const gstPaise = Math.round((discountedBase * GST_BPS) / 10_000);
+  const { getEngineDefaults } = await import("@/services/rate-engine.service.js");
+  const gstBps = (await getEngineDefaults()).gstBps ?? GST_BPS;
+  const gstPaise = Math.round((discountedBase * gstBps) / 10_000);
   const totalPaise = discountedBase + gstPaise;
 
   let number = makeInvoiceNumber();
@@ -277,6 +279,24 @@ async function activateFromInvoice(invoice: any, paymentId: string) {
     body: `Payment received — invoice ${claimed.number}.`,
     actionUrl: "/app/billing",
   });
+  // Outbound webhook fan-out (fire-and-forget).
+  {
+    const { emitWebhookEvent } = await import("@/services/webhook.service.js");
+    void emitWebhookEvent(claimed.companyId, "invoice.paid", {
+      invoice_number: claimed.number,
+      plan_code: claimed.planCode,
+      interval: claimed.interval,
+      amount: rupees(claimed.totalPaise ?? 0),
+      paid_at: now.toISOString(),
+    });
+    void emitWebhookEvent(claimed.companyId, "subscription.updated", {
+      plan_code: plan.code,
+      status: "active",
+      interval: claimed.interval,
+      current_period_end: periodEnd.toISOString(),
+      cancel_at_period_end: false,
+    });
+  }
   return claimed;
 }
 
@@ -381,6 +401,18 @@ async function markPaymentFailed(invoice: any) {
     companyId: invoice.companyId,
     resource: { kind: "invoice", id: String(invoice._id), name: invoice.number },
   });
+  // Platform ops alert (email/Slack per the admin Notifications config).
+  try {
+    const { dispatchPlatformAlert } = await import("@/services/platform-alerts.service.js");
+    await dispatchPlatformAlert({
+      severity: "warning",
+      event: "billing.payment.failed",
+      title: `Payment failed — invoice ${invoice.number}`,
+      body: `Dunning attempt recorded for plan ${invoice.planCode} (₹${rupees(invoice.totalPaise)}).`,
+    });
+  } catch {
+    /* alerting is best-effort */
+  }
 }
 
 /** Platform (invoice:refund): refund a paid invoice and drop the tenant to Free. Cross-tenant. */
@@ -452,5 +484,15 @@ export async function cancelSubscription() {
   sub.canceledAt = new Date();
   await sub.save();
   await writeAudit({ action: "billing.subscription_canceled", category: "billing", severity: "notice", resource: { kind: "subscription", id: String(sub._id) } });
+  {
+    const { emitWebhookEvent } = await import("@/services/webhook.service.js");
+    void emitWebhookEvent(companyId, "subscription.updated", {
+      plan_code: sub.planCode,
+      status: "active",
+      interval: sub.interval,
+      current_period_end: sub.currentPeriodEnd?.toISOString() ?? null,
+      cancel_at_period_end: true,
+    });
+  }
   return { ok: true, cancel_at_period_end: true, current_period_end: sub.currentPeriodEnd };
 }

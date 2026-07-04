@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
 import { SettingsNav } from "../settings-nav";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TwoFactorCard } from "@/components/shared/two-factor-card";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { Icon } from "@/components/icons";
 import {
@@ -22,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
@@ -221,38 +221,11 @@ export default function SecuritySettingsPage() {
           </form>
         </Card>
 
-        {/* 2FA — not yet available */}
-        <Card data-testid="security-2fa-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              Two-factor authentication
-              <Badge variant="muted" data-testid="security-2fa-status">
-                Coming soon
-              </Badge>
-            </CardTitle>
-            <CardDescription>Add an extra layer of security with an authenticator app (TOTP).</CardDescription>
-            <CardAction>
-              <Switch
-                checked={false}
-                disabled
-                onCheckedChange={() => toast("Two-factor authentication is coming soon.")}
-                aria-label="Toggle two-factor authentication"
-                data-testid="security-2fa-toggle"
-              />
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 text-center">
-              <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-gradient-soft text-primary">
-                <Icon name="shield" trigger="loop" animation="float" size={22} />
-              </span>
-              <p className="mt-3 text-sm text-muted-foreground">
-                App-based two-factor authentication is on the way. In the meantime, use a strong, unique password and review
-                your active sessions below.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 2FA — live TOTP enrollment (same flow as platform staff) */}
+        <TwoFactorCard
+          testIdPrefix="security-2fa"
+          description="Add an extra layer of security with an authenticator app (TOTP)."
+        />
       </div>
 
       {/* Active sessions */}

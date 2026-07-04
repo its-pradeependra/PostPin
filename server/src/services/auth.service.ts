@@ -114,7 +114,7 @@ export async function login(input: {
   password: string;
   ip: string;
   userAgent: string;
-}): Promise<LoginResult> {
+}): Promise<LoginResult | MfaChallenge> {
   const email = input.email.toLowerCase().trim();
   const user = await UserModel.findOne({ email });
   if (!user) invalidCreds();
@@ -129,6 +129,17 @@ export async function login(input: {
     if (user.failedLoginCount >= AUTH.maxFailedLogins) {
       user.lockedUntil = new Date(Date.now() + AUTH.lockoutMs);
       user.failedLoginCount = 0;
+      // Ops alert: repeated bad passwords locked an account (possible attack).
+      void import("@/services/platform-alerts.service.js")
+        .then(({ dispatchPlatformAlert }) =>
+          dispatchPlatformAlert({
+            severity: "warning",
+            event: "security.alert",
+            title: "Account locked after repeated failed logins",
+            body: `${email} was locked for ${Math.round(AUTH.lockoutMs / 60000)} minutes after ${AUTH.maxFailedLogins} failed attempts (ip ${input.ip}).`,
+          }),
+        )
+        .catch(() => {});
     }
     await user.save();
     await writeAudit({
@@ -160,19 +171,34 @@ export async function login(input: {
     }
   }
 
+  // Two-factor gate: if the account has TOTP enabled, don't mint a session yet —
+  // return a short-lived challenge the client redeems with a code.
+  if ((user.mfa as { enabled?: boolean } | undefined)?.enabled) {
+    const { signPurposeToken } = await import("@/lib/jwt.js");
+    const mfaToken = await signPurposeToken("mfa_login", { sub: String(user._id) }, 300);
+    return { mfaRequired: true as const, mfaToken };
+  }
+
+  return issueLoginResult(user, input.ip, input.userAgent, ["pwd"]);
+}
+
+/** Mint the session + access token for an authenticated user. Shared by the
+ * password path and the 2FA-completion path. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function issueLoginResult(user: any, ip: string, userAgent: string, amr: string[]): Promise<LoginResult> {
   user.failedLoginCount = 0;
   user.lockedUntil = null;
   user.lastLoginAt = new Date();
-  user.lastLoginIp = input.ip;
+  user.lastLoginIp = ip;
   await user.save();
 
   const { roleKey, permissions } = await resolveRolePerms(user.roleId);
   const session = await createSession({
     userId: user._id,
     companyId: user.companyId ?? null,
-    ip: input.ip,
-    userAgent: input.userAgent,
-    amr: ["pwd"],
+    ip,
+    userAgent,
+    amr,
   });
   const accessToken = await signAccessToken({
     sub: String(user._id),
@@ -181,7 +207,7 @@ export async function login(input: {
     permVersion: user.permVersion,
     isPlatformStaff: user.isPlatformStaff,
     sid: session.sessionId,
-    amr: ["pwd"],
+    amr,
   });
 
   await writeAudit({
@@ -189,8 +215,9 @@ export async function login(input: {
     category: "auth",
     actorType: user.isPlatformStaff ? "admin" : "user",
     actorId: user._id,
-    actorEmail: email,
+    actorEmail: user.email,
     companyId: user.companyId,
+    metadata: { amr },
   });
 
   return {
@@ -209,6 +236,51 @@ export async function login(input: {
       isPlatformStaff: user.isPlatformStaff,
     },
   };
+}
+
+export interface MfaChallenge {
+  mfaRequired: true;
+  mfaToken: string;
+}
+
+/** Second factor: redeem the MFA challenge with a TOTP or backup code. */
+export async function completeMfaLogin(input: { mfaToken: string; code: string; ip: string; userAgent: string }): Promise<LoginResult> {
+  const { verifyPurposeToken } = await import("@/lib/jwt.js");
+  let sub: string;
+  try {
+    const payload = await verifyPurposeToken(input.mfaToken, "mfa_login");
+    sub = String(payload.sub);
+  } catch {
+    throw new AppError("mfa_challenge_invalid", "This 2FA session expired — sign in again", 401);
+  }
+  const user = await UserModel.findById(sub);
+  if (!user || user.status !== "active") throw new AppError("mfa_challenge_invalid", "This 2FA session expired — sign in again", 401);
+
+  const { verifyTotpForUser } = await import("@/services/mfa.service.js");
+  const ok = await verifyTotpForUser(user, input.code);
+  if (!ok) {
+    await writeAudit({ action: "auth.2fa_failed", category: "security", outcome: "failure", actorId: user._id, actorEmail: user.email });
+    throw new AppError("invalid_totp", "That code is incorrect", 401);
+  }
+  return issueLoginResult(user, input.ip, input.userAgent, ["pwd", "otp"]);
+}
+
+/** Re-verify the current user (password + 2FA if enabled) and mint a short-lived
+ * step-up token for a sensitive action (e.g. impersonation). */
+export async function stepUp(input: { userId: Types.ObjectId; password: string; code?: string }): Promise<{ stepUpToken: string; expiresIn: number }> {
+  const user = await UserModel.findById(input.userId);
+  if (!user) throw AppError.unauthorized();
+  const ok = await verifyPassword(user.passwordHash, input.password);
+  if (!ok) throw new AppError("invalid_password", "Password is incorrect", 401);
+  if ((user.mfa as { enabled?: boolean } | undefined)?.enabled) {
+    const { verifyTotpForUser } = await import("@/services/mfa.service.js");
+    const passed = input.code ? await verifyTotpForUser(user, input.code) : false;
+    if (!passed) throw new AppError("invalid_totp", "Enter your current 2FA code", 401);
+  }
+  const { signPurposeToken } = await import("@/lib/jwt.js");
+  const stepUpToken = await signPurposeToken("step_up", { sub: String(user._id) }, 600);
+  await writeAudit({ action: "auth.step_up", category: "security", severity: "notice", actorId: user._id, actorEmail: user.email });
+  return { stepUpToken, expiresIn: 600 };
 }
 
 // ── Refresh / logout ─────────────────────────────────────────────────────────
@@ -423,6 +495,7 @@ export async function getMe(userId: Types.ObjectId) {
       role: roleKey,
       permissions,
       is_platform_staff: user.isPlatformStaff,
+      avatar_url: user.avatarUrl ?? null,
       locale: user.locale,
       timezone: user.timezone,
     },

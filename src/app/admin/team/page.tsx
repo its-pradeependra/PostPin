@@ -11,8 +11,10 @@ import { QueryBoundary } from "@/components/ui/query-boundary";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -39,7 +41,15 @@ import {
 } from "@/components/ui/select";
 import { useSession } from "@/components/providers/session-provider";
 
-import { listAdminTeam, updateStaffRole, type StaffRow } from "@/lib/api/services/admin";
+import {
+  getRoleMatrix,
+  inviteStaff,
+  listAdminTeam,
+  removeStaff,
+  updateStaffRole,
+  type StaffRow,
+} from "@/lib/api/services/admin";
+import { TwoFactorCard } from "@/components/shared/two-factor-card";
 import { ApiError } from "@/lib/api/errors";
 import { formatDate, formatRelativeTime } from "@/lib/format";
 
@@ -155,6 +165,18 @@ export default function AdminTeamPage() {
     role: string;
     roleName: string;
   } | null>(null);
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+  const [removing, setRemoving] = React.useState<StaffRow | null>(null);
+
+  const removeM = useMutation({
+    mutationFn: (m: StaffRow) => removeStaff(m.id),
+    onSuccess: (_r, m) => {
+      void qc.invalidateQueries({ queryKey: ["admin", "team"] });
+      toast.success(`${m.name} was removed from the platform team.`);
+      setRemoving(null);
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't remove the member"),
+  });
 
   const roleM = useMutation({
     mutationFn: (vars: { member: StaffRow; role: string; roleName: string }) =>
@@ -190,8 +212,18 @@ export default function AdminTeamPage() {
       <PageHeader
         eyebrow="Platform"
         title="Sub-admins & roles"
-        description="The Postpin staff who operate the portal — review access and reassign platform roles."
-      />
+        description="The Postpin staff who operate the portal — invite members, manage 2FA, and reassign platform roles."
+      >
+        <Button
+          variant="gradient"
+          className="group"
+          onClick={() => setInviteOpen(true)}
+          data-testid="admin-team-invite-btn"
+        >
+          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          Invite staff
+        </Button>
+      </PageHeader>
 
       <QueryBoundary isLoading={q.isLoading} error={q.error} onRetry={() => void q.refetch()}>
         <Tabs defaultValue="members" className="space-y-6">
@@ -202,12 +234,16 @@ export default function AdminTeamPage() {
             <TabsTrigger value="roles" className="group" data-testid="admin-team-tab-roles">
               <Icon name="shieldCheck" trigger="group-hover" size={15} /> Roles &amp; permissions
             </TabsTrigger>
+            <TabsTrigger value="security" className="group" data-testid="admin-team-tab-security">
+              <Icon name="lock" trigger="group-hover" size={15} /> Your 2FA
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Members ─────────────────────────────────────────── */}
           <TabsContent value="members" className="space-y-4">
-            <p className="text-sm text-muted-foreground" data-testid="admin-team-deferred-note">
-              Staff invites &amp; 2FA are coming soon — accounts are provisioned by a super admin.
+            <p className="text-sm text-muted-foreground" data-testid="admin-team-invite-hint">
+              Invite platform staff by email — they set a password from the invite link, then can
+              enable two-factor auth on their own account.
             </p>
 
             {staff.length === 0 ? (
@@ -277,13 +313,25 @@ export default function AdminTeamPage() {
                             {formatDate(m.created_at)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex justify-end">
+                            <div className="flex items-center justify-end gap-1.5">
                               <RoleControl
                                 member={m}
                                 self={isSelf(m)}
                                 roles={roles}
                                 onChange={requestRoleChange}
                               />
+                              {!isSelf(m) && !isLastSuperAdmin(m) && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="group size-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => setRemoving(m)}
+                                  aria-label={`Remove ${m.name}`}
+                                  data-testid={`admin-team-remove-btn-${m.id}`}
+                                >
+                                  <Icon name="trash" trigger="group-hover" size={14} />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -362,10 +410,15 @@ export default function AdminTeamPage() {
               })}
             </div>
 
-            <p className="text-sm text-muted-foreground" data-testid="admin-team-permissions-note">
-              A detailed per-role permission matrix is coming soon — role permissions are defined in
-              the platform seed and enforced by the API.
-            </p>
+            <RoleMatrixCard />
+          </TabsContent>
+
+          {/* ── Your 2FA ─────────────────────────────────────────── */}
+          <TabsContent value="security" className="space-y-4">
+            <TwoFactorCard
+              testIdPrefix="admin-2fa"
+              description="Protect your admin account with a TOTP authenticator app."
+            />
           </TabsContent>
         </Tabs>
       </QueryBoundary>
@@ -408,6 +461,185 @@ export default function AdminTeamPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Remove-staff confirmation */}
+      {removing && (
+        <Dialog open onOpenChange={(o) => !o && setRemoving(null)}>
+          <DialogContent className="max-w-md" data-testid="admin-team-remove-dialog">
+            <DialogHeader>
+              <DialogTitle>Remove {removing.name}?</DialogTitle>
+              <DialogDescription>
+                {removing.name} loses all platform access immediately and their sessions are
+                revoked. This can&apos;t be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRemoving(null)} data-testid="admin-team-remove-cancel-btn">
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={removeM.isPending}
+                onClick={() => removeM.mutate(removing)}
+                data-testid="admin-team-remove-confirm-btn"
+              >
+                {removeM.isPending ? "Removing…" : "Remove member"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {inviteOpen && <InviteStaffDialog roles={roles} onClose={() => setInviteOpen(false)} onInvited={() => { void qc.invalidateQueries({ queryKey: ["admin", "team"] }); setInviteOpen(false); }} />}
     </div>
   );
 }
+
+/* ── Invite staff dialog ──────────────────────────────────────────── */
+function InviteStaffDialog({ roles, onClose, onInvited }: { roles: RoleOption[]; onClose: () => void; onInvited: () => void }) {
+  const [email, setEmail] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [roleKey, setRoleKey] = React.useState(roles.find((r) => r.key !== "super_admin")?.key ?? roles[0]?.key ?? "read_only");
+
+  const inviteM = useMutation({
+    mutationFn: () => inviteStaff({ email: email.trim(), name: name.trim(), role_key: roleKey }),
+    onSuccess: (r) => {
+      toast.success(`Invite sent to ${r.email}.`, { description: "They'll set a password from the emailed link." });
+      onInvited();
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't send the invite"),
+  });
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md" data-testid="admin-team-invite-dialog">
+        <DialogHeader>
+          <DialogTitle>Invite a staff member</DialogTitle>
+          <DialogDescription>
+            They receive an email to set their password, then get platform access at the role you
+            pick.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teammate@postpin.dev"
+              data-testid="admin-team-invite-email-input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-name">Name</Label>
+            <Input
+              id="invite-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Jordan Rao"
+              data-testid="admin-team-invite-name-input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Role</Label>
+            <Select value={roleKey} onValueChange={setRoleKey}>
+              <SelectTrigger data-testid="admin-team-invite-role-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map((r) => (
+                  <SelectItem key={r.key} value={r.key}>
+                    {r.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} data-testid="admin-team-invite-cancel-btn">
+            Cancel
+          </Button>
+          <Button
+            variant="gradient"
+            disabled={inviteM.isPending || !emailValid || name.trim().length < 2}
+            onClick={() => inviteM.mutate()}
+            data-testid="admin-team-invite-send-btn"
+          >
+            <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+            {inviteM.isPending ? "Sending…" : "Send invite"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Role → permission matrix ─────────────────────────────────────── */
+function RoleMatrixCard() {
+  const q = useQuery({ queryKey: ["admin", "role-matrix"], queryFn: getRoleMatrix });
+
+  return (
+    <Card className="overflow-hidden p-0" data-testid="admin-role-matrix-card">
+      <CardHeader className="p-5 pb-3">
+        <CardTitle className="text-base">Permission matrix</CardTitle>
+        <CardDescription>
+          The live permissions each platform role grants — sourced from the role &amp; permission
+          catalog the API enforces.
+        </CardDescription>
+      </CardHeader>
+      <QueryBoundary isLoading={q.isLoading} error={q.error} onRetry={() => void q.refetch()}>
+        {q.data && (
+          <div className="overflow-x-auto">
+            <Table data-testid="admin-role-matrix-table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[220px]">Permission</TableHead>
+                  {q.data.roles.map((r) => (
+                    <TableHead key={r.key} className="text-center">
+                      {r.name}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {q.data.permissions.map((p) => (
+                  <TableRow key={p.key} data-testid={`admin-role-matrix-row-${p.key}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs">{p.key}</span>
+                        {p.is_dangerous && (
+                          <Badge variant="destructive" className="px-1 py-0 text-[10px]">
+                            danger
+                          </Badge>
+                        )}
+                      </div>
+                      {p.description && (
+                        <p className="text-xs text-muted-foreground">{p.description}</p>
+                      )}
+                    </TableCell>
+                    {q.data!.roles.map((r) => (
+                      <TableCell key={r.key} className="text-center" data-testid={`admin-role-matrix-${r.key}-${p.key}`}>
+                        {r.permissions.includes(p.key) ? (
+                          <Icon name="check" size={15} className="mx-auto text-success" />
+                        ) : (
+                          <span className="text-muted-foreground/40">–</span>
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </QueryBoundary>
+    </Card>
+  );
+}
+
+/* ── Your two-factor auth ─────────────────────────────────────────── */

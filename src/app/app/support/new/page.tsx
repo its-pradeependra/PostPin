@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { toast } from "sonner";
-import { createTicket } from "@/lib/api/services/tickets";
+import { createTicket, uploadTicketAttachment } from "@/lib/api/services/tickets";
 import { ApiError } from "@/lib/api/errors";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -58,7 +58,27 @@ export default function NewTicketPage() {
   const [priority, setPriority] = useState<TicketPriority>("medium");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Array<{ url: string; name: string; mimetype: string; size: number }>>([]);
+  const [uploading, setUploading] = useState(false);
+
+  async function onAttach(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5_000_000) {
+      toast.error(`"${file.name}" is over the 5 MB limit.`);
+      return;
+    }
+    setUploading(true);
+    try {
+      const att = await uploadTicketAttachment(file);
+      setAttachments((a) => [...a, att]);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't upload that file.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const categoryMeta = CATEGORIES.find((c) => c.value === category);
 
@@ -93,6 +113,7 @@ export default function NewTicketPage() {
         category,
         priority,
         body: description.trim(),
+        attachments,
       });
       await qc.invalidateQueries({ queryKey: ["tickets"] });
       toast.success("Ticket created", {
@@ -266,38 +287,48 @@ export default function NewTicketPage() {
                   <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
                     <Icon name="upload" trigger="group-hover" size={20} />
                   </span>
-                  <span className="text-sm font-medium">Click to upload a screenshot or log</span>
-                  <span className="text-xs text-muted-foreground">PNG, JPG, PDF or LOG up to 10 MB</span>
+                  <span className="text-sm font-medium">
+                    {uploading ? "Uploading…" : "Click to upload a screenshot or log"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">PNG, JPG, WebP, GIF, PDF or TXT up to 5 MB</span>
                   <input
                     id="ticket-attach"
                     type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,text/plain,text/csv"
                     className="sr-only"
+                    disabled={uploading || attachments.length >= 5}
                     data-testid="ticket-attach-input"
-                    onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+                    onChange={onAttach}
                   />
                 </label>
-                {fileName && (
+                {attachments.map((att, i) => (
                   <div
+                    key={att.url}
                     className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-sm"
-                    data-testid="ticket-attach-chip"
+                    data-testid={`ticket-attach-chip-${i}`}
                   >
-                    <span className="flex items-center gap-2 truncate">
+                    <a
+                      href={att.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 truncate hover:text-primary"
+                    >
                       <Icon name="invoice" size={16} className="text-muted-foreground" />
-                      <span className="truncate">{fileName}</span>
-                    </span>
+                      <span className="truncate">{att.name}</span>
+                    </a>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       className="group size-7"
-                      onClick={() => setFileName(null)}
-                      data-testid="ticket-attach-remove-btn"
+                      onClick={() => setAttachments((a) => a.filter((x) => x.url !== att.url))}
+                      data-testid={`ticket-attach-remove-btn-${i}`}
                       aria-label="Remove attachment"
                     >
                       <Icon name="close" trigger="group-hover" size={15} />
                     </Button>
                   </div>
-                )}
+                ))}
               </div>
             </CardContent>
           </>
@@ -353,15 +384,17 @@ export default function NewTicketPage() {
                   {description || "—"}
                 </dd>
               </div>
-              {fileName && (
+              {attachments.length > 0 && (
                 <div className="space-y-1.5">
                   <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Attachment
+                    Attachment{attachments.length > 1 ? "s" : ""}
                   </dt>
-                  <dd className="flex items-center gap-2 text-sm">
-                    <Icon name="invoice" size={16} className="text-muted-foreground" />
-                    {fileName}
-                  </dd>
+                  {attachments.map((att) => (
+                    <dd key={att.url} className="flex items-center gap-2 text-sm">
+                      <Icon name="invoice" size={16} className="text-muted-foreground" />
+                      {att.name}
+                    </dd>
+                  ))}
                 </div>
               )}
             </CardContent>
