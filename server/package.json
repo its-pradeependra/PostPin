@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx src/scripts/seed.ts",
-    "gen-keys": "tsx src/scripts/gen-keys.ts"
+    "gen-keys": "tsx src/scripts/gen-keys.ts",
+    "backfill-key-usage": "tsx src/scripts/backfill-key-usage.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.1",
