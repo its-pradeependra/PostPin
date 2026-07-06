@@ -49,7 +49,9 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
       user={{
         name: user.name,
         email: user.email,
-        avatar: `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(user.name)}`,
+        // Uploaded profile photo wins; generated placeholder only when none exists.
+        avatar:
+          user.avatar_url ?? `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(user.name)}`,
       }}
       onSignOut={handleSignOut}
       footer={<PlanUsageCard planName={planName} used={used} quota={quota} />}

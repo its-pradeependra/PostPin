@@ -48,7 +48,9 @@ export async function buildApp() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  await app.register(helmet, { contentSecurityPolicy: false });
+  // CORP must be cross-origin: the web app (a different origin) embeds /uploads/*
+  // images; helmet's default `same-origin` makes browsers silently block them.
+  await app.register(helmet, { contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: "cross-origin" } });
   await app.register(cors, {
     origin: env.WEB_ORIGIN,
     credentials: true,
