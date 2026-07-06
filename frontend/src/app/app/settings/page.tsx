@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { SettingsNav } from "./settings-nav";
 import { useSession } from "@/components/providers/session-provider";
 import { removeAvatar, updateProfile, uploadAvatar } from "@/lib/api/services/account";
+import {
+  getNotificationPrefs,
+  updateNotificationPrefs,
+  type NotificationKind,
+  type NotificationPrefs,
+} from "@/lib/api/services/notifications";
 import { ApiError } from "@/lib/api/errors";
 import { Icon } from "@/components/icons";
 import {
@@ -32,6 +38,9 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { QueryBoundary } from "@/components/ui/query-boundary";
 
 const LOCALES = [
   { value: "en-IN", label: "English (India)" },
@@ -55,6 +64,135 @@ function initials(name: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
+}
+
+const KIND_META: { kind: NotificationKind; label: string; hint: string }[] = [
+  { kind: "billing", label: "Billing & invoices", hint: "Payments, plan changes, failed charges" },
+  { kind: "ticket", label: "Support tickets", hint: "Replies and status changes on your tickets" },
+  { kind: "system", label: "System & security", hint: "Security alerts and platform notices" },
+  { kind: "usage", label: "Usage & quota", hint: "Quota warnings as you approach your plan limit" },
+  { kind: "key", label: "API keys", hint: "Keys created, rotated or revoked" },
+  { kind: "sync", label: "Pincode syncs", hint: "Nightly India Post sync results" },
+];
+
+/** Per-user notification channel preferences (in-app / email, per event kind). */
+function NotificationPrefsCard() {
+  const qc = useQueryClient();
+  const prefsQ = useQuery({ queryKey: ["notification-prefs"], queryFn: getNotificationPrefs });
+  const [draft, setDraft] = useState<NotificationPrefs | null>(null);
+  const prefs = draft ?? prefsQ.data ?? null;
+
+  const saveM = useMutation({
+    mutationFn: (next: NotificationPrefs) =>
+      updateNotificationPrefs({ email_enabled: next.email_enabled, kinds: next.kinds }),
+    onSuccess: (saved) => {
+      qc.setQueryData(["notification-prefs"], saved);
+      setDraft(null);
+      toast.success("Notification preferences saved");
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't save preferences"),
+  });
+
+  function patchKind(kind: NotificationKind, channel: "in_app" | "email", value: boolean) {
+    if (!prefs) return;
+    setDraft({ ...prefs, kinds: { ...prefs.kinds, [kind]: { ...prefs.kinds[kind], [channel]: value } } });
+  }
+
+  const dirty = draft !== null;
+
+  return (
+    <Card id="notifications" data-testid="notif-prefs-card" className="scroll-mt-24">
+      <CardHeader>
+        <CardTitle className="text-base">Notification preferences</CardTitle>
+        <CardDescription>
+          Choose which events reach you in-app and which also email you at your account address.
+        </CardDescription>
+        <CardAction>
+          <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
+            <Icon name="notifications" size={18} />
+          </span>
+        </CardAction>
+      </CardHeader>
+      <QueryBoundary isLoading={prefsQ.isLoading} error={prefsQ.error} onRetry={() => void prefsQ.refetch()}>
+        {prefs && (
+          <>
+            <CardContent className="space-y-5">
+              <div className="flex items-center justify-between rounded-xl border p-4">
+                <div>
+                  <p className="text-sm font-medium">Email notifications</p>
+                  <p className="text-xs text-muted-foreground">
+                    Master switch — turn off to stop all notification emails without touching the per-event settings.
+                  </p>
+                </div>
+                <Switch
+                  checked={prefs.email_enabled}
+                  onCheckedChange={(v) => setDraft({ ...prefs, email_enabled: v })}
+                  data-testid="notif-prefs-email-master-switch"
+                />
+              </div>
+
+              <div className="overflow-hidden rounded-xl border">
+                <div className="grid grid-cols-[1fr_4rem_4rem] items-center gap-2 border-b bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>Event</span>
+                  <span className="text-center">In-app</span>
+                  <span className="text-center">Email</span>
+                </div>
+                {KIND_META.map(({ kind, label, hint }) => (
+                  <div
+                    key={kind}
+                    className="grid grid-cols-[1fr_4rem_4rem] items-center gap-2 border-b px-4 py-3 last:border-b-0"
+                    data-testid={`notif-prefs-row-${kind}`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{label}</p>
+                      <p className="text-xs text-muted-foreground">{hint}</p>
+                    </div>
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={prefs.kinds[kind].in_app}
+                        onCheckedChange={(v) => patchKind(kind, "in_app", v === true)}
+                        data-testid={`notif-prefs-${kind}-inapp-checkbox`}
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={prefs.kinds[kind].email}
+                        disabled={!prefs.email_enabled}
+                        onCheckedChange={(v) => patchKind(kind, "email", v === true)}
+                        data-testid={`notif-prefs-${kind}-email-checkbox`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!dirty || saveM.isPending}
+                onClick={() => setDraft(null)}
+                data-testid="notif-prefs-reset-btn"
+              >
+                Reset
+              </Button>
+              <Button
+                type="button"
+                variant="gradient"
+                className="group"
+                disabled={!dirty || saveM.isPending}
+                onClick={() => prefs && saveM.mutate(prefs)}
+                data-testid="notif-prefs-save-btn"
+              >
+                <Icon name="check" size={16} className="text-white" />
+                {saveM.isPending ? "Saving…" : "Save preferences"}
+              </Button>
+            </CardFooter>
+          </>
+        )}
+      </QueryBoundary>
+    </Card>
+  );
 }
 
 export default function ProfileSettingsPage() {
@@ -326,6 +464,8 @@ export default function ProfileSettingsPage() {
           </CardFooter>
         </Card>
       </form>
+
+      <NotificationPrefsCard />
     </div>
   );
 }

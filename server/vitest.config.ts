@@ -13,6 +13,10 @@ export default defineConfig({
     env: {
       RAZORPAY_KEY_SECRET: "test_key_secret",
       RAZORPAY_WEBHOOK_SECRET: "test_webhook_secret",
+      // mongodb-memory-server data dirs land in os.tmpdir(); keep them off the
+      // nearly-full C: drive (mongod fasserts when the disk fills mid-run).
+      TEMP: "D:\\tmp\\vitest-mongo",
+      TMP: "D:\\tmp\\vitest-mongo",
     },
   },
   resolve: {

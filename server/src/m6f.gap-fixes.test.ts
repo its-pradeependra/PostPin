@@ -300,6 +300,16 @@ describe("M6f — honest admin usage + webhook cap", () => {
     const sub = (detail.json() as { subscription: { calls_used: number; quota_pct: number } }).subscription;
     expect(sub.calls_used).toBe(3);
     expect(sub.quota_pct).toBeGreaterThan(0);
+
+    // The per-key counters on the Keys page must also move (requestCount +
+    // lastUsedAt) — these drive "REQUESTS" and "LAST USED". Fire-and-forget, so poll.
+    const key = await eventually(async () => {
+      const keys = await app.inject({ method: "GET", url: "/v1/keys", headers: auth(tenantT) });
+      const k = (keys.json() as { keys: Array<{ request_count: number; last_used_at: string | null }> }).keys[0]!;
+      return k.request_count === 3 ? k : null;
+    });
+    expect(key.request_count).toBe(3);
+    expect(key.last_used_at).not.toBeNull();
   });
 
   it("a tenant can NOT edit or delete the platform-assigned billing card (403)", async () => {

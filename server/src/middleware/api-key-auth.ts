@@ -100,5 +100,8 @@ export async function apiKeyAuth(req: FastifyRequest, reply: FastifyReply): Prom
   });
   keyInfo.set(req, { apiKeyId: key._id, mode: key.mode as "live" | "test", keyPrefix: key.prefix });
 
-  void ApiKeyModel.updateOne({ _id: key._id }, { $set: { lastUsedAt: new Date() }, $inc: { requestCount: 1 } });
+  // Fire-and-forget usage counters (Keys page: REQUESTS + LAST USED). Mongoose
+  // queries are LAZY — the `.catch()` is what actually executes this; a bare
+  // `void Model.updateOne(...)` builds the query but never sends it.
+  ApiKeyModel.updateOne({ _id: key._id }, { $set: { lastUsedAt: new Date() }, $inc: { requestCount: 1 } }).catch(() => {});
 }

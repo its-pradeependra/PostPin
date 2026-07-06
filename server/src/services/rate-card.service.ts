@@ -204,7 +204,8 @@ export async function createRateCard(input: RateCardInput) {
 
 export async function updateRateCard(id: string, patch: Partial<RateCardInput>) {
   if (id === "standard") throw AppError.badRequest("The Standard card cannot be edited");
-  const existing = await scopedRepo(RateCardModel).findById(id).lean();
+  // scopedRepo is Model<any> → .lean() widens to an ambiguous union; assert shape.
+  const existing = (await scopedRepo(RateCardModel).findById(id).lean()) as { isDefault?: boolean } | null;
   if (!existing) throw AppError.notFound("Rate card not found");
   // The ASSIGNED billing card is platform-managed: a tenant must never be able
   // to rewrite the prices they are actually charged. Drafts stay editable.
@@ -224,7 +225,8 @@ export async function updateRateCard(id: string, patch: Partial<RateCardInput>) 
 
 export async function deleteRateCard(id: string) {
   if (id === "standard") throw AppError.badRequest("The Standard card cannot be deleted");
-  const existing = await scopedRepo(RateCardModel).findById(id).lean();
+  // scopedRepo is Model<any> → .lean() widens to an ambiguous union; assert shape.
+  const existing = (await scopedRepo(RateCardModel).findById(id).lean()) as { isDefault?: boolean } | null;
   if (!existing) throw AppError.notFound("Rate card not found");
   if (existing.isDefault) {
     throw AppError.forbidden("This card is assigned by Postpin and can only be changed by our team — contact support", "card_platform_managed");

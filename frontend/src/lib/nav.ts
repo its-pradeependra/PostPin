@@ -36,7 +36,7 @@ export const portalNav: NavSection[] = [
     items: [
       { title: "Billing & Plans", href: "/app/billing", icon: "billing" },
       { title: "Support", href: "/app/support", icon: "support" },
-      { title: "Notifications", href: "/app/notifications", icon: "notifications", badge: "2" },
+      { title: "Notifications", href: "/app/notifications", icon: "notifications" },
       { title: "Settings", href: "/app/settings", icon: "settings" },
     ],
   },
@@ -58,7 +58,7 @@ export const adminNav: NavSection[] = [
       { title: "Plans", href: "/admin/plans", icon: "wallet" },
       { title: "Billing", href: "/admin/billing", icon: "billing" },
       { title: "Coupons", href: "/admin/coupons", icon: "percent" },
-      { title: "Tickets", href: "/admin/tickets", icon: "ticket", badge: "37" },
+      { title: "Tickets", href: "/admin/tickets", icon: "ticket" },
     ],
   },
   {

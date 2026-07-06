@@ -28,6 +28,33 @@ export async function notificationsRoutes(appBase: FastifyInstance) {
 
   app.get("/unread-count", { preHandler: auth }, async () => notifications.unreadCount());
 
+  // Per-user channel preferences (in-app / email, per event kind).
+  app.get("/preferences", { preHandler: auth }, async () => notifications.getNotificationPrefs());
+
+  const kindPrefs = z.object({ in_app: z.boolean().optional(), email: z.boolean().optional() });
+  app.patch(
+    "/preferences",
+    {
+      preHandler: auth,
+      schema: {
+        body: z.object({
+          email_enabled: z.boolean().optional(),
+          kinds: z
+            .object({
+              usage: kindPrefs.optional(),
+              billing: kindPrefs.optional(),
+              key: kindPrefs.optional(),
+              sync: kindPrefs.optional(),
+              ticket: kindPrefs.optional(),
+              system: kindPrefs.optional(),
+            })
+            .optional(),
+        }),
+      },
+    },
+    async (req) => notifications.updateNotificationPrefs(req.body),
+  );
+
   app.post("/mark-all-read", { preHandler: auth }, async () => notifications.markAllRead());
 
   app.post(

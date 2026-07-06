@@ -71,7 +71,11 @@ export default function NotificationsPage() {
       return { prev };
     },
     onError: (_e, _id, ctx) => ctx?.prev && qc.setQueryData(QKEY, ctx.prev),
-    onSettled: () => void qc.invalidateQueries({ queryKey: QKEY }),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: QKEY });
+      // Keep the topbar dot + sidebar badge in sync (they read a separate key).
+      void qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+    },
   });
 
   const allReadM = useMutation({
@@ -89,7 +93,11 @@ export default function NotificationsPage() {
       return { prev };
     },
     onError: (_e, _v, ctx) => ctx?.prev && qc.setQueryData(QKEY, ctx.prev),
-    onSettled: () => void qc.invalidateQueries({ queryKey: QKEY }),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: QKEY });
+      // Keep the topbar dot + sidebar badge in sync (they read a separate key).
+      void qc.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+    },
   });
 
   const isEmpty = items.length === 0;
@@ -151,12 +159,12 @@ export default function NotificationsPage() {
                   </span>
                   <CardTitle className="mt-3 text-base">Notification preferences</CardTitle>
                   <CardDescription>
-                    Choose which events reach you and on which channels — in-app, email or webhook.
+                    Choose which events reach you and on which channels — in-app and email.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button variant="gradient" asChild className="group w-full" data-testid="notif-preferences-link">
-                    <Link href="/app/settings">
+                    <Link href="/app/settings#notifications">
                       <Icon name="settings" size={16} className="text-white" />
                       Manage preferences
                       <Icon name="arrowRight" size={16} className="ml-auto text-white" />

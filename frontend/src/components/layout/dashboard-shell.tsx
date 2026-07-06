@@ -45,6 +45,20 @@ export function DashboardShell({
   });
   const unreadCount = isPortal ? (unread?.unreadCount ?? 0) : 0;
 
+  // Live unread badge on the Notifications nav item (never a hardcoded number).
+  const liveSections = React.useMemo(
+    () =>
+      sections.map((section) => ({
+        ...section,
+        items: section.items.map((item) =>
+          item.href === notificationsHref
+            ? { ...item, badge: unreadCount > 0 ? String(unreadCount) : undefined }
+            : item,
+        ),
+      })),
+    [sections, notificationsHref, unreadCount],
+  );
+
   const sidebarInner = (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center gap-2 px-5">
@@ -55,7 +69,7 @@ export function DashboardShell({
           </Badge>
         )}
       </div>
-      <SidebarNav sections={sections} onNavigate={() => setMobileOpen(false)} />
+      <SidebarNav sections={liveSections} onNavigate={() => setMobileOpen(false)} />
       {footer && <div className="border-t border-sidebar-border p-3">{footer}</div>}
     </div>
   );
