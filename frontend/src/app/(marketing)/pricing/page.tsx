@@ -199,7 +199,7 @@ export default function PricingPage() {
                   <Button asChild variant={plan.highlight ? "gradient" : "outline"} className="mt-6 w-full">
                     <Link href={isFree ? "/signup?plan=free" : `/signup?plan=${plan.id}`} data-testid={`pricing-${plan.id}-select-btn`}>
                       {isFree ? "Start free" : `Choose ${plan.name}`}
-                      {plan.highlight && <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />}
+                      {plan.highlight && <Icon name="arrowRight" size={16} className="text-white" />}
                     </Link>
                   </Button>
 
@@ -314,7 +314,7 @@ export default function PricingPage() {
               <Button asChild variant="gradient" className="relative mt-auto w-full sm:w-auto sm:self-start">
                 <Link href="/contact?interest=sales&plan=enterprise" data-testid="pricing-enterprise-contact-btn">
                   Contact sales
-                  <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+                  <Icon name="arrowRight" size={16} className="text-white" />
                 </Link>
               </Button>
             </Card>
@@ -424,12 +424,12 @@ export default function PricingPage() {
                 <Button asChild variant="gradient" size="lg">
                   <Link href="/signup" data-testid="pricing-final-cta-signup-btn">
                     Start free
-                    <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                    <Icon name="arrowRight" size={17} className="text-white" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link href="/contact" data-testid="pricing-final-cta-contact-btn">
-                    <Icon name="message" trigger="group-hover" size={17} />
+                    <Icon name="message" size={17} />
                     Talk to sales
                   </Link>
                 </Button>

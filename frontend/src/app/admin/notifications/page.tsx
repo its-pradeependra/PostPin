@@ -312,7 +312,7 @@ function ChannelsConfigCard() {
                 disabled={testM.isPending}
                 data-testid="notif-test-btn"
               >
-                <Icon name="send" trigger="group-hover" size={15} />
+                <Icon name="send" size={15} />
                 {testM.isPending ? "Sending…" : "Send test alert"}
               </Button>
               <Button
@@ -322,7 +322,7 @@ function ChannelsConfigCard() {
                 disabled={saveM.isPending}
                 data-testid="notif-config-save-btn"
               >
-                <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="check" size={16} className="text-white" />
                 {saveM.isPending ? "Saving…" : "Save channels"}
               </Button>
             </CardFooter>
@@ -359,7 +359,7 @@ export default function NotificationCenterPage() {
       >
         <Button variant="outline" className="group" asChild data-testid="notif-header-auditlogs-link">
           <Link href="/admin/audit-logs">
-            <Icon name="audit" trigger="group-hover" size={16} />
+            <Icon name="audit" size={16} />
             View audit logs
           </Link>
         </Button>

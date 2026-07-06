@@ -133,7 +133,7 @@ function RowActions({
           aria-label={`Actions for ${tenant.name}`}
           data-testid={`users-row-actions-${tenant.id}`}
         >
-          <Icon name="more" trigger="group-hover" size={16} />
+          <Icon name="more" size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
@@ -330,7 +330,7 @@ export default function AdminUsersPage() {
           disabled={tenants.length === 0}
           data-testid="users-export-csv-btn"
         >
-          <Icon name="download" trigger="group-hover" size={16} /> Export CSV
+          <Icon name="download" size={16} /> Export CSV
         </Button>
       </PageHeader>
 
@@ -577,7 +577,7 @@ export default function AdminUsersPage() {
                   data-testid="users-next-page-btn"
                 >
                   Next
-                  <Icon name="arrowRight" trigger="group-hover" size={15} />
+                  <Icon name="arrowRight" size={15} />
                 </Button>
               </div>
             </div>

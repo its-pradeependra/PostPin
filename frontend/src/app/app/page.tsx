@@ -91,13 +91,13 @@ export default function DashboardPage() {
       >
         <Button variant="outline" asChild className="group" data-testid="dashboard-playground-btn">
           <Link href="/app/playground">
-            <Icon name="calculator" trigger="group-hover" size={16} />
+            <Icon name="calculator" size={16} />
             Open playground
           </Link>
         </Button>
         <Button variant="gradient" asChild className="group" data-testid="dashboard-create-key-btn">
           <Link href="/app/keys">
-            <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="plus" size={16} className="text-white" />
             Create API key
           </Link>
         </Button>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
             >
               <Link href="/app/billing">
                 View billing
-                <Icon name="arrowRight" trigger="group-hover" size={14} />
+                <Icon name="arrowRight" size={14} />
               </Link>
             </Button>
           </AlertDescription>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
           <div className="mt-auto pt-6">
             <Button variant="gradient" className="group w-full" asChild data-testid="dashboard-upgrade-btn">
               <Link href="/app/billing">
-                <Icon name="zap" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="zap" size={16} className="text-white" />
                 Upgrade plan
               </Link>
             </Button>
@@ -241,7 +241,7 @@ export default function DashboardPage() {
           <Button variant="ghost" size="sm" asChild className="group shrink-0" data-testid="dashboard-view-usage-btn">
             <Link href="/app/usage">
               View all
-              <Icon name="arrowRight" trigger="group-hover" size={14} />
+              <Icon name="arrowRight" size={14} />
             </Link>
           </Button>
         </CardHeader>
@@ -371,14 +371,14 @@ export default function DashboardPage() {
         <CardFooter className="gap-2">
           <Button variant="outline" size="sm" asChild className="group" data-testid="dashboard-docs-btn">
             <Link href="/docs">
-              <Icon name="book" trigger="group-hover" size={14} />
+              <Icon name="book" size={14} />
               Read the docs
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild className="group" data-testid="dashboard-try-playground-btn">
             <Link href="/app/playground">
               Try it in the playground
-              <Icon name="arrowRight" trigger="group-hover" size={14} />
+              <Icon name="arrowRight" size={14} />
             </Link>
           </Button>
         </CardFooter>

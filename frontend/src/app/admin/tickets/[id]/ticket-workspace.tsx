@@ -130,7 +130,7 @@ export function TicketWorkspace({ ticketNumber }: { ticketNumber: string }) {
       <div>
         <Button variant="outline" asChild data-testid="ticket-detail-back-btn">
           <Link href="/admin/tickets" className="group">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" />
+            <Icon name="arrowRight" size={16} className="rotate-180" />
             All tickets
           </Link>
         </Button>
@@ -228,7 +228,7 @@ export function TicketWorkspace({ ticketNumber }: { ticketNumber: string }) {
                       disabled={updateM.isPending || ticket.status === "resolved" || ticket.status === "closed"}
                       data-testid="ticket-resolve-btn"
                     >
-                      <Icon name="checkCircle" trigger="group-hover" size={16} />
+                      <Icon name="checkCircle" size={16} />
                       Resolve
                     </Button>
                   </CardContent>
@@ -428,7 +428,7 @@ function Composer({
                 disabled={sending || !note.trim()}
                 data-testid="ticket-note-submit-btn"
               >
-                <Icon name="lock" trigger="group-hover" size={15} />
+                <Icon name="lock" size={15} />
                 {sending ? "Adding…" : "Add internal note"}
               </Button>
             </div>
@@ -450,7 +450,7 @@ function Composer({
                 disabled={sending || !reply.trim()}
                 data-testid="ticket-reply-submit-btn"
               >
-                <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="send" size={16} className="text-white" />
                 {sending ? "Sending…" : "Send reply"}
               </Button>
             </div>

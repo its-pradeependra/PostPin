@@ -141,12 +141,12 @@ export function HeroApiMoment() {
             <Button asChild variant="gradient" size="lg">
               <Link href="/signup" data-testid="hero-cta-signup">
                 Start free
-                <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                <Icon name="arrowRight" size={17} className="text-white" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/docs" data-testid="hero-cta-docs">
-                <Icon name="code" trigger="group-hover" size={17} />
+                <Icon name="code" size={17} />
                 Read the docs
               </Link>
             </Button>
@@ -180,8 +180,6 @@ export function HeroApiMoment() {
               >
                 <Icon
                   name={sendBusy ? "sync" : "send"}
-                  trigger={sendBusy ? "loop" : "group-hover"}
-                  animation={sendBusy ? "spin" : undefined}
                   size={12}
                   className="text-primary"
                 />

@@ -103,7 +103,7 @@ export default function StatusPage() {
               className="group inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
               data-testid="status-docs-link"
             >
-              <Icon name="book" trigger="group-hover" size={16} />
+              <Icon name="book" size={16} />
               API documentation
             </Link>
           </div>
@@ -200,7 +200,6 @@ export default function StatusPage() {
                             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
                               <Icon
                                 name={COMPONENT_ICONS[c.id] ?? "activity"}
-                                trigger="group-hover"
                                 size={18}
                               />
                             </span>
@@ -309,7 +308,7 @@ export default function StatusPage() {
               className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:border-primary/40"
               data-testid="status-subscribe-link"
             >
-              <Icon name="mail" trigger="group-hover" size={15} />
+              <Icon name="mail" size={15} />
               Subscribe to updates
             </Link>
             <Link
@@ -317,7 +316,7 @@ export default function StatusPage() {
               className="group inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-gradient px-3 text-sm font-medium text-white shadow-glow"
               data-testid="status-sla-link"
             >
-              <Icon name="shieldCheck" trigger="group-hover" size={15} className="text-white" />
+              <Icon name="shieldCheck" size={15} className="text-white" />
               View SLA
             </Link>
           </div>

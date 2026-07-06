@@ -221,7 +221,7 @@ export default function AdminTeamPage() {
           onClick={() => setInviteOpen(true)}
           data-testid="admin-team-invite-btn"
         >
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="plus" size={16} className="text-white" />
           Invite staff
         </Button>
       </PageHeader>
@@ -230,13 +230,13 @@ export default function AdminTeamPage() {
         <Tabs defaultValue="members" className="space-y-6">
           <TabsList data-testid="admin-team-tabs">
             <TabsTrigger value="members" className="group" data-testid="admin-team-tab-members">
-              <Icon name="users" trigger="group-hover" size={15} /> Members
+              <Icon name="users" size={15} /> Members
             </TabsTrigger>
             <TabsTrigger value="roles" className="group" data-testid="admin-team-tab-roles">
-              <Icon name="shieldCheck" trigger="group-hover" size={15} /> Roles &amp; permissions
+              <Icon name="shieldCheck" size={15} /> Roles &amp; permissions
             </TabsTrigger>
             <TabsTrigger value="security" className="group" data-testid="admin-team-tab-security">
-              <Icon name="lock" trigger="group-hover" size={15} /> Your 2FA
+              <Icon name="lock" size={15} /> Your 2FA
             </TabsTrigger>
           </TabsList>
 
@@ -330,7 +330,7 @@ export default function AdminTeamPage() {
                                   aria-label={`Remove ${m.name}`}
                                   data-testid={`admin-team-remove-btn-${m.id}`}
                                 >
-                                  <Icon name="trash" trigger="group-hover" size={14} />
+                                  <Icon name="trash" size={14} />
                                 </Button>
                               )}
                             </div>
@@ -571,7 +571,7 @@ function InviteStaffDialog({ roles, onClose, onInvited }: { roles: RoleOption[];
             onClick={() => inviteM.mutate()}
             data-testid="admin-team-invite-send-btn"
           >
-            <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="send" size={16} className="text-white" />
             {inviteM.isPending ? "Sending…" : "Send invite"}
           </Button>
         </DialogFooter>

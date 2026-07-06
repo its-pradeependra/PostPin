@@ -383,7 +383,7 @@ export default function AdminZonesPage() {
               disabled={saveM.isPending}
               data-testid="zone-editor-save-btn"
             >
-              <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="check" size={16} className="text-white" />
               {saveM.isPending ? "Saving…" : "Save zone"}
             </Button>
           </DialogFooter>
@@ -479,7 +479,7 @@ function ZoneCard({ zone, onEdit }: { zone: AdminZone; onEdit: () => void }) {
           onClick={onEdit}
           data-testid={`zone-edit-btn-${code}`}
         >
-          <Icon name="edit" trigger="group-hover" size={14} />
+          <Icon name="edit" size={14} />
           Edit zone
         </Button>
       </CardFooter>

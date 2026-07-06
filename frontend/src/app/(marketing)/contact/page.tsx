@@ -81,7 +81,7 @@ export default function ContactPage() {
             className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-primary"
             data-testid="contact-eyebrow-badge"
           >
-            <Icon name="message" trigger="loop" animation="pop" size={13} />
+            <Icon name="message" size={13} />
             Contact &amp; sales
           </Badge>
           <h1 className="mt-5 max-w-2xl font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl">
@@ -131,7 +131,7 @@ export default function ContactPage() {
                     data-testid={`contact-channel-${c.id}`}
                   >
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient-soft text-primary">
-                      <Icon name={c.icon} trigger="group-hover" size={17} />
+                      <Icon name={c.icon} size={17} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted-foreground">{c.label}</p>
@@ -174,7 +174,7 @@ export default function ContactPage() {
                   data-testid="contact-status-link-btn"
                 >
                   <Link href="/status">
-                    <Icon name="activity" trigger="group-hover" size={16} />
+                    <Icon name="activity" size={16} />
                     Check system status
                   </Link>
                 </Button>
@@ -230,7 +230,7 @@ export default function ContactPage() {
                     data-testid={`contact-why-${w.id}`}
                   >
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-card text-primary shadow-sm">
-                      <Icon name={w.icon} trigger="group-hover" size={16} />
+                      <Icon name={w.icon} size={16} />
                     </span>
                     <div>
                       <p className="text-sm font-medium text-foreground">{w.title}</p>
@@ -247,7 +247,7 @@ export default function ContactPage() {
                 >
                   <Link href="/docs">
                     Prefer to dig into the docs?
-                    <Icon name="arrowRight" trigger="group-hover" size={16} />
+                    <Icon name="arrowRight" size={16} />
                   </Link>
                 </Button>
               </CardContent>

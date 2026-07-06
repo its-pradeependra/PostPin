@@ -198,7 +198,7 @@ export default function TeamSettingsPage() {
                                   aria-label={`Remove ${m.name}`}
                                   data-testid={`team-remove-btn-${m.id}`}
                                 >
-                                  <Icon name="trash" trigger="group-hover" size={16} />
+                                  <Icon name="trash" size={16} />
                                 </Button>
                               }
                             />
@@ -281,7 +281,7 @@ function InviteDialog({
     >
       <DialogTrigger asChild>
         <Button variant="gradient" className="group" disabled={seatsFull} data-testid="team-invite-btn">
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" /> Invite member
+          <Icon name="plus" size={16} className="text-white" /> Invite member
         </Button>
       </DialogTrigger>
       <DialogContent data-testid="team-invite-dialog">
@@ -338,7 +338,7 @@ function InviteDialog({
             </Button>
           </DialogClose>
           <Button variant="gradient" onClick={submit} disabled={pending} className="group" data-testid="team-invite-send-btn">
-            <Icon name="send" trigger="group-hover" size={16} className="text-white" /> {pending ? "Sending…" : "Send invite"}
+            <Icon name="send" size={16} className="text-white" /> {pending ? "Sending…" : "Send invite"}
           </Button>
         </DialogFooter>
       </DialogContent>

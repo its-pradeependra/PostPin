@@ -118,7 +118,7 @@ export default function PlaygroundPage() {
       >
         <Button variant="outline" asChild data-testid="playground-docs-btn" className="group">
           <Link href="/docs">
-            <Icon name="book" trigger="group-hover" size={16} className="text-primary" />
+            <Icon name="book" size={16} className="text-primary" />
             Read the docs
           </Link>
         </Button>
@@ -147,7 +147,7 @@ export default function PlaygroundPage() {
               data-testid="playground-cache-pill"
               className="inline-flex items-center gap-1.5 rounded-full border border-border bg-success/12 px-2.5 py-1 text-[11px] font-medium text-success"
             >
-              <Icon name="zap" trigger="loop" size={12} className="text-success" />
+              <Icon name="zap" size={12} className="text-success" />
               served from cache
             </span>
           </div>
@@ -199,7 +199,7 @@ export default function PlaygroundPage() {
               className="group inline-flex items-center gap-0.5 font-medium text-primary underline-offset-4 hover:underline"
             >
               API reference
-              <Icon name="arrowRight" trigger="group-hover" size={12} className="text-primary" />
+              <Icon name="arrowRight" size={12} className="text-primary" />
             </Link>
             .
           </p>

@@ -27,7 +27,7 @@ export function EmptyState({
       )}
     >
       <span className="grid size-14 place-items-center rounded-2xl bg-brand-gradient-soft text-primary">
-        <Icon name={icon} trigger="loop" animation="float" size={26} />
+        <Icon name={icon} size={26} />
       </span>
       <h3 className="mt-4 font-display text-lg font-semibold">{title}</h3>
       {description && (

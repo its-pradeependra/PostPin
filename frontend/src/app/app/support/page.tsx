@@ -25,7 +25,7 @@ export default function SupportPage() {
       >
         <Button variant="gradient" asChild data-testid="support-new-btn">
           <Link href="/app/support/new" className="group">
-            <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="plus" size={16} className="text-white" />
             New ticket
           </Link>
         </Button>

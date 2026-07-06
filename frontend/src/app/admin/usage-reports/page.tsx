@@ -237,7 +237,7 @@ export default function AdminUsageReportsPage() {
           onClick={handleExportCsv}
           data-testid="usage-reports-export-csv-btn"
         >
-          <Icon name="download" trigger="group-hover" size={16} /> Export CSV
+          <Icon name="download" size={16} /> Export CSV
         </Button>
       </PageHeader>
 
@@ -387,7 +387,7 @@ export default function AdminUsageReportsPage() {
                       <span
                         className={`grid size-9 shrink-0 place-items-center rounded-lg ${s.iconWrap}`}
                       >
-                        <Icon name={flag.icon} trigger="group-hover" size={18} />
+                        <Icon name={flag.icon} size={18} />
                       </span>
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -411,7 +411,6 @@ export default function AdminUsageReportsPage() {
                           {flag.actionLabel}
                           <Icon
                             name="arrowRight"
-                            trigger="group-hover"
                             size={14}
                           />
                         </Link>

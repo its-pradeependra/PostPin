@@ -48,7 +48,6 @@ export function SidebarNav({
                 )}
                 <Icon
                   name={item.icon}
-                  trigger="group-hover"
                   size={18}
                   className={active ? "text-primary" : ""}
                 />

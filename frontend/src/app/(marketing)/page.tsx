@@ -58,7 +58,7 @@ function buildStats(live: { pincodes: number | null; zones: number | null }) {
 
 const STEPS = [
   { icon: "keys" as IconName, title: "Get your API key", body: "Sign up and generate a domain-restricted key in seconds. Live and test environments included." },
-  { icon: "code" as IconName, title: "Call /v1/rates", body: "Send pickup + delivery pincode, weight, dimensions and payment type. One request, one JSON response." },
+  { icon: "code" as IconName, title: "Call /v1/rates/calculate", body: "Send pickup + delivery pincode, weight, dimensions and payment type. One request, one JSON response." },
   { icon: "truck" as IconName, title: "Show the rate", body: "Render an accurate, GST-aware shipping charge at checkout, with zone, ETA and breakdown included." },
 ];
 
@@ -76,7 +76,7 @@ const CODE_TABS = [
     label: "cURL",
     language: "bash",
     code: `curl ${site.apiBase}/rates/calculate \\
-  -H "Authorization: Bearer pk_live_..." \\
+  -H "Authorization: Bearer pp_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
     "origin": "400001",
@@ -91,7 +91,7 @@ const CODE_TABS = [
     language: "javascript",
     code: `import { Postpin } from "@postpin/node";
 
-const postpin = new Postpin("pk_live_...");
+const postpin = new Postpin("pp_live_...");
 
 const rate = await postpin.rates.calculate({
   origin: "400001",
@@ -108,7 +108,7 @@ console.log(rate.total); // 254.38`,
     language: "python",
     code: `from postpin import Postpin
 
-postpin = Postpin("pk_live_...")
+postpin = Postpin("pp_live_...")
 
 rate = postpin.rates.calculate(
     origin="400001",
@@ -237,7 +237,7 @@ export default async function LandingPage() {
             <Button asChild variant="gradient" size="lg" className="mt-8">
               <Link href="/signup" data-testid="calculator-cta-signup">
                 Start free
-                <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="arrowRight" size={16} className="text-white" />
               </Link>
             </Button>
           </Reveal>
@@ -264,7 +264,7 @@ export default async function LandingPage() {
                   0{i + 1}
                 </span>
                 <span className="grid size-12 place-items-center rounded-2xl bg-brand-gradient-soft text-primary">
-                  <Icon name={step.icon} trigger="group-hover" size={24} />
+                  <Icon name={step.icon} size={24} />
                 </span>
                 <h3 className="mt-4 font-display text-lg font-semibold">{step.title}</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">{step.body}</p>
@@ -335,7 +335,7 @@ export default async function LandingPage() {
                     featured || wide ? "bg-card shadow-sm ring-hairline" : "bg-brand-gradient-soft",
                   )}
                 >
-                  <Icon name={f.icon} trigger="group-hover" size={22} />
+                  <Icon name={f.icon} size={22} />
                 </span>
                 <div className={cn("relative", !wide && "mt-4")}>
                   <h3 className={cn("font-display font-semibold", featured ? "text-xl" : "text-base")}>
@@ -378,7 +378,7 @@ export default async function LandingPage() {
           <Card className="border-white/10 bg-white/10 p-6 text-white backdrop-blur">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-medium">
-                <Icon name="sync" trigger="loop" animation="spin" size={16} className="text-white" />
+                <Icon name="sync" size={16} className="text-white" />
                 Last sync · 10 min ago
               </span>
               <Badge className="border-white/30 bg-white/20 text-white">Synced</Badge>
@@ -450,7 +450,7 @@ export default async function LandingPage() {
               <Button asChild variant="gradient" size="lg">
                 <Link href="/signup" data-testid="footer-cta-signup">
                   Start free
-                  <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                  <Icon name="arrowRight" size={17} className="text-white" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">

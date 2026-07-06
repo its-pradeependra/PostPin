@@ -24,7 +24,7 @@ export function MarketingFooter() {
                 data-testid="footer-email-link"
                 className="group grid size-9 place-items-center rounded-lg border border-border transition-colors hover:bg-accent"
               >
-                <Icon name="mail" trigger="group-hover" size={17} />
+                <Icon name="mail" size={17} />
               </Link>
               {socialLinks.map((social) => (
                 <a
@@ -36,7 +36,7 @@ export function MarketingFooter() {
                   data-testid={`footer-social-${social.icon}`}
                   className="group grid size-9 place-items-center rounded-lg border border-border transition-colors hover:bg-accent"
                 >
-                  <Icon name={social.icon} trigger="group-hover" size={17} />
+                  <Icon name={social.icon} size={17} />
                 </a>
               ))}
               <FooterStatusPill />

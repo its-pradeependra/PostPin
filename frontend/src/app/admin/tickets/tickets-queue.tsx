@@ -254,7 +254,7 @@ export function TicketsQueue() {
                   onClick={clearFilters}
                   data-testid="tickets-clear-filters-btn"
                 >
-                  <Icon name="filter" trigger="group-hover" size={15} />
+                  <Icon name="filter" size={15} />
                   Clear
                 </Button>
               )}
@@ -310,7 +310,6 @@ export function TicketsQueue() {
                             <span className="truncate">{t.subject}</span>
                             <Icon
                               name="arrowRight"
-                              trigger="group-hover"
                               size={14}
                               className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                             />
@@ -480,7 +479,7 @@ function RowActions({
           data-testid={`ticket-actions-${ticket.id}`}
           aria-label={`Actions for ${ticket.subject}`}
         >
-          <Icon name="more" trigger="group-hover" size={18} />
+          <Icon name="more" size={18} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">

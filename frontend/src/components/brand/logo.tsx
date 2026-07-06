@@ -26,7 +26,7 @@ export function Logo({ className, href = "/", showWordmark = true, size = "md" }
           s.box,
         )}
       >
-        <Icon name="pin" trigger="group-hover" size={s.icon} className="text-white" />
+        <Icon name="pin" size={s.icon} className="text-white" />
       </span>
       {showWordmark && (
         <span className={cn("font-display font-bold tracking-tight", s.text)}>{site.name}</span>

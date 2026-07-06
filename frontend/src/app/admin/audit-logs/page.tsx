@@ -232,7 +232,7 @@ export default function AdminAuditLogsPage() {
             disabled={logs.length === 0}
             data-testid="audit-export-btn"
           >
-            <Icon name="download" trigger="group-hover" size={16} /> Export CSV
+            <Icon name="download" size={16} /> Export CSV
           </Button>
         </PageHeader>
 
@@ -477,7 +477,7 @@ export default function AdminAuditLogsPage() {
                     data-testid="audit-next-page-btn"
                   >
                     Next
-                    <Icon name="arrowRight" trigger="group-hover" size={15} />
+                    <Icon name="arrowRight" size={15} />
                   </Button>
                 </div>
               </div>
@@ -574,7 +574,7 @@ export default function AdminAuditLogsPage() {
                     }}
                     data-testid="audit-detail-copy-btn"
                   >
-                    <Icon name="copy" trigger="group-hover" size={16} /> Copy ID
+                    <Icon name="copy" size={16} /> Copy ID
                   </Button>
                   <Button
                     variant="secondary"

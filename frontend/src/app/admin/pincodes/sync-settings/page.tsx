@@ -176,7 +176,7 @@ export default function PincodeSyncSettingsPage() {
           disabled={saveM.isPending || !draft}
           data-testid="sync-settings-save-btn"
         >
-          <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="check" size={16} className="text-white" />
           {saveM.isPending ? "Saving…" : "Save changes"}
         </Button>
       </PageHeader>
@@ -248,7 +248,7 @@ export default function PincodeSyncSettingsPage() {
                     </CardDescription>
                     <CardAction>
                       <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                        <Icon name="clock" trigger="loop" size={18} />
+                        <Icon name="clock" size={18} />
                       </span>
                     </CardAction>
                   </CardHeader>
@@ -403,7 +403,7 @@ export default function PincodeSyncSettingsPage() {
                     disabled={saveM.isPending}
                     data-testid="sync-settings-save-footer-btn"
                   >
-                    <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+                    <Icon name="check" size={16} className="text-white" />
                     {saveM.isPending ? "Saving…" : "Save changes"}
                   </Button>
                 </CardFooter>

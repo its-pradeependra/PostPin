@@ -105,7 +105,7 @@ export function DashboardShell({
               data-testid="topbar-docs-link"
               className="group hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:flex"
             >
-              <Icon name="docs" trigger="group-hover" size={16} />
+              <Icon name="docs" size={16} />
               Docs
             </Link>
             <Link
@@ -114,7 +114,7 @@ export function DashboardShell({
               aria-label="Notifications"
               className="group relative grid size-9 place-items-center rounded-lg border border-border transition-colors hover:bg-accent"
             >
-              <Icon name="notifications" trigger="group-hover" size={18} />
+              <Icon name="notifications" size={18} />
               {unreadCount > 0 && (
                 <span
                   className="absolute right-2 top-2 size-2 rounded-full bg-fuchsia ring-2 ring-background"

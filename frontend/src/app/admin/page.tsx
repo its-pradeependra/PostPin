@@ -102,13 +102,13 @@ export default function AdminDashboardPage() {
       >
         <Button variant="outline" asChild className="group" data-testid="admin-overview-usage-btn">
           <Link href="/admin/usage-reports">
-            <Icon name="analytics" trigger="group-hover" size={16} />
+            <Icon name="analytics" size={16} />
             Usage reports
           </Link>
         </Button>
         <Button variant="gradient" asChild className="group" data-testid="admin-overview-pincodes-btn">
           <Link href="/admin/pincodes">
-            <Icon name="sync" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="sync" size={16} className="text-white" />
             Pincode master
           </Link>
         </Button>
@@ -242,9 +242,9 @@ export default function AdminDashboardPage() {
                     data-testid="admin-sync-pincode-master-btn"
                   >
                     <Link href="/admin/pincodes">
-                      <Icon name="pin" trigger="group-hover" size={16} />
+                      <Icon name="pin" size={16} />
                       Go to Pincode Master
-                      <Icon name="arrowRight" trigger="group-hover" size={14} className="ml-auto" />
+                      <Icon name="arrowRight" size={14} className="ml-auto" />
                     </Link>
                   </Button>
                 </CardFooter>
@@ -289,7 +289,7 @@ export default function AdminDashboardPage() {
                           className={`group flex items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/40 ${s.wrap}`}
                         >
                           <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${s.icon}`}>
-                            <Icon name={a.icon as IconName} trigger="group-hover" size={18} />
+                            <Icon name={a.icon as IconName} size={18} />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ export default function AdminDashboardPage() {
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">{a.meta}</p>
                             <span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary">
                               {a.action}
-                              <Icon name="arrowRight" trigger="group-hover" size={12} />
+                              <Icon name="arrowRight" size={12} />
                             </span>
                           </div>
                         </Link>
@@ -331,7 +331,7 @@ export default function AdminDashboardPage() {
                 >
                   <Link href="/admin/audit-logs">
                     View audit log
-                    <Icon name="arrowRight" trigger="group-hover" size={14} />
+                    <Icon name="arrowRight" size={14} />
                   </Link>
                 </Button>
               </CardHeader>

@@ -187,7 +187,7 @@ export default function AboutPage() {
             className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-primary"
             data-testid="about-eyebrow-badge"
           >
-            <Icon name="company" trigger="loop" animation="pulse" size={13} />
+            <Icon name="company" size={13} />
             Our story · Built in India
           </Badge>
           <h1 className="mt-5 font-display text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
@@ -202,12 +202,12 @@ export default function AboutPage() {
             <Button asChild variant="gradient" size="lg">
               <Link href="/signup" data-testid="about-hero-signup-btn">
                 Start free
-                <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                <Icon name="arrowRight" size={17} className="text-white" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="group">
               <Link href="#careers" data-testid="about-hero-careers-btn">
-                <Icon name="rocket" trigger="group-hover" size={17} />
+                <Icon name="rocket" size={17} />
                 We&apos;re hiring
               </Link>
             </Button>
@@ -245,7 +245,7 @@ export default function AboutPage() {
             <div className="pointer-events-none absolute inset-0 bg-brand-gradient opacity-[0.06]" />
             <div className="relative">
               <span className="grid size-12 place-items-center rounded-2xl bg-brand-gradient-soft text-primary">
-                <Icon name="sparkles" size={24} animation="pulse" />
+                <Icon name="sparkles" size={24} />
               </span>
               <p className="mt-5 font-display text-xl font-semibold leading-snug">
                 &ldquo;A quote is a promise. If the invoice breaks it, the checkout was lying.&rdquo;
@@ -299,7 +299,7 @@ export default function AboutPage() {
               data-testid={`about-timeline-item-${m.id}`}
             >
               <span className="relative z-10 grid size-10 shrink-0 place-items-center rounded-full border border-primary/20 bg-card text-primary shadow-glow sm:size-12">
-                <Icon name={m.icon} trigger="group-hover" size={20} />
+                <Icon name={m.icon} size={20} />
               </span>
               <div className="pt-0.5 sm:pt-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -338,7 +338,7 @@ export default function AboutPage() {
                 data-testid={`about-value-card-${v.id}`}
               >
                 <span className="grid size-11 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                  <Icon name={v.icon} trigger="group-hover" size={22} />
+                  <Icon name={v.icon} size={22} />
                 </span>
                 <h3 className="mt-4 font-display text-base font-semibold">{v.title}</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">{v.body}</p>
@@ -414,7 +414,7 @@ export default function AboutPage() {
             <Button asChild variant="outline" className="group shrink-0">
               <Link href="/docs#changelog" data-testid="about-blog-all-btn">
                 All posts
-                <Icon name="arrowRight" trigger="group-hover" size={16} />
+                <Icon name="arrowRight" size={16} />
               </Link>
             </Button>
           </div>
@@ -436,7 +436,7 @@ export default function AboutPage() {
                 <div className="mt-5 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="tabular-nums">{post.date}</span>
                   <span className="flex items-center gap-1.5">
-                    <Icon name="clock" size={13} animation="none" />
+                    <Icon name="clock" size={13} />
                     {post.readMins} min read
                   </span>
                 </div>
@@ -446,7 +446,7 @@ export default function AboutPage() {
                   data-testid={`about-blog-readmore-${post.id}`}
                 >
                   Read in docs
-                  <Icon name="arrowRight" trigger="group-hover" size={15} />
+                  <Icon name="arrowRight" size={15} />
                 </Link>
               </Card>
             ))}
@@ -475,7 +475,7 @@ export default function AboutPage() {
             <Button asChild variant="gradient" size="lg" className="mt-6">
               <Link href="/contact" data-testid="about-careers-cta-btn">
                 See all openings
-                <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                <Icon name="arrowRight" size={17} className="text-white" />
               </Link>
             </Button>
           </div>
@@ -490,7 +490,7 @@ export default function AboutPage() {
                     data-testid={`about-role-row-${role.id}`}
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                      <Icon name="rocket" trigger="group-hover" size={18} />
+                      <Icon name="rocket" size={18} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-display text-base font-semibold">{role.title}</p>
@@ -506,7 +506,6 @@ export default function AboutPage() {
                     </div>
                     <Icon
                       name="chevronRight"
-                      trigger="group-hover"
                       size={18}
                       className="shrink-0 text-muted-foreground"
                     />
@@ -549,7 +548,7 @@ export default function AboutPage() {
               <Button asChild variant="gradient" size="lg">
                 <Link href="/signup" data-testid="about-final-cta-signup-btn">
                   Create free account
-                  <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                  <Icon name="arrowRight" size={17} className="text-white" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">

@@ -393,7 +393,7 @@ function SettingCard({ setting }: { setting: PlatformSetting }) {
                 data-testid={`settings-${slug}-link`}
               >
                 <Link href={meta.link.href}>
-                  <Icon name="external" trigger="group-hover" size={15} />
+                  <Icon name="external" size={15} />
                   {meta.link.label}
                 </Link>
               </Button>
@@ -416,7 +416,7 @@ function SettingCard({ setting }: { setting: PlatformSetting }) {
               disabled={!dirty || saveM.isPending}
               data-testid={`settings-${slug}-save-btn`}
             >
-              <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="check" size={16} className="text-white" />
               {saveM.isPending ? "Saving…" : "Save changes"}
             </Button>
           </div>

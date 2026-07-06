@@ -189,7 +189,7 @@ export default function AdminBillingPage() {
           disabled={invoiceRows.length === 0}
           data-testid="admin-billing-export-btn"
         >
-          <Icon name="download" trigger="group-hover" size={16} /> Export page CSV
+          <Icon name="download" size={16} /> Export page CSV
         </Button>
       </PageHeader>
 
@@ -380,7 +380,7 @@ export default function AdminBillingPage() {
                                       disabled={refundM.isPending}
                                       data-testid={`admin-billing-refund-btn-${inv.id}`}
                                     >
-                                      <Icon name="coins" trigger="group-hover" size={14} /> Refund
+                                      <Icon name="coins" size={14} /> Refund
                                     </Button>
                                   }
                                   title={`Refund ${inv.number}?`}
@@ -442,7 +442,7 @@ export default function AdminBillingPage() {
                         data-testid="admin-billing-next-page-btn"
                       >
                         Next
-                        <Icon name="arrowRight" trigger="group-hover" size={15} />
+                        <Icon name="arrowRight" size={15} />
                       </Button>
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function AdminBillingPage() {
             <CardDescription>Tenants by subscription plan.</CardDescription>
             <CardAction>
               <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                <Icon name="users" trigger="loop" size={18} />
+                <Icon name="users" size={18} />
               </span>
             </CardAction>
           </CardHeader>

@@ -81,7 +81,7 @@ export function MarketingNav() {
             <Button asChild variant="gradient" size="sm" className="hidden sm:inline-flex">
               <Link href="/signup" data-testid="marketing-signup-btn">
                 Start free
-                <Icon name="arrowRight" trigger="group-hover" size={15} className="text-white" />
+                <Icon name="arrowRight" size={15} className="text-white" />
               </Link>
             </Button>
 

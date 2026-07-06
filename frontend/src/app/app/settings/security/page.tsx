@@ -141,7 +141,7 @@ export default function SecuritySettingsPage() {
             <CardDescription>Use at least 12 characters with a mix of letters, numbers &amp; symbols.</CardDescription>
             <CardAction>
               <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                <Icon name="lock" trigger="loop" size={18} />
+                <Icon name="lock" size={18} />
               </span>
             </CardAction>
           </CardHeader>
@@ -167,7 +167,7 @@ export default function SecuritySettingsPage() {
                     className="group inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                     data-testid="security-pw-visibility-btn"
                   >
-                    <Icon name={show ? "eyeOff" : "eye"} trigger="group-hover" size={14} />
+                    <Icon name={show ? "eyeOff" : "eye"} size={14} />
                     {show ? "Hide" : "Show"}
                   </button>
                 </div>
@@ -214,7 +214,7 @@ export default function SecuritySettingsPage() {
             </CardContent>
             <CardFooter className="justify-end">
               <Button type="submit" variant="gradient" disabled={changePwM.isPending} className="group" data-testid="security-update-pw-btn">
-                <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="check" size={16} className="text-white" />
                 {changePwM.isPending ? "Updating…" : "Update password"}
               </Button>
             </CardFooter>
@@ -249,7 +249,7 @@ export default function SecuritySettingsPage() {
                   disabled={otherCount === 0 || revokeAllM.isPending}
                   data-testid="security-revoke-all-btn"
                 >
-                  <Icon name="logout" trigger="group-hover" size={15} /> Revoke all others
+                  <Icon name="logout" size={15} /> Revoke all others
                 </Button>
               }
             />
@@ -311,7 +311,7 @@ export default function SecuritySettingsPage() {
                                 className="group text-muted-foreground hover:text-destructive"
                                 data-testid={`security-revoke-btn-${s.id}`}
                               >
-                                <Icon name="logout" trigger="group-hover" size={15} /> Revoke
+                                <Icon name="logout" size={15} /> Revoke
                               </Button>
                             }
                           />
@@ -353,7 +353,7 @@ export default function SecuritySettingsPage() {
             onConfirm={() => deleteM.mutate()}
             trigger={
               <Button variant="destructive" className="group" disabled={deleteM.isPending} data-testid="security-delete-account-btn">
-                <Icon name="trash" trigger="group-hover" size={16} /> Delete account
+                <Icon name="trash" size={16} /> Delete account
               </Button>
             }
           />

@@ -539,7 +539,7 @@ export default function AdminBlogPage() {
           onSubmit={handleCreate}
           trigger={
             <Button variant="gradient" className="group" data-testid="blog-create-btn">
-              <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="plus" size={16} className="text-white" />
               New article
             </Button>
           }

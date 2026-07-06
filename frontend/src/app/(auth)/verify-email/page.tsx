@@ -58,7 +58,7 @@ function VerifyEmailForm() {
     return (
       <div className="space-y-6 text-center" data-testid="verify-verifying-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-gradient-soft">
-          <Icon name="sync" trigger="loop" size={26} className="text-primary" />
+          <Icon name="sync" size={26} className="text-primary" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Verifying your email…</h1>
@@ -72,7 +72,7 @@ function VerifyEmailForm() {
     return (
       <div className="space-y-6 text-center" data-testid="verify-check-inbox-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-gradient-soft">
-          <Icon name="mail" trigger="loop" animation="float" size={26} className="text-primary" />
+          <Icon name="mail" size={26} className="text-primary" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Check your inbox</h1>
@@ -91,7 +91,7 @@ function VerifyEmailForm() {
             disabled={cooldown > 0}
             data-testid="verify-resend-btn"
           >
-            <Icon name="mail" trigger="group-hover" size={16} />
+            <Icon name="mail" size={16} />
             {cooldown > 0 ? `Resend in 0:${String(cooldown).padStart(2, "0")}` : "Resend verification email"}
           </Button>
         )}
@@ -110,7 +110,7 @@ function VerifyEmailForm() {
     return (
       <div className="space-y-6 text-center" data-testid="verify-error-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-warning/12">
-          <Icon name="clock" trigger="loop" animation="pulse" size={26} className="text-warning" />
+          <Icon name="clock" size={26} className="text-warning" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Link expired</h1>
@@ -127,7 +127,7 @@ function VerifyEmailForm() {
           disabled={cooldown > 0 || !email}
           data-testid="verify-resend-btn"
         >
-          <Icon name="mail" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="mail" size={16} className="text-white" />
           {cooldown > 0 ? `Resend in 0:${String(cooldown).padStart(2, "0")}` : "Resend verification email"}
         </Button>
         <Link
@@ -144,7 +144,7 @@ function VerifyEmailForm() {
   return (
     <div className="space-y-6 text-center" data-testid="verify-verified-card">
       <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-success/12">
-        <Icon name="checkCircle" trigger="mount" size={28} className="text-success" />
+        <Icon name="checkCircle" size={28} className="text-success" />
       </div>
       <div className="space-y-2">
         <h1 className="font-display text-2xl font-bold tracking-tight">Email verified</h1>
@@ -162,12 +162,12 @@ function VerifyEmailForm() {
         data-testid="verify-continue-btn"
       >
         Continue to log in
-        <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+        <Icon name="arrowRight" size={16} className="text-white" />
       </Button>
 
       <Button asChild variant="ghost" className="group w-full" data-testid="verify-docs-btn">
         <Link href="/docs">
-          <Icon name="book" trigger="group-hover" size={16} /> Read the quickstart
+          <Icon name="book" size={16} /> Read the quickstart
         </Link>
       </Button>
     </div>

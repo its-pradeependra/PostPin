@@ -103,7 +103,7 @@ export default function PincodeMasterPage() {
 
         <Button asChild variant="ghost" className="group" data-testid="pincode-view-logs-link">
           <Link href="/admin/pincodes/sync-logs">
-            <Icon name="activity" trigger="group-hover" size={16} />
+            <Icon name="activity" size={16} />
             View logs
           </Link>
         </Button>
@@ -166,7 +166,7 @@ export default function PincodeMasterPage() {
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2">
                       <span className="grid size-8 place-items-center rounded-lg bg-brand-gradient-soft text-primary">
-                        <Icon name="sync" trigger="hover" size={16} />
+                        <Icon name="sync" size={16} />
                       </span>
                       Latest sync run
                     </CardTitle>
@@ -224,7 +224,7 @@ export default function PincodeMasterPage() {
                       </div>
                       <Button asChild variant="ghost" size="sm" className="group">
                         <Link href="/admin/pincodes/sync-logs" data-testid="pincode-sync-viewlog-link">
-                          <Icon name="external" trigger="group-hover" size={15} />
+                          <Icon name="external" size={15} />
                           View run history
                         </Link>
                       </Button>
@@ -271,7 +271,7 @@ export default function PincodeMasterPage() {
                     data-testid="pincode-sync-settings-link"
                   >
                     <Link href="/admin/pincodes/sync-settings">
-                      <Icon name="settings" trigger="group-hover" size={15} />
+                      <Icon name="settings" size={15} />
                       Sync settings
                     </Link>
                   </Button>
@@ -283,7 +283,7 @@ export default function PincodeMasterPage() {
                     data-testid="pincode-sync-logs-card-link"
                   >
                     <Link href="/admin/pincodes/sync-logs">
-                      <Icon name="audit" trigger="group-hover" size={15} />
+                      <Icon name="audit" size={15} />
                       Sync logs
                     </Link>
                   </Button>
@@ -344,7 +344,7 @@ export default function PincodeMasterPage() {
                     onClick={() => setQuery("")}
                     data-testid="pincode-clear-search-btn"
                   >
-                    <Icon name="filter" trigger="group-hover" size={15} />
+                    <Icon name="filter" size={15} />
                     Clear search
                   </Button>
                 </EmptyState>
@@ -548,8 +548,6 @@ function RunLiveSyncButton() {
         >
           <Icon
             name="sync"
-            trigger={busy ? "loop" : "group-hover"}
-            animation={busy ? "spin" : undefined}
             size={16}
             className="text-white"
           />
@@ -581,7 +579,6 @@ function RunLiveSyncButton() {
           >
             <Icon
               name="sync"
-              trigger={syncM.isPending ? "loop" : "group-hover"}
               size={16}
               className="text-white"
             />
@@ -665,7 +662,7 @@ function ImportCsvDialog() {
     >
       <DialogTrigger asChild>
         <Button variant="outline" className="group" data-testid="pincode-sync-run-btn">
-          <Icon name="upload" trigger="group-hover" size={16} />
+          <Icon name="upload" size={16} />
           Import CSV
         </Button>
       </DialogTrigger>
@@ -749,7 +746,6 @@ function ImportCsvDialog() {
           >
             <Icon
               name={importM.isPending ? "sync" : "upload"}
-              trigger={importM.isPending ? "loop" : "group-hover"}
               size={16}
               className="text-white"
             />

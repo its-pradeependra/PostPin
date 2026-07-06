@@ -105,7 +105,7 @@ export default function AdminRateCardsPage() {
         description="The zone-rate matrix the live engine prices on, plus every tenant custom card. Create, edit, assign and simulate cards across the platform."
       >
         <Button variant="gradient" className="group" onClick={openCreate} data-testid="ratecard-new-btn">
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="plus" size={16} className="text-white" />
           New rate card
         </Button>
       </PageHeader>
@@ -242,7 +242,7 @@ export default function AdminRateCardsPage() {
                               onClick={() => setSimCard(card)}
                               data-testid={`ratecard-simulate-btn-${card.id}`}
                             >
-                              <Icon name="calculator" trigger="group-hover" size={14} />
+                              <Icon name="calculator" size={14} />
                               Simulate
                             </Button>
                             <Button
@@ -252,7 +252,7 @@ export default function AdminRateCardsPage() {
                               onClick={() => openEdit(card.id)}
                               data-testid={`ratecard-edit-btn-${card.id}`}
                             >
-                              <Icon name="edit" trigger="group-hover" size={14} />
+                              <Icon name="edit" size={14} />
                               Edit
                             </Button>
                             <Button
@@ -263,7 +263,7 @@ export default function AdminRateCardsPage() {
                               disabled={assignM.isPending}
                               data-testid={`ratecard-assign-btn-${card.id}`}
                             >
-                              <Icon name="check" trigger="group-hover" size={14} />
+                              <Icon name="check" size={14} />
                               Assign
                             </Button>
                           </div>
@@ -519,7 +519,7 @@ function RateCardEditor({
             disabled={saveM.isPending}
             data-testid="ratecard-editor-save-btn"
           >
-            <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="check" size={16} className="text-white" />
             {saveM.isPending ? "Saving…" : isCreating ? "Create card" : "Save card"}
           </Button>
         </DialogFooter>
@@ -607,7 +607,7 @@ function SimulateDialog({ card, onClose }: { card: OverviewCard; onClose: () => 
             disabled={simM.isPending}
             data-testid="ratecard-sim-run-btn"
           >
-            <Icon name="calculator" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="calculator" size={16} className="text-white" />
             {simM.isPending ? "Calculating…" : "Simulate"}
           </Button>
 

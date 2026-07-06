@@ -408,14 +408,14 @@ export default function PrivacyPolicyPage() {
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild variant="gradient" className="group" data-testid="legal-contact-btn">
                 <Link href="/contact">
-                  <Icon name="mail" trigger="group-hover" size={16} className="text-white" />
+                  <Icon name="mail" size={16} className="text-white" />
                   Contact privacy team
                 </Link>
               </Button>
               <Button asChild variant="outline" className="group" data-testid="legal-terms-link-btn">
                 <Link href="/legal/terms">
                   Read the Terms of Service
-                  <Icon name="arrowRight" trigger="group-hover" size={16} />
+                  <Icon name="arrowRight" size={16} />
                 </Link>
               </Button>
             </div>

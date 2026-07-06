@@ -434,7 +434,7 @@ function RowActions({
           aria-label={`Actions for ${coupon.code}`}
           data-testid={`coupon-row-actions-${coupon.id}`}
         >
-          <Icon name="more" trigger="group-hover" size={16} />
+          <Icon name="more" size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
@@ -669,7 +669,7 @@ export default function CouponsPage() {
           onSubmit={handleCreate}
           trigger={
             <Button variant="gradient" className="group" data-testid="coupon-create-btn">
-              <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="plus" size={16} className="text-white" />
               Create coupon
             </Button>
           }
@@ -782,7 +782,7 @@ export default function CouponsPage() {
                       className="group"
                       data-testid="coupon-empty-create-btn"
                     >
-                      <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+                      <Icon name="plus" size={16} className="text-white" />
                       Create coupon
                     </Button>
                   }

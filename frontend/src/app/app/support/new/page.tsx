@@ -135,7 +135,7 @@ export default function NewTicketPage() {
       >
         <Button variant="outline" asChild data-testid="ticket-cancel-btn">
           <Link href="/app/support" className="group">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" />
+            <Icon name="arrowRight" size={16} className="rotate-180" />
             Back to tickets
           </Link>
         </Button>
@@ -211,7 +211,7 @@ export default function NewTicketPage() {
                   >
                     <RadioGroupItem value={c.value} id={`cat-${c.value}`} className="mt-0.5" />
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-gradient-soft text-primary">
-                      <Icon name={c.icon} trigger="group-hover" size={18} />
+                      <Icon name={c.icon} size={18} />
                     </span>
                     <span className="min-w-0">
                       <span className="block font-medium">{c.label}</span>
@@ -285,7 +285,7 @@ export default function NewTicketPage() {
                   className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-4 py-8 text-center transition-colors hover:border-primary/50 hover:bg-accent"
                 >
                   <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                    <Icon name="upload" trigger="group-hover" size={20} />
+                    <Icon name="upload" size={20} />
                   </span>
                   <span className="text-sm font-medium">
                     {uploading ? "Uploading…" : "Click to upload a screenshot or log"}
@@ -325,7 +325,7 @@ export default function NewTicketPage() {
                       data-testid={`ticket-attach-remove-btn-${i}`}
                       aria-label="Remove attachment"
                     >
-                      <Icon name="close" trigger="group-hover" size={15} />
+                      <Icon name="close" size={15} />
                     </Button>
                   </div>
                 ))}
@@ -409,7 +409,7 @@ export default function NewTicketPage() {
             className="group"
             data-testid="ticket-back-btn"
           >
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" />
+            <Icon name="arrowRight" size={16} className="rotate-180" />
             Back
           </Button>
           {step < 3 ? (
@@ -420,7 +420,7 @@ export default function NewTicketPage() {
               data-testid="ticket-next-btn"
             >
               Next
-              <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="arrowRight" size={16} className="text-white" />
             </Button>
           ) : (
             <Button
@@ -430,7 +430,7 @@ export default function NewTicketPage() {
               className="group"
               data-testid="ticket-submit-btn"
             >
-              <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="send" size={16} className="text-white" />
               {submitting ? "Submitting…" : "Submit ticket"}
             </Button>
           )}

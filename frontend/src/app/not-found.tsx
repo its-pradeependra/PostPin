@@ -40,13 +40,13 @@ export default function NotFound() {
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
         <Button variant="gradient" size="lg" asChild className="group" data-testid="not-found-home-btn">
           <Link href="/">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="arrowRight" size={16} className="text-white" />
             Back to home
           </Link>
         </Button>
         <Button variant="outline" size="lg" asChild className="group" data-testid="not-found-docs-btn">
           <Link href="/docs">
-            <Icon name="book" trigger="group-hover" size={16} />
+            <Icon name="book" size={16} />
             Read the docs
           </Link>
         </Button>
@@ -58,7 +58,7 @@ export default function NotFound() {
           data-testid="not-found-pricing-link"
           className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Icon name="tag" trigger="group-hover" size={14} />
+          <Icon name="tag" size={14} />
           Pricing
         </Link>
         <Link
@@ -66,7 +66,7 @@ export default function NotFound() {
           data-testid="not-found-dashboard-link"
           className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Icon name="dashboard" trigger="group-hover" size={14} />
+          <Icon name="dashboard" size={14} />
           Dashboard
         </Link>
         <Link
@@ -74,7 +74,7 @@ export default function NotFound() {
           data-testid="not-found-contact-link"
           className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Icon name="support" trigger="group-hover" size={14} />
+          <Icon name="support" size={14} />
           Contact support
         </Link>
       </div>

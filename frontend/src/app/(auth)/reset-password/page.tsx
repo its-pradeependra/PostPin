@@ -82,7 +82,7 @@ function ResetForm() {
     return (
       <div className="space-y-6 text-center" data-testid="reset-expired-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-warning/12">
-          <Icon name="clock" trigger="loop" animation="pulse" size={26} className="text-warning" />
+          <Icon name="clock" size={26} className="text-warning" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Link expired</h1>
@@ -93,7 +93,7 @@ function ResetForm() {
         <Button asChild variant="gradient" size="lg" className="group w-full" data-testid="reset-request-new-link-btn">
           <Link href="/forgot-password">
             Request a new link
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="arrowRight" size={16} className="text-white" />
           </Link>
         </Button>
         <Link
@@ -146,7 +146,7 @@ function ResetForm() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               data-testid="reset-new-password-toggle"
             >
-              <Icon name={showPassword ? "eyeOff" : "eye"} trigger="group-hover" size={16} />
+              <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
             </button>
           </div>
 
@@ -200,12 +200,12 @@ function ResetForm() {
         >
           {loading ? (
             <>
-              <Icon name="sync" trigger="loop" size={16} className="text-white" /> Updating…
+              <Icon name="sync" size={16} className="text-white" /> Updating…
             </>
           ) : (
             <>
               Update password
-              <Icon name="lock" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="lock" size={16} className="text-white" />
             </>
           )}
         </Button>

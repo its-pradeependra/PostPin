@@ -39,7 +39,7 @@ export default function Error({ error, reset }: ErrorProps) {
       </div>
 
       <span className="grid size-16 place-items-center rounded-2xl bg-destructive/12 text-destructive">
-        <Icon name="shield" animation="pulse" trigger="loop" size={30} />
+        <Icon name="shield" size={30} />
       </span>
 
       <p className="mt-6 font-mono text-xs font-medium uppercase tracking-[0.18em] text-destructive">
@@ -78,12 +78,12 @@ export default function Error({ error, reset }: ErrorProps) {
           className="group"
           data-testid="error-try-again-btn"
         >
-          <Icon name="sync" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="sync" size={16} className="text-white" />
           Try again
         </Button>
         <Button variant="outline" size="lg" asChild className="group" data-testid="error-home-btn">
           <Link href="/">
-            <Icon name="arrowRight" trigger="group-hover" size={16} />
+            <Icon name="arrowRight" size={16} />
             Back to home
           </Link>
         </Button>
@@ -95,7 +95,7 @@ export default function Error({ error, reset }: ErrorProps) {
           data-testid="error-docs-link"
           className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Icon name="book" trigger="group-hover" size={14} />
+          <Icon name="book" size={14} />
           Read the docs
         </Link>
         <Link
@@ -103,7 +103,7 @@ export default function Error({ error, reset }: ErrorProps) {
           data-testid="error-contact-link"
           className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Icon name="support" trigger="group-hover" size={14} />
+          <Icon name="support" size={14} />
           Contact support
         </Link>
       </div>

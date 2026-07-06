@@ -182,7 +182,7 @@ export default function ProfileSettingsPage() {
                     onClick={() => fileRef.current?.click()}
                     data-testid="profile-avatar-upload-btn"
                   >
-                    <Icon name="upload" trigger="group-hover" size={15} />{" "}
+                    <Icon name="upload" size={15} />{" "}
                     {uploadM.isPending ? "Uploading…" : "Upload photo"}
                   </Button>
                   {user?.avatar_url && (
@@ -195,7 +195,7 @@ export default function ProfileSettingsPage() {
                       onClick={() => removeAvatarM.mutate()}
                       data-testid="profile-avatar-remove-btn"
                     >
-                      <Icon name="trash" trigger="group-hover" size={15} /> Remove
+                      <Icon name="trash" size={15} /> Remove
                     </Button>
                   )}
                 </div>
@@ -263,7 +263,7 @@ export default function ProfileSettingsPage() {
             </CardDescription>
             <CardAction>
               <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                <Icon name="globe" trigger="loop" size={18} />
+                <Icon name="globe" size={18} />
               </span>
             </CardAction>
           </CardHeader>
@@ -320,7 +320,7 @@ export default function ProfileSettingsPage() {
               className="group"
               data-testid="profile-save-btn"
             >
-              <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="check" size={16} className="text-white" />
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </CardFooter>

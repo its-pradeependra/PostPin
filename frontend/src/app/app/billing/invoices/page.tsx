@@ -65,11 +65,11 @@ export default function InvoicesPage() {
       <PageHeader title="Invoices" description="Download GST-compliant invoices and review your billing history." eyebrow="Account">
         <Button variant="outline" asChild className="group" data-testid="invoices-billing-link">
           <Link href="/app/billing">
-            <Icon name="billing" trigger="group-hover" size={16} /> Billing
+            <Icon name="billing" size={16} /> Billing
           </Link>
         </Button>
         <Button variant="gradient" className="group" onClick={downloadAll} data-testid="invoices-download-all-btn">
-          <Icon name="download" trigger="group-hover" size={16} className="text-white" /> Download all
+          <Icon name="download" size={16} className="text-white" /> Download all
         </Button>
       </PageHeader>
 
@@ -132,7 +132,7 @@ export default function InvoicesPage() {
                 {invoices.length === 0 ? (
                   <Button variant="gradient" asChild className="group" data-testid="invoices-empty-plans-btn">
                     <Link href="/app/billing/plans">
-                      <Icon name="rocket" trigger="group-hover" size={16} className="text-white" /> View plans
+                      <Icon name="rocket" size={16} className="text-white" /> View plans
                     </Link>
                   </Button>
                 ) : (
@@ -177,7 +177,7 @@ export default function InvoicesPage() {
                           <TableCell className="text-sm text-muted-foreground tabular-nums">{formatDate(inv.issuedAt)}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm" className="group" onClick={() => downloadInvoice(inv)} data-testid={`invoice-download-${inv.id}`}>
-                              <Icon name="download" trigger="group-hover" size={15} /> Invoice
+                              <Icon name="download" size={15} /> Invoice
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -212,7 +212,7 @@ export default function InvoicesPage() {
                         </div>
                       </div>
                       <Button variant="outline" size="sm" className="group mt-3 w-full" onClick={() => downloadInvoice(inv)} data-testid={`invoice-download-mobile-${inv.id}`}>
-                        <Icon name="download" trigger="group-hover" size={15} /> Download invoice
+                        <Icon name="download" size={15} /> Download invoice
                       </Button>
                     </Card>
                   ))}

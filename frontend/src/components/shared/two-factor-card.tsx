@@ -113,7 +113,7 @@ export function TwoFactorCard({
                 disabled={setupM.isPending}
                 data-testid={tid("setup-btn")}
               >
-                <Icon name="lock" trigger="group-hover" size={15} className="text-white" />
+                <Icon name="lock" size={15} className="text-white" />
                 {setupM.isPending ? "Starting…" : "Set up 2FA"}
               </Button>
             </div>

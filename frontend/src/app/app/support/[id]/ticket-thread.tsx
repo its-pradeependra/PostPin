@@ -194,7 +194,7 @@ export function TicketThread({
             onClick={() => fileRef.current?.click()}
             data-testid="ticket-attach-reply-btn"
           >
-            <Icon name="upload" trigger="group-hover" size={15} />
+            <Icon name="upload" size={15} />
             {uploading ? "Uploading…" : "Attach"}
           </Button>
           <Button
@@ -204,7 +204,7 @@ export function TicketThread({
             disabled={sending || !reply.trim()}
             data-testid="ticket-send-btn"
           >
-            <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="send" size={16} className="text-white" />
             {sending ? "Sending…" : "Send reply"}
           </Button>
         </div>

@@ -23,6 +23,7 @@ import { notificationsRoutes } from "@/routes/notifications.routes.js";
 import { publicRoutes } from "@/routes/public.routes.js";
 import { rateCardsRoutes } from "@/routes/rate-cards.routes.js";
 import { ratesRoutes } from "@/routes/rates.routes.js";
+import { lookupRoutes } from "@/routes/lookup.routes.js";
 import { subscriptionRoutes } from "@/routes/subscription.routes.js";
 import { ticketsRoutes } from "@/routes/tickets.routes.js";
 import { usageRoutes } from "@/routes/usage.routes.js";
@@ -122,6 +123,7 @@ export async function buildApp() {
   await app.register(publicRoutes, { prefix: "/v1/public" });
   await app.register(keysRoutes, { prefix: "/v1/keys" });
   await app.register(ratesRoutes, { prefix: "/v1/rates" });
+  await app.register(lookupRoutes, { prefix: "/v1" });
   await app.register(usageRoutes, { prefix: "/v1/usage" });
   await app.register(subscriptionRoutes, { prefix: "/v1/subscription" });
   await app.register(webhooksRoutes, { prefix: "/v1/webhooks" });

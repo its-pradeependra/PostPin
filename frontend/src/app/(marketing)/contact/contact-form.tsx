@@ -364,12 +364,12 @@ export function ContactForm() {
       >
         {submitting ? (
           <>
-            <Icon name="sync" trigger="loop" animation="spin" size={17} className="text-white" />
+            <Icon name="sync" size={17} className="text-white" />
             Sending…
           </>
         ) : (
           <>
-            <Icon name="send" trigger="group-hover" size={17} className="text-white" />
+            <Icon name="send" size={17} className="text-white" />
             Send message
           </>
         )}

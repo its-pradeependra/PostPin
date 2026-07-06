@@ -23,7 +23,7 @@ export function StatCard({ label, value, icon, deltaPct, hint, testId, className
       <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-brand-gradient opacity-[0.06] blur-2xl transition-opacity group-hover:opacity-[0.12]" />
       <div className="flex items-start justify-between">
         <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-          <Icon name={icon} trigger="group-hover" size={20} />
+          <Icon name={icon} size={20} />
         </span>
         {typeof deltaPct === "number" && (
           <span

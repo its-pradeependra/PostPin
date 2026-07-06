@@ -84,7 +84,7 @@ export function SupportList({ tickets }: { tickets: Ticket[] }) {
         >
           <Button variant="gradient" asChild data-testid="support-empty-new-btn">
             <Link href="/app/support/new" className="group">
-              <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="plus" size={16} className="text-white" />
               New ticket
             </Link>
           </Button>
@@ -120,7 +120,6 @@ export function SupportList({ tickets }: { tickets: Ticket[] }) {
                           <span className="truncate">{t.subject}</span>
                           <Icon
                             name="arrowRight"
-                            trigger="group-hover"
                             size={14}
                             className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                           />

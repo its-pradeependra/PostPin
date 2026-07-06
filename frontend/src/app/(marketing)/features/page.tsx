@@ -49,7 +49,7 @@ const RATE_CODE_TABS = [
     label: "Request",
     language: "bash",
     code: `curl ${site.apiBase}/rates/calculate \\
-  -H "Authorization: Bearer pk_live_..." \\
+  -H "Authorization: Bearer pp_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
     "origin": "302001",
@@ -87,7 +87,7 @@ const RATE_CODE_TABS = [
     language: "javascript",
     code: `import { Postpin } from "@postpin/node";
 
-const postpin = new Postpin("pk_live_...");
+const postpin = new Postpin("pp_live_...");
 
 const rate = await postpin.rates.calculate({
   origin: "302001",        // Jaipur
@@ -134,7 +134,7 @@ export default function FeaturesPage() {
         <div className="pointer-events-none absolute -top-40 right-1/3 -z-10 size-[36rem] rounded-full bg-brand-gradient opacity-20 blur-[130px]" />
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 lg:py-24">
           <Badge variant="outline" className="gap-1.5 border-primary/30 bg-primary/5 py-1 text-primary">
-            <Icon name="sparkles" trigger="loop" animation="pulse" size={13} />
+            <Icon name="sparkles" size={13} />
             The platform behind every quote
           </Badge>
           <h1 className="mx-auto mt-5 max-w-3xl font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
@@ -159,7 +159,7 @@ export default function FeaturesPage() {
                 data-testid={`features-anchor-${a.id}`}
                 className="group inline-flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
-                <Icon name={a.icon} trigger="group-hover" size={15} />
+                <Icon name={a.icon} size={15} />
                 {a.label}
               </Link>
             ))}
@@ -286,13 +286,13 @@ export default function FeaturesPage() {
         <Card className="group p-6" data-testid="features-key-card">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm font-medium">
-              <Icon name="keys" trigger="group-hover" size={16} className="text-primary" />
+              <Icon name="keys" size={16} className="text-primary" />
               Production key
             </span>
             <Badge variant="success">Active</Badge>
           </div>
           <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-sm">
-            <span className="truncate text-muted-foreground">pk_live_3kQ9••••••••••••••••f7Az</span>
+            <span className="truncate text-muted-foreground">pp_live_3kQ9••••••••••••••••f7Az</span>
             <Icon name="lock" size={15} className="shrink-0 text-success" />
           </div>
           <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -377,7 +377,7 @@ export default function FeaturesPage() {
         <Card className="group p-6" data-testid="features-webhook-card">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-sm font-medium">
-              <Icon name="webhook" trigger="group-hover" size={16} className="text-primary" />
+              <Icon name="webhook" size={16} className="text-primary" />
               flipmart.in/api/postpin/webhook
             </span>
             <Badge variant="success">Healthy</Badge>
@@ -506,12 +506,12 @@ export default function FeaturesPage() {
               <Button asChild variant="gradient" size="lg">
                 <Link href="/signup" data-testid="features-cta-signup-btn">
                   Start free
-                  <Icon name="arrowRight" trigger="group-hover" size={17} className="text-white" />
+                  <Icon name="arrowRight" size={17} className="text-white" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="/docs" data-testid="features-cta-docs-btn">
-                  <Icon name="code" trigger="group-hover" size={17} />
+                  <Icon name="code" size={17} />
                   Read the docs
                 </Link>
               </Button>

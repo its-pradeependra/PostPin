@@ -273,7 +273,7 @@ export default function AdminPlansPage() {
         description="Define the commercial catalog — pricing, quota, limits and features for every subscription tier."
       >
         <Button variant="gradient" className="group" onClick={openCreate} data-testid="plan-new-btn">
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="plus" size={16} className="text-white" />
           New plan
         </Button>
       </PageHeader>
@@ -383,7 +383,7 @@ export default function AdminPlansPage() {
                               onClick={() => openEdit(row)}
                               data-testid={`plan-edit-btn-${row.code}`}
                             >
-                              <Icon name="edit" trigger="group-hover" size={15} />
+                              <Icon name="edit" size={15} />
                               Edit
                             </Button>
                             {row.is_active ? (
@@ -407,7 +407,7 @@ export default function AdminPlansPage() {
                                       disabled={toggleM.isPending}
                                       data-testid={`plan-archive-btn-${row.code}`}
                                     >
-                                      <Icon name="trash" trigger="group-hover" size={15} />
+                                      <Icon name="trash" size={15} />
                                       Deactivate
                                     </Button>
                                   }
@@ -421,7 +421,7 @@ export default function AdminPlansPage() {
                                   onClick={() => toggleM.mutate({ plan: row, active: false })}
                                   data-testid={`plan-archive-btn-${row.code}`}
                                 >
-                                  <Icon name="trash" trigger="group-hover" size={15} />
+                                  <Icon name="trash" size={15} />
                                   Deactivate
                                 </Button>
                               )
@@ -434,7 +434,7 @@ export default function AdminPlansPage() {
                                 onClick={() => toggleM.mutate({ plan: row, active: true })}
                                 data-testid={`plan-restore-btn-${row.code}`}
                               >
-                                <Icon name="rocket" trigger="group-hover" size={15} />
+                                <Icon name="rocket" size={15} />
                                 Activate
                               </Button>
                             )}
@@ -531,7 +531,7 @@ export default function AdminPlansPage() {
                       onClick={() => openEdit(row)}
                       data-testid={`plan-card-edit-btn-${row.code}`}
                     >
-                      <Icon name="edit" trigger="group-hover" size={14} />
+                      <Icon name="edit" size={14} />
                       Edit
                     </Button>
                   </CardFooter>
@@ -733,7 +733,7 @@ export default function AdminPlansPage() {
                   onClick={addFeature}
                   data-testid="plan-feature-add-btn"
                 >
-                  <Icon name="plus" trigger="group-hover" size={15} />
+                  <Icon name="plus" size={15} />
                   Add
                 </Button>
               </div>
@@ -760,7 +760,7 @@ export default function AdminPlansPage() {
                         data-testid={`plan-feature-remove-btn-${i}`}
                         aria-label={`Remove ${feature}`}
                       >
-                        <Icon name="trash" trigger="group-hover" size={14} />
+                        <Icon name="trash" size={14} />
                       </Button>
                     </li>
                   ))}
@@ -820,7 +820,7 @@ export default function AdminPlansPage() {
               disabled={editorBusy}
               data-testid="plan-editor-save-btn"
             >
-              <Icon name="check" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="check" size={16} className="text-white" />
               {editorBusy ? "Saving…" : isCreating ? "Create plan" : "Save changes"}
             </Button>
           </DialogFooter>

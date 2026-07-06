@@ -63,12 +63,12 @@ export default function BillingPage() {
       <PageHeader title="Billing & plans" description="Manage your subscription and review recent invoices." eyebrow="Account">
         <Button variant="outline" asChild data-testid="billing-invoices-link">
           <Link href="/app/billing/invoices" className="group">
-            <Icon name="invoice" trigger="group-hover" size={16} /> Invoices
+            <Icon name="invoice" size={16} /> Invoices
           </Link>
         </Button>
         <Button variant="gradient" asChild data-testid="billing-change-plan-btn">
           <Link href="/app/billing/plans" className="group">
-            <Icon name="rocket" trigger="group-hover" size={16} className="text-white" /> Change plan
+            <Icon name="rocket" size={16} className="text-white" /> Change plan
           </Link>
         </Button>
       </PageHeader>
@@ -91,7 +91,7 @@ export default function BillingPage() {
                   <CardDescription>Your active subscription and included usage.</CardDescription>
                   <CardAction>
                     <span className="grid size-11 place-items-center rounded-2xl bg-brand-gradient-soft text-primary">
-                      <Icon name="billing" trigger="loop" animation="float" size={22} />
+                      <Icon name="billing" size={22} />
                     </span>
                   </CardAction>
                 </CardHeader>
@@ -122,7 +122,7 @@ export default function BillingPage() {
                 <CardFooter className="flex flex-wrap gap-2">
                   <Button variant="gradient" asChild className="group" data-testid="billing-change-plan-cta">
                     <Link href="/app/billing/plans">
-                      <Icon name="trending" trigger="group-hover" size={16} className="text-white" /> Change plan
+                      <Icon name="trending" size={16} className="text-white" /> Change plan
                     </Link>
                   </Button>
                   {!isFree && <CancelDialog onConfirm={() => cancelM.mutate()} pending={cancelM.isPending} />}
@@ -136,7 +136,7 @@ export default function BillingPage() {
                   <CardDescription>Calls in the current billing cycle.</CardDescription>
                   <CardAction>
                     <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                      <Icon name="gauge" trigger="loop" size={18} />
+                      <Icon name="gauge" size={18} />
                     </span>
                   </CardAction>
                 </CardHeader>
@@ -179,7 +179,7 @@ export default function BillingPage() {
                 <CardDescription>How subscription charges are processed.</CardDescription>
                 <CardAction>
                   <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                    <Icon name="wallet" trigger="loop" size={18} />
+                    <Icon name="wallet" size={18} />
                   </span>
                 </CardAction>
               </CardHeader>
@@ -205,7 +205,7 @@ export default function BillingPage() {
                 <CardAction>
                   <Button variant="ghost" size="sm" asChild className="group" data-testid="billing-view-all-invoices-btn">
                     <Link href="/app/billing/invoices">
-                      View all <Icon name="arrowRight" trigger="group-hover" size={15} />
+                      View all <Icon name="arrowRight" size={15} />
                     </Link>
                   </Button>
                 </CardAction>
@@ -257,7 +257,7 @@ function CancelDialog({ onConfirm, pending }: { onConfirm: () => void; pending: 
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="ghost" className="group text-muted-foreground" data-testid="billing-cancel-btn">
-          <Icon name="close" trigger="group-hover" size={16} /> Cancel plan
+          <Icon name="close" size={16} /> Cancel plan
         </Button>
       </DialogTrigger>
       <DialogContent data-testid="billing-cancel-dialog">

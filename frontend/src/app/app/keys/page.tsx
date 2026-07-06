@@ -193,7 +193,7 @@ function CreateKeyDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="gradient" className="group" data-testid="key-create-btn">
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="plus" size={16} className="text-white" />
           Create key
         </Button>
       </DialogTrigger>
@@ -302,7 +302,7 @@ function RowActions({
           aria-label={`Actions for ${apiKey.name}`}
           data-testid={`key-row-actions-${apiKey.id}`}
         >
-          <Icon name="more" trigger="group-hover" size={16} />
+          <Icon name="more" size={16} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">

@@ -44,7 +44,6 @@ export function SettingsNav() {
             >
               <Icon
                 name={tab.icon}
-                trigger="group-hover"
                 size={16}
                 className={active ? "text-primary" : undefined}
               />

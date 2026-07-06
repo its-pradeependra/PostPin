@@ -145,12 +145,12 @@ function LoginForm() {
           >
             {loading ? (
               <>
-                <Icon name="sync" trigger="loop" size={16} className="text-white" /> Verifying…
+                <Icon name="sync" size={16} className="text-white" /> Verifying…
               </>
             ) : (
               <>
                 Verify
-                <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="arrowRight" size={16} className="text-white" />
               </>
             )}
           </Button>
@@ -233,7 +233,7 @@ function LoginForm() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               data-testid="login-password-toggle"
             >
-              <Icon name={showPassword ? "eyeOff" : "eye"} trigger="group-hover" size={16} />
+              <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
             </button>
           </div>
         </div>
@@ -261,12 +261,12 @@ function LoginForm() {
         >
           {loading ? (
             <>
-              <Icon name="sync" trigger="loop" size={16} className="text-white" /> Logging in…
+              <Icon name="sync" size={16} className="text-white" /> Logging in…
             </>
           ) : (
             <>
               Log in
-              <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="arrowRight" size={16} className="text-white" />
             </>
           )}
         </Button>

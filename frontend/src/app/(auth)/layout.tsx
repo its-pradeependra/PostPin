@@ -35,7 +35,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute -bottom-24 -right-24 size-[28rem] rounded-full bg-white/10 blur-3xl" />
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Icon name="zap" trigger="loop" animation="pulse" size={18} className="text-white" />
+            <Icon name="zap" size={18} className="text-white" />
             Sub-50ms shipping rates · 1,57,000+ pincodes
           </div>
           <div className="space-y-6">

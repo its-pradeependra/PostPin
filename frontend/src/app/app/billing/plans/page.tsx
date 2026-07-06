@@ -97,7 +97,7 @@ export default function PlansPage() {
       <PageHeader title="Plans & pricing" description="Pick the plan that fits your shipping volume. Prices exclude 18% GST." eyebrow="Account">
         <Button variant="outline" asChild className="group" data-testid="plans-back-btn">
           <Link href="/app/billing">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" /> Back to billing
+            <Icon name="arrowRight" size={16} className="rotate-180" /> Back to billing
           </Link>
         </Button>
       </PageHeader>
@@ -185,7 +185,7 @@ export default function PlansPage() {
                   {isContact ? (
                     <Button variant="outline" className="group w-full" asChild data-testid={`plans-contact-btn-${plan.id}`}>
                       <Link href="/app/support/new">
-                        <Icon name="headphones" trigger="group-hover" size={16} /> Talk to sales
+                        <Icon name="headphones" size={16} /> Talk to sales
                       </Link>
                     </Button>
                   ) : isCurrent ? (
@@ -199,7 +199,7 @@ export default function PlansPage() {
                       onClick={() => setSelected(plan)}
                       data-testid={`plans-${action}-btn-${plan.id}`}
                     >
-                      <Icon name={action === "upgrade" ? "rocket" : "arrowRight"} trigger="group-hover" size={16} className={action === "upgrade" ? "text-white" : undefined} />
+                      <Icon name={action === "upgrade" ? "rocket" : "arrowRight"} size={16} className={action === "upgrade" ? "text-white" : undefined} />
                       {action === "upgrade" ? "Upgrade" : "Downgrade"}
                     </Button>
                   )}
@@ -341,7 +341,7 @@ function CheckoutDialog({
                       </Button>
                     ) : (
                       <Button variant="secondary" className="group shrink-0" onClick={applyCoupon} disabled={applying || !couponInput.trim()} data-testid="plans-coupon-apply-btn">
-                        <Icon name="tag" trigger="group-hover" size={16} /> {applying ? "Checking…" : "Apply"}
+                        <Icon name="tag" size={16} /> {applying ? "Checking…" : "Apply"}
                       </Button>
                     )}
                   </div>
@@ -367,7 +367,7 @@ function CheckoutDialog({
                 Cancel
               </Button>
               <Button variant="gradient" className="group" onClick={() => onConfirm(applied?.code)} disabled={pending} data-testid="plans-checkout-confirm-btn">
-                <Icon name="checkCircle" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="checkCircle" size={16} className="text-white" />
                 {pending ? "Processing…" : toFree ? "Confirm downgrade" : "Confirm & pay"}
               </Button>
             </DialogFooter>

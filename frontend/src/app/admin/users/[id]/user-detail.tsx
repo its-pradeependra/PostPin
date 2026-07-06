@@ -241,7 +241,7 @@ function DetailBody({
                   aria-label="More actions"
                   data-testid="user-detail-more-btn"
                 >
-                  <Icon name="more" trigger="group-hover" size={16} />
+                  <Icon name="more" size={16} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -566,7 +566,7 @@ function DetailBody({
       <div>
         <Button variant="ghost" asChild className="group" data-testid="user-detail-back-btn">
           <Link href="/admin/users">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" />
+            <Icon name="arrowRight" size={16} className="rotate-180" />
             All tenants
           </Link>
         </Button>
@@ -666,7 +666,7 @@ function ImpersonateDialog({
             onClick={() => goM.mutate()}
             data-testid="impersonate-confirm-btn"
           >
-            <Icon name="users" trigger="group-hover" size={16} className="text-white" />
+            <Icon name="users" size={16} className="text-white" />
             {goM.isPending ? "Verifying…" : "Impersonate"}
           </Button>
         </DialogFooter>

@@ -112,7 +112,7 @@ export default function NotificationsPage() {
           onClick={() => allReadM.mutate()}
           data-testid="notif-mark-all-read-btn"
         >
-          <Icon name="checkCircle" trigger="group-hover" size={16} className="text-success" />
+          <Icon name="checkCircle" size={16} className="text-success" />
           Mark all read
         </Button>
       </PageHeader>
@@ -127,7 +127,7 @@ export default function NotificationsPage() {
           >
             <Button variant="gradient" asChild className="group" data-testid="notif-empty-settings-btn">
               <Link href="/app/settings">
-                <Icon name="settings2" trigger="group-hover" size={16} className="text-white" />
+                <Icon name="settings2" size={16} className="text-white" />
                 Notification preferences
               </Link>
             </Button>
@@ -147,7 +147,7 @@ export default function NotificationsPage() {
               <Card data-testid="notif-preferences-card">
                 <CardHeader>
                   <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                    <Icon name="settings2" trigger="loop" animation="spin" size={20} />
+                    <Icon name="settings2" size={20} />
                   </span>
                   <CardTitle className="mt-3 text-base">Notification preferences</CardTitle>
                   <CardDescription>
@@ -157,9 +157,9 @@ export default function NotificationsPage() {
                 <CardContent>
                   <Button variant="gradient" asChild className="group w-full" data-testid="notif-preferences-link">
                     <Link href="/app/settings">
-                      <Icon name="settings" trigger="group-hover" size={16} className="text-white" />
+                      <Icon name="settings" size={16} className="text-white" />
                       Manage preferences
-                      <Icon name="arrowRight" trigger="group-hover" size={16} className="ml-auto text-white" />
+                      <Icon name="arrowRight" size={16} className="ml-auto text-white" />
                     </Link>
                   </Button>
                 </CardContent>
@@ -223,7 +223,7 @@ function NotificationRow({ notification, onRead }: { notification: AppNotificati
         <span
           className={cn("mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl border", meta.tint, meta.ring, meta.iconColor)}
         >
-          <Icon name={meta.icon} trigger="group-hover" size={18} />
+          <Icon name={meta.icon} size={18} />
         </span>
 
         <div className="min-w-0 flex-1 space-y-1">

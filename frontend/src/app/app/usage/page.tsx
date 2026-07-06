@@ -110,7 +110,7 @@ export default function UsageAnalyticsPage() {
           </SelectContent>
         </Select>
         <Button variant="outline" className="group" onClick={handleExportCsv} data-testid="usage-export-csv-btn">
-          <Icon name="download" trigger="group-hover" size={16} /> Export CSV
+          <Icon name="download" size={16} /> Export CSV
         </Button>
       </PageHeader>
 

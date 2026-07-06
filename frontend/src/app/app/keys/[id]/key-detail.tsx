@@ -86,7 +86,7 @@ export function KeyDetail({ keyId }: { keyId: string }) {
         className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         data-testid="key-detail-back-link"
       >
-        <Icon name="arrowRight" trigger="group-hover" size={14} className="rotate-180" />
+        <Icon name="arrowRight" size={14} className="rotate-180" />
         Back to API keys
       </Link>
 
@@ -104,7 +104,7 @@ export function KeyDetail({ keyId }: { keyId: string }) {
                     disabled={apiKey.status === "revoked"}
                     data-testid="key-detail-revoke-btn"
                   >
-                    <Icon name="trash" trigger="group-hover" size={16} className="text-white" />
+                    <Icon name="trash" size={16} className="text-white" />
                     Revoke
                   </Button>
                 }
@@ -203,7 +203,7 @@ export function KeyDetail({ keyId }: { keyId: string }) {
                         data-testid="key-detail-domain-input"
                       />
                       <Button variant="secondary" onClick={addDomain} className="group shrink-0" data-testid="key-detail-domain-add-btn">
-                        <Icon name="plus" trigger="group-hover" size={16} />
+                        <Icon name="plus" size={16} />
                         Add domain
                       </Button>
                     </div>
@@ -225,7 +225,7 @@ export function KeyDetail({ keyId }: { keyId: string }) {
                               aria-label={`Remove ${d}`}
                               data-testid={`key-detail-domain-remove-${d}`}
                             >
-                              <Icon name="close" trigger="group-hover" size={16} />
+                              <Icon name="close" size={16} />
                             </Button>
                           </li>
                         ))}

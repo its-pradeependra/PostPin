@@ -37,7 +37,7 @@ export function PlanUsageCard({
         data-testid="sidebar-upgrade-link"
         className="group mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-2 text-xs font-semibold text-white shadow-glow transition-transform hover:-translate-y-0.5"
       >
-        <Icon name="rocket" trigger="group-hover" size={14} className="text-white" />
+        <Icon name="rocket" size={14} className="text-white" />
         Upgrade plan
       </Link>
     </div>

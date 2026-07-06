@@ -194,7 +194,7 @@ export function RateCalculator({
           fieldRing,
         )}
       >
-        <Icon name="sync" trigger="hover" animation="spin" size={14} />
+        <Icon name="sync" size={14} />
       </button>
       <Input
         id="calc-dest"
@@ -276,7 +276,7 @@ export function RateCalculator({
         )}
       >
         <span className="flex items-center gap-2">
-          <Icon name="boxes" trigger="group-hover" size={16} className="text-primary" />
+          <Icon name="boxes" size={16} className="text-primary" />
           Package dimensions
           <span className="text-xs font-normal text-muted-foreground">optional</span>
         </span>
@@ -325,9 +325,9 @@ export function RateCalculator({
       className="w-full"
     >
       {loading ? (
-        <Icon name="sync" trigger="loop" animation="spin" size={18} className="text-white" />
+        <Icon name="sync" size={18} className="text-white" />
       ) : (
-        <Icon name="calculator" trigger="group-hover" size={18} className="text-white" />
+        <Icon name="calculator" size={18} className="text-white" />
       )}
       {loading ? "Calculating…" : "Calculate shipping"}
     </Button>
@@ -434,7 +434,7 @@ function ResultStrip({ result, loading }: { result: RateResult | null; loading?:
         className="flex items-center justify-between border-t border-primary/10 bg-muted/40 px-5 py-4 text-sm text-muted-foreground"
       >
         <span>{loading ? "Calculating your quote…" : "Hit Calculate for a live quote"}</span>
-        <Icon name="truck" trigger="loop" animation="float" size={18} className="text-primary" />
+        <Icon name="truck" size={18} className="text-primary" />
       </div>
     );
   }
@@ -488,14 +488,14 @@ export function RateResultView({ result, loading }: { result: RateResult | null;
   if (loading && !result) {
     return (
       <div className="flex h-full min-h-56 items-center justify-center">
-        <Icon name="sync" trigger="loop" animation="spin" size={26} className="text-primary" />
+        <Icon name="sync" size={26} className="text-primary" />
       </div>
     );
   }
   if (!result) {
     return (
       <div className="flex h-full min-h-56 flex-col items-center justify-center text-center text-sm text-muted-foreground">
-        <Icon name="truck" trigger="loop" animation="float" size={28} className="mb-2 text-primary" />
+        <Icon name="truck" size={28} className="mb-2 text-primary" />
         Hit “Calculate shipping” to see your live quote.
       </div>
     );

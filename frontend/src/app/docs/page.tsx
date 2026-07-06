@@ -58,7 +58,7 @@ const RATE_BODY = `{
   "declared_value": 1499
 }`;
 
-const CURL_SNIPPET = `curl ${site.apiBase}/rates \\
+const CURL_SNIPPET = `curl ${site.apiBase}/rates/calculate \\
   -H "Authorization: Bearer pp_live_3kQ9xR2pLmZ" \\
   -H "Content-Type: application/json" \\
   -d '${RATE_BODY}'`;
@@ -122,27 +122,25 @@ const SERVICEABILITY_CURL = `curl ${site.apiBase}/serviceability/781001 \\
   -H "Authorization: Bearer pp_live_3kQ9xR2pLmZ"`;
 
 const SERVICEABILITY_RESPONSE = `{
-  "pincode": "781001",
-  "serviceable": true,
-  "city": "Guwahati",
-  "state": "Assam",
-  "zone": "special",
-  "zone_label": "Special / Remote",
-  "cod_available": true,
-  "eta_days": [5, 9]
+  "data": {
+    "pincode": "781001",
+    "serviceable": true,
+    "found": true,
+    "city": "Guwahati",
+    "state": "Assam"
+  },
+  "meta": { "request_id": "req_7Yh2mKp", "api_version": "v1" }
 }`;
 
 const PINCODES_CURL = `curl "${site.apiBase}/pincodes?q=jaipur&limit=5" \\
   -H "Authorization: Bearer pp_live_3kQ9xR2pLmZ"`;
 
 const PINCODES_RESPONSE = `{
-  "object": "list",
   "data": [
-    { "pincode": "302001", "city": "Jaipur", "state": "Rajasthan", "metro": false },
-    { "pincode": "302002", "city": "Jaipur", "state": "Rajasthan", "metro": false }
+    { "pincode": "302001", "city": "Jaipur", "state": "Rajasthan", "metro": false, "serviceable": true },
+    { "pincode": "302002", "city": "Jaipur", "state": "Rajasthan", "metro": false, "serviceable": true }
   ],
-  "has_more": false,
-  "synced_at": "2026-06-26T00:30:00+05:30"
+  "meta": { "request_id": "req_9Kd4nQw", "api_version": "v1", "has_more": false }
 }`;
 
 const WEBHOOK_PAYLOAD = `POST /your-endpoint  HTTP/1.1
@@ -390,12 +388,12 @@ export default function DocsPage() {
         <div className="flex shrink-0 flex-wrap items-center gap-3">
           <Button asChild variant="outline" className="group" data-testid="docs-quickstart-btn">
             <Link href="#quickstart">
-              <Icon name="rocket" trigger="group-hover" size={16} /> Quickstart
+              <Icon name="rocket" size={16} /> Quickstart
             </Link>
           </Button>
           <Button asChild variant="gradient" className="group" data-testid="docs-getkey-btn">
             <Link href="/signup">
-              <Icon name="key" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="key" size={16} className="text-white" />
               Get API key
             </Link>
           </Button>
@@ -424,7 +422,6 @@ export default function DocsPage() {
                   >
                     <Icon
                       name={item.icon}
-                      trigger="group-hover"
                       size={16}
                       className="text-primary"
                     />
@@ -447,7 +444,7 @@ export default function DocsPage() {
                 data-testid="docs-sidebar-getkey-btn"
               >
                 <Link href="/signup">
-                  <Icon name="sparkles" trigger="group-hover" size={14} className="text-white" />
+                  <Icon name="sparkles" size={14} className="text-white" />
                   Get API key
                 </Link>
               </Button>
@@ -815,7 +812,7 @@ export default function DocsPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild variant="outline" className="group" data-testid="docs-sdk-github-btn">
                 <Link href="https://github.com/postpin" target="_blank" rel="noreferrer">
-                  <Icon name="github" trigger="group-hover" size={16} /> View on GitHub
+                  <Icon name="github" size={16} /> View on GitHub
                   <Icon name="external" size={14} className="text-muted-foreground" />
                 </Link>
               </Button>
@@ -876,13 +873,13 @@ export default function DocsPage() {
               <div className="flex flex-wrap gap-3">
                 <Button asChild variant="gradient" className="group" data-testid="docs-cta-getkey-btn">
                   <Link href="/signup">
-                    <Icon name="key" trigger="group-hover" size={16} className="text-white" />
+                    <Icon name="key" size={16} className="text-white" />
                     Get API key
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="group" data-testid="docs-cta-contact-btn">
                   <Link href="/contact">
-                    <Icon name="headphones" trigger="group-hover" size={16} /> Talk to sales
+                    <Icon name="headphones" size={16} /> Talk to sales
                   </Link>
                 </Button>
               </div>

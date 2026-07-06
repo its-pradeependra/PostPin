@@ -94,135 +94,129 @@ import {
 import {
   AnimatedIcon,
   type AnimatedIconProps,
-  type IconAnimation,
-  type IconTrigger,
 } from "./animated-icon";
 
 export { AnimatedIcon };
-export type { AnimatedIconProps, IconAnimation, IconTrigger };
+export type { AnimatedIconProps };
 
 /**
- * Central registry of every icon used across Postpin, each paired with a
- * sensible default animation. Nav/menu data references icons by key so it
- * stays serializable while still rendering animated icons.
+ * Central registry mapping a stable key → its Lucide icon. Nav/menu data
+ * references icons by key so it stays serializable. Icons are static.
  */
 export const iconRegistry = {
   // navigation / structure
-  dashboard: { icon: LayoutDashboard, animation: "pop" },
-  keys: { icon: KeyRound, animation: "wiggle" },
-  key: { icon: Key, animation: "wiggle" },
-  usage: { icon: BarChart3, animation: "bounce" },
-  analytics: { icon: LineChart, animation: "bounce" },
-  calculator: { icon: Calculator, animation: "pop" },
-  billing: { icon: CreditCard, animation: "swing" },
-  invoice: { icon: FileText, animation: "pop" },
-  fileText: { icon: FileText, animation: "pop" },
-  wallet: { icon: Wallet, animation: "bounce" },
-  support: { icon: LifeBuoy, animation: "spin" },
-  headphones: { icon: Headphones, animation: "pulse" },
-  ticket: { icon: Ticket, animation: "wiggle" },
-  settings: { icon: Settings, animation: "spin" },
-  settings2: { icon: Settings2, animation: "spin" },
-  profile: { icon: User, animation: "pop" },
-  users: { icon: Users, animation: "pop" },
-  admin: { icon: UserCog, animation: "wiggle" },
-  company: { icon: Building2, animation: "pop" },
-  docs: { icon: BookOpen, animation: "swing" },
-  book: { icon: Book, animation: "swing" },
-  code: { icon: Code2, animation: "pop" },
-  terminal: { icon: Terminal, animation: "pop" },
-  webhook: { icon: Webhook, animation: "pulse" },
-  notifications: { icon: Bell, animation: "swing" },
-  bellRing: { icon: BellRing, animation: "swing" },
+  dashboard: LayoutDashboard,
+  keys: KeyRound,
+  key: Key,
+  usage: BarChart3,
+  analytics: LineChart,
+  calculator: Calculator,
+  billing: CreditCard,
+  invoice: FileText,
+  fileText: FileText,
+  wallet: Wallet,
+  support: LifeBuoy,
+  headphones: Headphones,
+  ticket: Ticket,
+  settings: Settings,
+  settings2: Settings2,
+  profile: User,
+  users: Users,
+  admin: UserCog,
+  company: Building2,
+  docs: BookOpen,
+  book: Book,
+  code: Code2,
+  terminal: Terminal,
+  webhook: Webhook,
+  notifications: Bell,
+  bellRing: BellRing,
 
   // logistics / domain
-  truck: { icon: Truck, animation: "bounce" },
-  package: { icon: Package, animation: "bounce" },
-  packageCheck: { icon: PackageCheck, animation: "pop" },
-  boxes: { icon: Boxes, animation: "pop" },
-  pin: { icon: MapPin, animation: "bounce" },
-  map: { icon: Map, animation: "pop" },
-  zones: { icon: Layers, animation: "pop" },
-  rateCard: { icon: ListChecks, animation: "pop" },
-  database: { icon: Database, animation: "pulse" },
-  sync: { icon: RefreshCw, animation: "spin" },
-  coins: { icon: Coins, animation: "bounce" },
-  percent: { icon: Percent, animation: "wiggle" },
-  tag: { icon: Tag, animation: "swing" },
-  audit: { icon: ScrollText, animation: "pop" },
+  truck: Truck,
+  package: Package,
+  packageCheck: PackageCheck,
+  boxes: Boxes,
+  pin: MapPin,
+  map: Map,
+  zones: Layers,
+  rateCard: ListChecks,
+  database: Database,
+  sync: RefreshCw,
+  coins: Coins,
+  percent: Percent,
+  tag: Tag,
+  audit: ScrollText,
 
   // status / meta
-  activity: { icon: Activity, animation: "pulse" },
-  gauge: { icon: Gauge, animation: "pop" },
-  trending: { icon: TrendingUp, animation: "bounce" },
-  zap: { icon: Zap, animation: "ping" },
-  rocket: { icon: Rocket, animation: "bounce" },
-  sparkles: { icon: Sparkles, animation: "pulse" },
-  shield: { icon: Shield, animation: "pop" },
-  shieldCheck: { icon: ShieldCheck, animation: "pop" },
-  lock: { icon: Lock, animation: "wiggle" },
-  verified: { icon: BadgeCheck, animation: "pop" },
-  star: { icon: Star, animation: "ping" },
-  globe: { icon: Globe, animation: "spin" },
-  clock: { icon: Clock, animation: "spin" },
-  timer: { icon: Timer, animation: "pulse" },
-  dollar: { icon: DollarSign, animation: "bounce" },
+  activity: Activity,
+  gauge: Gauge,
+  trending: TrendingUp,
+  zap: Zap,
+  rocket: Rocket,
+  sparkles: Sparkles,
+  shield: Shield,
+  shieldCheck: ShieldCheck,
+  lock: Lock,
+  verified: BadgeCheck,
+  star: Star,
+  globe: Globe,
+  clock: Clock,
+  timer: Timer,
+  dollar: DollarSign,
 
   // actions
-  plus: { icon: Plus, animation: "pop" },
-  copy: { icon: Copy, animation: "pop" },
-  check: { icon: Check, animation: "pop" },
-  checkCircle: { icon: CheckCircle2, animation: "pop" },
-  edit: { icon: Pencil, animation: "wiggle" },
-  trash: { icon: Trash2, animation: "wiggle" },
-  search: { icon: Search, animation: "pop" },
-  filter: { icon: Filter, animation: "bounce" },
-  download: { icon: Download, animation: "bounce" },
-  upload: { icon: Upload, animation: "bounce" },
-  send: { icon: Send, animation: "jiggle" },
-  mail: { icon: Mail, animation: "swing" },
-  message: { icon: MessageSquare, animation: "pop" },
-  logout: { icon: LogOut, animation: "jiggle" },
-  link: { icon: Link2, animation: "pop" },
-  external: { icon: ExternalLink, animation: "pop" },
-  eye: { icon: Eye, animation: "pop" },
-  eyeOff: { icon: EyeOff, animation: "pop" },
-  more: { icon: MoreHorizontal, animation: "pop" },
-  wrench: { icon: Wrench, animation: "wiggle" },
-  menu: { icon: Menu, animation: "pop" },
-  close: { icon: X, animation: "pop" },
-  help: { icon: CircleHelp, animation: "pop" },
-  github: { icon: Github, animation: "pop" },
-  linkedin: { icon: Linkedin, animation: "pop" },
-  instagram: { icon: Instagram, animation: "pop" },
-  twitter: { icon: Twitter, animation: "pop" },
+  plus: Plus,
+  copy: Copy,
+  check: Check,
+  checkCircle: CheckCircle2,
+  edit: Pencil,
+  trash: Trash2,
+  search: Search,
+  filter: Filter,
+  download: Download,
+  upload: Upload,
+  send: Send,
+  mail: Mail,
+  message: MessageSquare,
+  logout: LogOut,
+  link: Link2,
+  external: ExternalLink,
+  eye: Eye,
+  eyeOff: EyeOff,
+  more: MoreHorizontal,
+  wrench: Wrench,
+  menu: Menu,
+  close: X,
+  help: CircleHelp,
+  github: Github,
+  linkedin: Linkedin,
+  instagram: Instagram,
+  twitter: Twitter,
 
   // arrows / chevrons
-  arrowRight: { icon: ArrowRight, animation: "jiggle" },
-  arrowUpRight: { icon: ArrowUpRight, animation: "pop" },
-  chevronDown: { icon: ChevronDown, animation: "bounce" },
-  chevronRight: { icon: ChevronRight, animation: "jiggle" },
+  arrowRight: ArrowRight,
+  arrowUpRight: ArrowUpRight,
+  chevronDown: ChevronDown,
+  chevronRight: ChevronRight,
 
   // theme
-  sun: { icon: Sun, animation: "spin" },
-  moon: { icon: Moon, animation: "swing" },
-} satisfies Record<string, { icon: LucideIcon; animation: IconAnimation }>;
+  sun: Sun,
+  moon: Moon,
+} satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof iconRegistry;
 
-export interface IconProps extends Omit<AnimatedIconProps, "icon" | "animation"> {
+export interface IconProps extends Omit<AnimatedIconProps, "icon"> {
   name: IconName;
-  /** Override the registry's default animation. */
-  animation?: IconAnimation;
 }
 
-/** Render a registered animated icon by name. */
-export function Icon({ name, animation, ...props }: IconProps) {
-  const entry = iconRegistry[name];
-  return <AnimatedIcon icon={entry.icon} animation={animation ?? entry.animation} {...props} />;
+/** Render a registered icon by name. Static — no animation. */
+export function Icon({ name, ...props }: IconProps) {
+  return <AnimatedIcon icon={iconRegistry[name]} {...props} />;
 }
 
-/** Resolve the raw Lucide component for a registry key (when AnimatedIcon isn't wanted). */
+/** Resolve the raw Lucide component for a registry key. */
 export function lucideFor(name: IconName): LucideIcon {
-  return iconRegistry[name].icon;
+  return iconRegistry[name];
 }

@@ -3,7 +3,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative w-full rounded-xl border px-4 py-3 text-sm grid grid-cols-[0_1fr] has-[>svg]:grid-cols-[calc(theme(spacing.4))_1fr] gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current",
+  // The first grid column hosts the icon: a bare <svg> or the <span>-wrapped
+  // animated <Icon />. Without either it collapses to 0 and text starts flush.
+  "relative w-full rounded-xl border px-4 py-3 text-sm grid grid-cols-[0_1fr] has-[>svg]:grid-cols-[calc(theme(spacing.6))_1fr] has-[>span]:grid-cols-[calc(theme(spacing.6))_1fr] gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current [&>span]:translate-y-0.5",
   {
     variants: {
       variant: {

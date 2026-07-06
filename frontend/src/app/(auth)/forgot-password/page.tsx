@@ -73,7 +73,7 @@ function ForgotForm() {
     return (
       <div className="space-y-6 text-center" data-testid="forgot-sent-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-gradient-soft">
-          <Icon name="mail" trigger="loop" animation="float" size={26} className="text-primary" />
+          <Icon name="mail" size={26} className="text-primary" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Check your email</h1>
@@ -92,12 +92,12 @@ function ForgotForm() {
             disabled={cooldown > 0}
             data-testid="forgot-resend-btn"
           >
-            <Icon name="sync" trigger="group-hover" size={16} />
+            <Icon name="sync" size={16} />
             {cooldown > 0 ? `Resend in 0:${String(cooldown).padStart(2, "0")}` : "Resend link"}
           </Button>
           <Button asChild variant="ghost" className="group w-full" data-testid="forgot-open-mail-btn">
             <a href="https://mail.google.com" target="_blank" rel="noopener noreferrer">
-              <Icon name="external" trigger="group-hover" size={16} /> Open your email app
+              <Icon name="external" size={16} /> Open your email app
             </a>
           </Button>
         </div>
@@ -120,7 +120,7 @@ function ForgotForm() {
         className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
         data-testid="forgot-back-link"
       >
-        <Icon name="arrowRight" trigger="group-hover" size={14} className="rotate-180" /> Back to log in
+        <Icon name="arrowRight" size={14} className="rotate-180" /> Back to log in
       </Link>
 
       <div className="space-y-2">
@@ -163,12 +163,12 @@ function ForgotForm() {
         >
           {loading ? (
             <>
-              <Icon name="sync" trigger="loop" size={16} className="text-white" /> Sending…
+              <Icon name="sync" size={16} className="text-white" /> Sending…
             </>
           ) : (
             <>
               Send reset link
-              <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="send" size={16} className="text-white" />
             </>
           )}
         </Button>

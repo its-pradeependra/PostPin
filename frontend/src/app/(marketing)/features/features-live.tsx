@@ -45,7 +45,7 @@ export function SyncSnapshotCard() {
     <Card className="group p-6" data-testid="features-sync-card">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-sm font-medium">
-          <Icon name="sync" trigger="loop" animation="spin" size={16} className="text-primary" />
+          <Icon name="sync" size={16} className="text-primary" />
           Pincode master · live coverage
         </span>
         <Badge variant="success">Live</Badge>

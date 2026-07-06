@@ -86,7 +86,7 @@ function AcceptInviteForm() {
     return (
       <div className="space-y-6 text-center" data-testid="accept-invite-expired-card">
         <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-warning/12">
-          <Icon name="clock" trigger="loop" animation="pulse" size={26} className="text-warning" />
+          <Icon name="clock" size={26} className="text-warning" />
         </div>
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">Invitation expired</h1>
@@ -155,7 +155,7 @@ function AcceptInviteForm() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               data-testid="accept-invite-password-toggle"
             >
-              <Icon name={showPassword ? "eyeOff" : "eye"} trigger="group-hover" size={16} />
+              <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
             </button>
           </div>
 
@@ -197,12 +197,12 @@ function AcceptInviteForm() {
         <Button type="submit" variant="gradient" size="lg" className="group w-full" disabled={loading} data-testid="accept-invite-submit-btn">
           {loading ? (
             <>
-              <Icon name="sync" trigger="loop" size={16} className="text-white" /> Joining…
+              <Icon name="sync" size={16} className="text-white" /> Joining…
             </>
           ) : (
             <>
               Join the team
-              <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="arrowRight" size={16} className="text-white" />
             </>
           )}
         </Button>

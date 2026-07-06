@@ -128,7 +128,7 @@ export default function SyncLogsPage() {
 
           <Button variant="gradient" size="sm" asChild data-testid="sync-logs-run-sync-link">
             <Link href="/admin/pincodes" className="group">
-              <Icon name="upload" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="upload" size={16} className="text-white" />
               Import CSV
             </Link>
           </Button>
@@ -206,7 +206,6 @@ export default function SyncLogsPage() {
                             {run.id.slice(-8)}
                             <Icon
                               name="arrowRight"
-                              trigger="group-hover"
                               size={13}
                               className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                             />
@@ -316,7 +315,7 @@ export default function SyncLogsPage() {
                       <Badge variant={trig.variant}>{trig.label}</Badge>
                       <span className="flex items-center gap-1 text-xs text-primary">
                         View detail
-                        <Icon name="arrowRight" trigger="group-hover" size={13} />
+                        <Icon name="arrowRight" size={13} />
                       </span>
                     </div>
                   </button>
@@ -489,7 +488,7 @@ function SyncRunDrawer({
                 data-testid="sync-run-rerun-link"
               >
                 <Link href="/admin/pincodes" className="group">
-                  <Icon name="upload" trigger="group-hover" size={16} className="text-white" />
+                  <Icon name="upload" size={16} className="text-white" />
                   Import a new CSV
                 </Link>
               </Button>

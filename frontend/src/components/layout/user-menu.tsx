@@ -35,7 +35,7 @@ export function UserMenu({ name, email, avatar, variant = "portal", onSignOut }:
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback>{initials(name)}</AvatarFallback>
           </Avatar>
-          <Icon name="chevronDown" trigger="hover" size={14} className="text-muted-foreground" />
+          <Icon name="chevronDown" size={14} className="text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

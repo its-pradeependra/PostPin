@@ -349,7 +349,7 @@ export default function WebhooksPage() {
           disabled={hooks.length >= cap}
           data-testid="webhook-add-btn"
         >
-          <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+          <Icon name="plus" size={16} className="text-white" />
           Add endpoint
         </Button>
       </PageHeader>
@@ -372,7 +372,7 @@ export default function WebhooksPage() {
             testId="webhook-empty-state"
           >
             <Button variant="gradient" onClick={() => setCreateOpen(true)} className="group" data-testid="webhook-empty-add-btn">
-              <Icon name="plus" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="plus" size={16} className="text-white" />
               Add endpoint
             </Button>
           </EmptyState>
@@ -437,7 +437,7 @@ export default function WebhooksPage() {
                               disabled={testM.isPending}
                               data-testid={`webhook-test-${h.id}`}
                             >
-                              <Icon name="sync" trigger="group-hover" size={14} />
+                              <Icon name="sync" size={14} />
                               Send test
                             </Button>
                             <DropdownMenu>
@@ -527,7 +527,7 @@ export default function WebhooksPage() {
                         disabled={testM.isPending}
                         data-testid={`webhook-card-test-${h.id}`}
                       >
-                        <Icon name="sync" trigger="group-hover" size={14} />
+                        <Icon name="sync" size={14} />
                         Send test
                       </Button>
                       <Button
@@ -617,7 +617,7 @@ export default function WebhooksPage() {
                               disabled={replayM.isPending}
                               data-testid={`webhook-delivery-replay-${d.id}`}
                             >
-                              <Icon name="sync" trigger="group-hover" size={14} />
+                              <Icon name="sync" size={14} />
                               Replay
                             </Button>
                           </TableCell>
@@ -660,7 +660,7 @@ export default function WebhooksPage() {
                         disabled={replayM.isPending}
                         data-testid={`webhook-delivery-card-replay-${d.id}`}
                       >
-                        <Icon name="sync" trigger="group-hover" size={14} />
+                        <Icon name="sync" size={14} />
                         Replay
                       </Button>
                     </div>

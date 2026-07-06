@@ -97,7 +97,7 @@ function RevokeAction({
           disabled={pending}
           data-testid={`${idPrefix}-revoke-btn-${apiKey.id}`}
         >
-          <Icon name="trash" trigger="group-hover" size={15} />
+          <Icon name="trash" size={15} />
           Revoke
         </Button>
       }
@@ -239,7 +239,7 @@ export default function ApiKeysAuditPage() {
           disabled={keys.length === 0}
           data-testid="apikeys-export-btn"
         >
-          <Icon name="download" trigger="group-hover" size={16} /> Export
+          <Icon name="download" size={16} /> Export
         </Button>
       </PageHeader>
 
@@ -532,7 +532,7 @@ export default function ApiKeysAuditPage() {
                   data-testid="apikeys-next-page-btn"
                 >
                   Next
-                  <Icon name="arrowRight" trigger="group-hover" size={15} />
+                  <Icon name="arrowRight" size={15} />
                 </Button>
               </div>
             </div>

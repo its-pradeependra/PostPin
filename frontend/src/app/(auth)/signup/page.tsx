@@ -199,7 +199,7 @@ function SignupForm() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               data-testid="signup-password-toggle"
             >
-              <Icon name={showPassword ? "eyeOff" : "eye"} trigger="group-hover" size={16} />
+              <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
             </button>
           </div>
 
@@ -271,12 +271,12 @@ function SignupForm() {
         >
           {loading ? (
             <>
-              <Icon name="sync" trigger="loop" size={16} className="text-white" /> Creating account…
+              <Icon name="sync" size={16} className="text-white" /> Creating account…
             </>
           ) : (
             <>
               Create account
-              <Icon name="arrowRight" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="arrowRight" size={16} className="text-white" />
             </>
           )}
         </Button>

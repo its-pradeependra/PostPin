@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardHeader,
@@ -74,7 +74,7 @@ export default function RateCardsPage() {
       >
         <Button variant="outline" asChild className="group" data-testid="ratecard-custom-pricing-btn">
           <Link href="/app/support/new">
-            <Icon name="sparkles" trigger="group-hover" size={16} />
+            <Icon name="sparkles" size={16} />
             Request custom pricing
           </Link>
         </Button>
@@ -82,18 +82,12 @@ export default function RateCardsPage() {
 
       {/* Intro context alert */}
       <Alert variant="info" data-testid="ratecard-intro-alert">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 grid size-5 shrink-0 place-items-center">
-            <Icon name="rateCard" size={18} />
-          </span>
-          <div className="space-y-0.5">
-            <p className="font-semibold leading-tight">These are the rate cards applied to your account</p>
-            <p className="text-sm opacity-90">
-              Rate cards are read-only here. Pricing is negotiated with our team — request a custom card if
-              your volumes have changed.
-            </p>
-          </div>
-        </div>
+        <Icon name="rateCard" size={16} />
+        <AlertTitle>These are the rate cards applied to your account</AlertTitle>
+        <AlertDescription>
+          Rate cards are read-only here. Pricing is negotiated with our team — request a custom card if
+          your volumes have changed.
+        </AlertDescription>
       </Alert>
 
       <QueryBoundary isLoading={isLoading} error={error} onRetry={() => void refetch()}>
@@ -106,7 +100,7 @@ export default function RateCardsPage() {
         >
           <Button variant="gradient" asChild className="group" data-testid="ratecard-empty-cta">
             <Link href="/app/support/new">
-              <Icon name="send" trigger="group-hover" size={16} className="text-white" />
+              <Icon name="send" size={16} className="text-white" />
               Talk to sales
             </Link>
           </Button>
@@ -153,7 +147,7 @@ export default function RateCardsPage() {
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                          <Icon name="rateCard" trigger="group-hover" size={18} />
+                          <Icon name="rateCard" size={18} />
                         </span>
                         <div className="min-w-0">
                           <CardTitle className="truncate text-base">{card.name}</CardTitle>
@@ -194,7 +188,7 @@ export default function RateCardsPage() {
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
                           View slabs
-                          <Icon name="arrowRight" trigger="group-hover" size={13} />
+                          <Icon name="arrowRight" size={13} />
                         </span>
                       )}
                     </CardFooter>
@@ -225,7 +219,7 @@ export default function RateCardsPage() {
                     data-testid="ratecard-how-quote-btn"
                   >
                     <Link href="/app/playground">
-                      <Icon name="calculator" trigger="group-hover" size={15} />
+                      <Icon name="calculator" size={15} />
                       How a quote is built
                     </Link>
                   </Button>
@@ -365,7 +359,7 @@ export default function RateCardsPage() {
                     <p className="text-xs text-muted-foreground">{zone.description}</p>
                     <div className="mt-auto flex items-center justify-between pt-1 text-xs">
                       <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                        <Icon name="clock" trigger="group-hover" size={13} className="text-primary" />
+                        <Icon name="clock" size={13} className="text-primary" />
                         {zone.etaDays[0]}–{zone.etaDays[1]} days
                       </span>
                       <span className="font-mono tabular-nums text-muted-foreground">
@@ -383,7 +377,7 @@ export default function RateCardsPage() {
               <Button variant="link" size="sm" asChild className="group h-auto p-0" data-testid="ratecard-support-link">
                 <Link href="/app/support/new">
                   Request custom pricing
-                  <Icon name="arrowRight" trigger="group-hover" size={14} />
+                  <Icon name="arrowRight" size={14} />
                 </Link>
               </Button>
             </CardFooter>
@@ -417,7 +411,7 @@ function SurchargeTile({
             className="group flex items-start gap-3 rounded-xl border border-border bg-card/50 p-3 text-left"
           >
             <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-gradient-soft text-primary">
-              <Icon name={icon} trigger="group-hover" size={16} />
+              <Icon name={icon} size={16} />
             </span>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">{label}</p>

@@ -67,7 +67,7 @@ export function TicketDetail({ ticketNumber }: { ticketNumber: string }) {
       <div>
         <Button variant="outline" asChild data-testid="ticket-detail-back-btn">
           <Link href="/app/support" className="group">
-            <Icon name="arrowRight" trigger="group-hover" size={16} className="rotate-180" />
+            <Icon name="arrowRight" size={16} className="rotate-180" />
             All tickets
           </Link>
         </Button>
