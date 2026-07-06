@@ -204,6 +204,13 @@ export async function createRateCard(input: RateCardInput) {
 
 export async function updateRateCard(id: string, patch: Partial<RateCardInput>) {
   if (id === "standard") throw AppError.badRequest("The Standard card cannot be edited");
+  const existing = await scopedRepo(RateCardModel).findById(id).lean();
+  if (!existing) throw AppError.notFound("Rate card not found");
+  // The ASSIGNED billing card is platform-managed: a tenant must never be able
+  // to rewrite the prices they are actually charged. Drafts stay editable.
+  if (existing.isDefault) {
+    throw AppError.forbidden("This card is assigned by Postpin and can only be changed by our team — contact support", "card_platform_managed");
+  }
   const set: Record<string, unknown> = {};
   if (patch.name !== undefined) set.name = patch.name;
   if (patch.serviceLevel !== undefined) set.serviceLevel = patch.serviceLevel;
@@ -217,6 +224,11 @@ export async function updateRateCard(id: string, patch: Partial<RateCardInput>) 
 
 export async function deleteRateCard(id: string) {
   if (id === "standard") throw AppError.badRequest("The Standard card cannot be deleted");
+  const existing = await scopedRepo(RateCardModel).findById(id).lean();
+  if (!existing) throw AppError.notFound("Rate card not found");
+  if (existing.isDefault) {
+    throw AppError.forbidden("This card is assigned by Postpin and can only be changed by our team — contact support", "card_platform_managed");
+  }
   const res = await scopedRepo(RateCardModel).findByIdAndUpdate(id, { $set: { isDeleted: true, status: "archived" } });
   if (!res) throw AppError.notFound("Rate card not found");
   await writeAudit({ action: "ratecard.deleted", category: "config", severity: "warning", resource: { kind: "rateCard", id, name: res.name } });

@@ -56,6 +56,7 @@ export const PERMISSIONS = [
   { key: "apikey:revoke.any", resource: "apikey", action: "revoke.any", group: "Platform API", scope: "platform", description: "Force-revoke any tenant's key", isDangerous: true },
   { key: "admin:write", resource: "admin", action: "write", group: "Platform", scope: "platform", description: "Manage platform staff" },
   { key: "settings:write", resource: "settings", action: "write", group: "Platform", scope: "platform", description: "Edit platform settings" },
+  { key: "blog:write", resource: "blog", action: "write", group: "Content", scope: "platform", description: "Create/edit/publish blog posts" },
   { key: "audit:read", resource: "audit", action: "read", group: "Platform", scope: "platform", description: "Read audit logs" },
   { key: "audit:export", resource: "audit", action: "export", group: "Platform", scope: "platform", description: "Export audit logs" },
 ] as const satisfies readonly PermissionDef[];

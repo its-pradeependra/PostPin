@@ -82,7 +82,9 @@ time by the scoped repo.
   (`Domain=.postpin.dev`, `SameSite=Strict`); dev uses `localhost` ports (`SameSite=Lax`,
   `Secure=false`). Access token is NOT a cookie — it is held in JS memory and sent as a Bearer.
   CORS allows the exact `WEB_ORIGIN` with credentials (never `*`). CSRF = double-submit on cookie-
-  bearing endpoints. Admin accounts require **TOTP** 2FA.
+  bearing endpoints. **TOTP 2FA** is available to every account (admin and tenant) with backup
+  codes and a two-step `/login → /login/2fa` challenge; enrollment is opt-in per user today —
+  mandatory-2FA-for-staff is an ops-hardening item, not yet enforced.
 
 ---
 
@@ -90,8 +92,8 @@ time by the scoped repo.
 
 ```mermaid
 flowchart LR
-  C[Browser / dashboard] -->|Bearer access JWT + credentials| MW[Next middleware.ts<br/>(edge: jose verify, gate /app /admin)]
-  MW --> API[Fastify /v1/*]
+  C[Browser / dashboard] -->|Bearer access JWT + credentials| GATE[SessionProvider<br/>(client gate: /me bootstrap,<br/>single-flight refresh, /app /admin redirect)]
+  GATE --> API[Fastify /v1/*]
   API --> AUTH[authenticate<br/>verify JWT, resolve permissions]
   AUTH --> CTX[RequestContext<br/>companyId frozen]
   CTX --> PERM[requirePermission key]

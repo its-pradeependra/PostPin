@@ -6,7 +6,7 @@
 >
 > Status: 🔴 todo · 🟡 in progress · 🟢 done · ⏸ blocked
 
-**Last updated:** 2026-07-01 · **Current milestone:** M3 next · **Overall:** M0 ✅, M1 ✅, **M2 ✅**, **M2b ✅ VERIFIED** (backend 30/30; dashboard + usage pages live)
+**Last updated:** 2026-07-04 · **Current milestone:** ALL SHIPPED (M0–M7 + admin deferrals + gap-fix sweep) · **Overall:** M0–M7 ✅ · backend **150/150** vitest · zero mock-data imports · zero "coming soon" UI
 
 ## M2b — Dashboard + usage reads ✅ VERIFIED
 - Backend: `GET /v1/subscription` (plan + real quota from apiLogs since period start), `GET /v1/usage/{summary,series,logs,endpoints,status}` (apiLogs aggregation). Enriched apiLogs with `detail` {origin,destination,zone}. `services/usage.service.ts` + `routes/{usage,subscription}.routes.ts`. **30/30 vitest** (M2b: 2).
@@ -22,21 +22,21 @@
 | Key-auth + keyed rate API + Redis limit/quota + apiLogs | `middleware/api-key-auth.js` + `routes/rates.routes.js` | — | vitest ✅ (create→use→revoke→401) | 🟢 |
 | Rate calculator → public API | — | `components/shipping/rate-calculator.tsx` | typecheck ✅ | 🟢 |
 | Fix `/legal/sla` dead link | — | `status/page.tsx` → `/legal/terms#sla` | ✅ | 🟢 |
-| `/pricing` → `/v1/public/plans` | ✅ endpoint | still reads mock `plans` (identical data) | — | 🟡 residual (cosmetic) |
-| Keys detail `/app/keys/[id]` | (needs GET /v1/keys/:id) | still mock | — | 🔴 residual |
-| Dashboard/usage reads (apiLogs aggregation) | (needs /v1/usage) | skeletons | — | 🔴 M2b/M3 |
+| `/pricing` → `/v1/public/plans` | ✅ endpoint | wired via react-query (comparison table from live plans) | ✅ | 🟢 |
+| Keys detail `/app/keys/[id]` | `GET /v1/keys/:id` + per-key logs | fully wired (react-query) | browser ✅ | 🟢 |
+| Dashboard/usage reads (apiLogs aggregation) | `/v1/usage/*` + `/v1/subscription` | dashboard + usage pages live | 30/30 + browser ✅ | 🟢 (see M2b above) |
 
 **M2 gate: ✅ 28/28 vitest + ✅ browser E2E 6/6** — anon landing quote (public API); login; create key (UI, one-time `pp_test_` secret); keyed `/v1/rates/calculate` → ₹196.66; revoke → 401; no-key → 401. Robustness fix: empty-body JSON POST → `{}` (no more spurious 400 on `/keys/:id/revoke`).
-**Remaining M2 (non-blocking):** `/pricing`→`/v1/public/plans` (cosmetic — mock == seeded), keys-detail `[id]` (needs GET /v1/keys/:id), dashboard/usage reads (needs `/v1/usage` apiLogs aggregation).
+**Remaining M2:** none — the three residuals above were closed in M2b (2026-07-01) and the 2026-07-03 sweeps.
 
 ---
 
 ## Kanban
 
-- **Done:** M0 Foundation (server scaffold, 22 models, RBAC contracts, tenancy primitives, test gate 10/10)
-- **Doing:** M1 — seed + custom auth + middleware; frontend api-client/middleware/session scaffold
-- **Next:** M2 — rate engine + public API + API keys (Redis online)
-- **Left:** M3 dev write flows · M4 Razorpay billing · M5 support/notifications/settings · M6 admin portal
+- **Done:** M0 foundation · M1 auth+tenancy · M2/M2b rate engine + public API + keys + usage · M3 webhooks/rate-cards · M4/M4b Razorpay billing + coupons/PDF/dunning/refunds · M5 support/notifications/account/team · M6a–f admin portal (incl. zones editor, rate-cards admin, plan create, notification channels, staff invites, 2FA, impersonation) · M7 public surface · nightly India Post sync · gap-fix sweep (webhook events, subscription lifecycle, engine.defaults wiring, honest usage, contact form, tenant 2FA UI)
+- **Doing:** —
+- **Next:** Ops hardening (PM2, real SMTP, Razorpay live keys, backups) — tracked below as the only open work
+- **Left:** —
 
 ---
 
@@ -46,10 +46,10 @@
 |---|---|---|---|
 | 1 | Mongo is **standalone** (SSH tunnel to remote) → no multi-doc transactions | M1 onboarding | Mitigated — onboarding uses compensating cleanup, not a transaction |
 | 2 | Shared `cnc_db` is another app's prod data | all writes | Resolved — using dedicated `postpin` db |
-| 3 | Web `node_modules` was incomplete (`@swc/helpers`) | running web app | User repairing; backend unaffected |
-| 4 | **Redis** required from M2 (rate-limit/quota/cache/BullMQ) | M2+ | Not yet provisioned — needed before M2 |
-| 5 | **SMTP** creds for real email | M1 verify/reset emails | Dev uses mailpit/maildev until provided |
-| 6 | **Razorpay** test keys | M4 billing | Needed before M4 |
+| 3 | Web `node_modules` was incomplete (`@swc/helpers`) | running web app | Resolved — web builds/runs; many Playwright E2Es since |
+| 4 | **Redis** required from M2 (rate-limit/quota/cache) | M2+ | Resolved — Docker `postpin-redis` on :6380, restart=unless-stopped |
+| 5 | **SMTP** creds for real email | prod email delivery | OPEN (ops) — dev captures locally; prod needs real creds |
+| 6 | **Razorpay** test keys | M4 billing | Resolved — valid test keys in `server/.env`; live keys = ops item |
 | 7 | SSH tunnel must be up for the API to reach Mongo | run/seed | Operational — confirm tunnel before `npm run dev`/seed |
 
 ---
@@ -65,7 +65,7 @@
 | RBAC contracts (`shared/permissions.ts`, `roles.ts`) | 🟢 | permission catalog + system role bundles |
 | Tenancy primitives (context, scoped-repo, admin-repo, audit) | 🟢 | injection-wins + 404-before-403 + tamper audit |
 | Test gate (vitest + mongodb-memory-server) | 🟢 | 10/10: health, jwks, 404 envelope, assertScoped, isolation proofs |
-| Frontend `src/lib/api` client + `middleware.ts` + `<SessionProvider>` + `QueryBoundary` | 🟡 | scaffolding |
+| Frontend `src/lib/api` client + `<SessionProvider>` + `QueryBoundary` (no edge middleware — client-side gating by design) | 🟢 | completed + E2E-verified in M1 |
 
 ---
 
@@ -73,7 +73,7 @@
 
 | Flow | Backend endpoint(s) | Frontend wiring | Tested? | Status |
 |---|---|---|---|---|
-| Seed (permissions/roles/plans/settings/super-admin/zones/pincodes/demo tenant) | `scripts/seed.ts` | — | onboarding shape (vitest) | 🟢 BE (live run pending tunnel) |
+| Seed (permissions/roles/plans/settings/super-admin/zones/pincodes/demo tenant) | `scripts/seed.ts` | — | vitest + live run ✅ (2026-06-30) | 🟢 |
 | Signup → company+owner+roles+Free-sub (+verify email) | `POST /v1/auth/signup` | `(auth)/signup` | integration ✅ | 🟢 done (E2E) |
 | Verify email | `POST /v1/auth/verify-email` | `(auth)/verify-email` | integration ✅ | 🟢 done (E2E) |
 | Login (lockout 423, Argon2id) | `POST /v1/auth/login` | `(auth)/login` | integration ✅ | 🟢 done (E2E) |
@@ -88,12 +88,12 @@
 | Frontend API client (credentials, single-flight 401→refresh, CSRF, error envelope) | — | `src/lib/api/{client,errors,services/*}` | E2E ✅ | 🟢 |
 | Wire 5 (auth) pages to real endpoints | `/v1/auth/*` | `(auth)/{login,signup,forgot-password,reset-password,verify-email}` | **E2E 6/6 ✅** | 🟢 |
 | Portal/admin shells off `currentUser` mock | `GET /v1/auth/me` | `app/layout`,`admin/layout` → shells | E2E ✅ (real "Aarav Sharma" + Free plan in shell) | 🟢 |
-| Rate-limit 429 on auth | `@fastify/rate-limit` | — | manual (disabled in tests) | 🔴 verify on dev |
+| Rate-limit 429 on auth | `@fastify/rate-limit` | — | live-verified 2026-07-04 (10×401 → 429 on /auth/login) | 🟢 |
 
 > **Architecture note:** gating is **client-side** (SessionProvider), not Next edge middleware — the access token is in-memory and the API is a separate origin, so the edge can't read it. Bootstrap = `/me` → on 401 single-flight `/auth/refresh` (refresh cookie) → retry. No `src/middleware.ts`.
-> **Residual mock:** `(auth)/signup` still imports `plans` from `mock-data` for the optional plan chip only — replace when `/v1/public/plans` lands in M2.
+> **Residual mock:** none — signup plan chip moved to `/v1/public/plans` in M2; `src/lib/mock-data.ts` itself was deleted on 2026-07-04.
 
-**M1 backend gate: ✅ 21/21 vitest** (signup→verify→login→/me→logout; isolation 404 + injection-wins; refresh-reuse family revoke; member 403; permVersion→token_stale; lockout; non-enumerating forgot; dup-signup 409; onboarding shape). **Remaining M1:** live `npm run seed` (needs tunnel), frontend api-client + middleware + SessionProvider + wire 5 (auth) pages + remove OAuth, then Playwright E2E.
+**M1 backend gate: ✅ 21/21 vitest** (signup→verify→login→/me→logout; isolation 404 + injection-wins; refresh-reuse family revoke; member 403; permVersion→token_stale; lockout; non-enumerating forgot; dup-signup 409; onboarding shape). **Remaining M1:** none — live seed, api-client, SessionProvider, all 5 (auth) pages, OAuth removal and the Playwright E2E all closed on 2026-06-30 (changelog entry 4).
 
 ---
 
@@ -108,6 +108,10 @@
 ---
 
 ## Changelog
+
+- **2026-07-06** — **Repo restructured into two top-level apps: `frontend/` (Next.js — src, public, all configs, node_modules, .env.local) and `server/` (Fastify API).** All 154 web files moved via git rename (history preserved; staged, not committed). Root now holds only `frontend/`, `server/`, `docs/`. Dev commands: web `cd frontend && npm run dev` (:3000), api `cd server && npm run dev` (:4000). Windows note: VSCode-held directory handles blocked plain renames of `src/app`+`src/components` — files were relocated with `robocopy /MOVE` (delete allowed where rename wasn't); web typecheck + dev boot re-verified from the new location.
+
+- **2026-07-04 (2)** — **Gap-fix sweep: the 46-finding audit's functional gaps + every remaining dummy closed. Backend 150/150.** (a) **Outbound webhooks are real**: `emitWebhookEvent`/`emitWebhookEventToAll` (context-free, 3 attempts w/ backoff, per-attempt delivery records) fired from key.created/key.revoked (api-key.service), invoice.paid + subscription.updated (billing activate/cancel), sync.completed/failed (pincode sync broadcast), rate.calculated (keyed rates route, fire-and-forget) — signed payloads, secrets never included. (b) **Subscription lifecycle exists**: `subscription-lifecycle.service.ts` hourly sweeper — free periods roll forward, `cancelAtPeriodEnd` downgrades to Free at period end, expired paid plans get ONE renewal notice (email+notification) in a 7-day grace then downgrade; audits `billing.downgraded_on_{cancel,expiry}`. (c) **engine.defaults is live**: DB-backed cached getter in the engine (quotes, card simulate, checkout GST, tenant rate-card surcharge display); PATCH invalidates; breakdown hints computed from bps. (d) **Quota warning** at `company.quotaWarningPct` (default 80%) — Redis SETNX-idempotent, once per period, notifies the owner. (e) **Honest admin usage**: tenant-detail + usage-report quota now count real apiLogs in the current period (dead `usage.callsUsed` no longer rendered). (f) **security.alert dispatches** on lockout + impersonation; billing.payment.failed alert on dunning. (g) **Failed keyed calls now logged** to apiLogs with real status. (h) **Contact form is real**: `POST /v1/public/contact` (rate-limited 5/min) → ops inbox (notification-config recipients, fallback seed admin) + audit; frontend wired with honeypot kept. (i) **Tenant 2FA UI shipped** — shared `TwoFactorCard` on `/app/settings/security` (fake "coming soon" toggle deleted); same component powers admin "Your 2FA". (j) **Marketing de-dummied**: footer status pill reads live /public/status; hero Send button fires a REAL /v1/public/rates call and re-renders the panel from the response (live engine-ms pill); landing stats fetch live pincode count (RSC, 1h revalidate); "one-click rollback" claim removed; blog links point to docs; `mock-data.ts` deleted. (k) sync-settings: retries/timeoutMs now honored by the live sync fetcher; final 2 "coming soon" notes rewritten. (l) Webhook endpoint cap served by the API (`GET /v1/webhooks` → `cap`), client fallback only. (m) **Pricing-authority lock**: tenants can no longer edit/delete the platform-ASSIGNED billing card (403 `card_platform_managed`; drafts stay editable) — closes the hole where a tenant could rewrite their own charged slabs. Auth 429 live-verified (10×401→429). Tests: `m6f.gap-fixes.test.ts` +11 (webhook deliver+sign+retry, sweeper cancel/grace/rollover, engine.defaults repricing, contact, honest usage, cap, pricing lock) → **150/150**. Known non-blockers intentionally deferred to ops: overage billing, GST invoice profile, shipping rules, audit export/tenant delete/sync rollback endpoints, webhook secret encryption-at-rest, email retry queue, notification email fan-out/templates.
 
 - **2026-07-04 (7)** — **ALL deferred admin features shipped + media uploads + sync UX hardening. Backend 139/139 vitest; web + server typecheck clean.** Nothing dummy/non-functional remains. New tests: `m6d` (+2 → 16), `m6e.admin-features` (19), `m6f.media` (4).
   - **Sync UX hardening:** durable `GET /admin/pincodes/sync/status` (running/current/last, 15-min stale-lock guard) + single-flight `POST /admin/pincodes/sync` now 409s `sync_in_progress`; frontend "Run live sync" button polls status (3s while running), stays disabled until complete/failed, toasts the outcome. Sync-fail now fans out to platform alert channels.

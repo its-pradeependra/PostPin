@@ -5,6 +5,7 @@ import { getContext } from "@/context/request-context.js";
 import { authenticate } from "@/middleware/authenticate.js";
 import { requirePermission } from "@/middleware/authorize.js";
 import * as admin from "@/services/admin.service.js";
+import * as blog from "@/services/blog.service.js";
 import * as tickets from "@/services/ticket.service.js";
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid id");
@@ -155,6 +156,77 @@ export async function adminRoutes(appBase: FastifyInstance) {
     },
     async (req) => admin.adminUpdateCoupon(req.params.id, req.body),
   );
+
+  // ── Blog CRUD ─────────────────────────────────────────────────────────────
+  const blogBody = z.object({
+    title: z.string().min(4).max(160),
+    slug: z.string().max(96).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).nullable().optional(),
+    excerpt: z.string().min(10).max(400),
+    content: z.string().min(50).max(100_000),
+    cover_image: z.string().url().max(500).nullable().optional(),
+    tags: z.array(z.string().min(1).max(40)).max(10).optional(),
+    meta_title: z.string().max(160).nullable().optional(),
+    meta_description: z.string().max(320).nullable().optional(),
+    meta_keywords: z.array(z.string().min(1).max(60)).max(20).optional(),
+  });
+
+  app.get(
+    "/blog",
+    {
+      preHandler: guard("blog:write"),
+      schema: { querystring: z.object({ status: z.enum(["draft", "published"]).optional(), q: z.string().max(100).optional() }) },
+    },
+    async (req) => blog.adminListBlogPosts(req.query),
+  );
+
+  app.get(
+    "/blog/:id",
+    { preHandler: guard("blog:write"), schema: { params: z.object({ id: objectId }) } },
+    async (req) => blog.adminGetBlogPost(req.params.id),
+  );
+
+  app.post(
+    "/blog",
+    { preHandler: guard("blog:write"), schema: { body: blogBody } },
+    async (req, reply) => reply.code(201).send(await blog.adminCreateBlogPost(req.body)),
+  );
+
+  app.patch(
+    "/blog/:id",
+    {
+      preHandler: guard("blog:write"),
+      schema: {
+        params: z.object({ id: objectId }),
+        body: blogBody.partial().extend({ status: z.enum(["draft", "published"]).optional() }),
+      },
+    },
+    async (req) => blog.adminUpdateBlogPost(req.params.id, req.body),
+  );
+
+  app.delete(
+    "/blog/:id",
+    { preHandler: guard("blog:write"), schema: { params: z.object({ id: objectId }) } },
+    async (req) => blog.adminDeleteBlogPost(req.params.id),
+  );
+
+  // Upload a blog cover image (local-disk media, same pipeline as avatars/tickets).
+  app.post("/blog/uploads", { preHandler: guard("blog:write") }, async (req, reply) => {
+    const { saveUpload, IMAGE_MIMES } = await import("@/services/upload.service.js");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await (req as any).file();
+    if (!data) return reply.code(400).send({ error: { code: "no_file", message: "No file uploaded" } });
+    const buffer = await data.toBuffer();
+    if (data.file.truncated) return reply.code(400).send({ error: { code: "file_too_large", message: "Image is too large" } });
+    const saved = saveUpload({
+      buffer,
+      mimetype: data.mimetype,
+      originalName: data.filename,
+      category: "blog",
+      ownerId: String(getContext().userId),
+      allowed: IMAGE_MIMES,
+    });
+    return { url: saved.url, name: saved.original_name, size: saved.size };
+  });
 
   // ── Platform billing ──────────────────────────────────────────────────────
   app.get("/billing/summary", { preHandler: guard("tenant:read") }, async () => admin.adminBillingSummary());

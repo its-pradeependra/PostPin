@@ -26,6 +26,7 @@ export * from "./notification.model.js";
 export * from "./webhook.model.js";
 export * from "./webhookDelivery.model.js";
 export * from "./auditLog.model.js";
+export * from "./blog.model.js";
 
 import { CompanyModel } from "./company.model.js";
 import { PermissionModel } from "./permission.model.js";
@@ -50,6 +51,7 @@ import { NotificationModel } from "./notification.model.js";
 import { WebhookModel } from "./webhook.model.js";
 import { WebhookDeliveryModel } from "./webhookDelivery.model.js";
 import { AuditLogModel } from "./auditLog.model.js";
+import { BlogPostModel } from "./blog.model.js";
 
 export const ALL_MODELS: Model<any>[] = [
   CompanyModel,
@@ -75,6 +77,7 @@ export const ALL_MODELS: Model<any>[] = [
   WebhookModel,
   WebhookDeliveryModel,
   AuditLogModel,
+  BlogPostModel,
 ];
 
 /** Strictly tenant-scoped models (companyId required + immutable). */

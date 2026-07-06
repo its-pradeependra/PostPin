@@ -11,9 +11,11 @@ const TMP_UPLOADS = path.join(os.tmpdir(), "postpin-test-uploads");
 
 import { type AppInstance, buildApp } from "@/app.js";
 import { initJwt } from "@/lib/jwt.js";
+import { hashPassword } from "@/lib/crypto.js";
 import { onboardCompany } from "@/services/company-onboard.service.js";
-import { PermissionModel, PlanModel, UserModel } from "@/models/index.js";
+import { PermissionModel, PlanModel, RoleModel, UserModel } from "@/models/index.js";
 import { PERMISSIONS } from "@/shared/permissions.js";
+import { PLATFORM_ROLES } from "@/shared/roles.js";
 import { clearCollections, startMemoryDb, stopMemoryDb } from "@/test/helpers.js";
 
 const PW = "Sup3rSecret!pw";
@@ -103,6 +105,57 @@ describe("M6f — avatar upload (local disk)", () => {
     const mp = multipart("file", "me.png", "image/png", PNG);
     const res = await app.inject({ method: "POST", url: "/v1/auth/avatar", headers: { "content-type": mp.contentType }, payload: mp.body });
     expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("Blog — cover image upload (blog:write)", () => {
+  async function seedSuperAdmin() {
+    const perms = await PermissionModel.find().select("key").lean();
+    const permIdByKey = new Map(perms.map((p) => [p.key, p._id]));
+    for (const r of PLATFORM_ROLES) {
+      await RoleModel.create({ companyId: null, key: r.key, name: r.name, scope: "platform", isSystem: true, permissionIds: r.permissions.map((k) => permIdByKey.get(k)).filter(Boolean) });
+    }
+    const superRole = await RoleModel.findOne({ companyId: null, key: "super_admin" });
+    await UserModel.create({ companyId: null, email: "root@media.test", name: "Root", passwordHash: await hashPassword(PW), roleId: superRole!._id, isPlatformStaff: true, status: "active", emailVerifiedAt: new Date() });
+  }
+
+  it("super admin uploads a cover; tenants are blocked", async () => {
+    await seedSuperAdmin();
+    const adminT = await login("root@media.test");
+
+    const mp = multipart("file", "cover.png", "image/png", PNG);
+    const up = await app.inject({ method: "POST", url: "/v1/admin/blog/uploads", headers: { ...auth(adminT), "content-type": mp.contentType }, payload: mp.body });
+    expect(up.statusCode).toBe(200);
+    const url = (up.json() as { url: string }).url;
+    expect(url).toMatch(/\/uploads\/blog\/.+\.png$/);
+    const rel = url.slice(url.indexOf("/uploads/") + "/uploads/".length);
+    expect(fs.existsSync(path.join(TMP_UPLOADS, rel))).toBe(true);
+
+    // The uploaded URL is accepted as a post cover, and deleting the post frees the file.
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/admin/blog",
+      headers: auth(adminT),
+      payload: {
+        title: "Cover Upload Post",
+        excerpt: "A post carrying an uploaded cover image for the media test.",
+        content: "Body content long enough to satisfy the fifty character minimum requirement.",
+        cover_image: url,
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const postId = (created.json() as { post: { id: string; cover_image: string } }).post.id;
+    await app.inject({ method: "DELETE", url: `/v1/admin/blog/${postId}`, headers: auth(adminT) });
+    // deleteByUrl is async best-effort; poll briefly.
+    await new Promise((r) => setTimeout(r, 200));
+    expect(fs.existsSync(path.join(TMP_UPLOADS, rel))).toBe(false);
+
+    // Tenants lack blog:write.
+    await onboardCompany({ companyName: "NoBlog Co", ownerName: "O", ownerEmail: "o@noblog.test", password: PW, emailVerified: true });
+    const tenantT = await login("o@noblog.test");
+    const mp2 = multipart("file", "cover.png", "image/png", PNG);
+    const denied = await app.inject({ method: "POST", url: "/v1/admin/blog/uploads", headers: { ...auth(tenantT), "content-type": mp2.contentType }, payload: mp2.body });
+    expect(denied.statusCode).toBe(403);
   });
 });
 

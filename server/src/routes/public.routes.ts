@@ -5,6 +5,7 @@ import { AppError } from "@/lib/errors.js";
 import { PincodeModel, PlanModel } from "@/models/index.js";
 import { calculateRate, resolvePincode, type ServiceLevel } from "@/services/rate-engine.service.js";
 import { publicStats, publicStatus } from "@/services/public-stats.service.js";
+import { publicBlogSitemap, publicGetBlogPost, publicListBlogPosts } from "@/services/blog.service.js";
 
 const PIN = z.string().regex(/^\d{6}$/);
 
@@ -147,6 +148,37 @@ export async function publicRoutes(appBase: FastifyInstance) {
       meta: meta(req),
     };
   });
+
+  // Published blog posts (marketing site). List is paginated; detail by slug.
+  app.get(
+    "/blog",
+    {
+      schema: {
+        querystring: z.object({
+          tag: z.string().max(40).optional(),
+          limit: z.coerce.number().int().min(1).max(50).default(12),
+          offset: z.coerce.number().int().min(0).default(0),
+        }),
+      },
+      config: rl(60),
+    },
+    async (req) => {
+      const { posts, total } = await publicListBlogPosts(req.query);
+      return { data: posts, meta: { ...meta(req), total } };
+    },
+  );
+
+  app.get(
+    "/blog/sitemap",
+    { config: rl(30) },
+    async (req) => ({ data: await publicBlogSitemap(), meta: meta(req) }),
+  );
+
+  app.get(
+    "/blog/:slug",
+    { schema: { params: z.object({ slug: z.string().min(1).max(96).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) }) }, config: rl(60) },
+    async (req) => ({ data: await publicGetBlogPost(req.params.slug), meta: meta(req) }),
+  );
 
   // Live platform status (public status page). Real component health + 90-day
   // uptime derived from request logs.
