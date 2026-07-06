@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PlanUsageCard } from "@/components/layout/plan-usage-card";
 import { useSession } from "@/components/providers/session-provider";
+import { getSubscription } from "@/lib/api/services/subscription";
 import { portalNav } from "@/lib/nav";
 
 function titleCase(s: string) {
@@ -15,6 +17,16 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { status, user, subscription, signOut } = useSession();
+
+  // Live usage for the sidebar meter — shares the ["subscription"] cache with
+  // the dashboard and refetches on window focus, so it tracks real API usage
+  // instead of the one-shot value baked into the session at login.
+  const subQ = useQuery({
+    queryKey: ["subscription"],
+    queryFn: getSubscription,
+    enabled: status === "authenticated",
+    refetchOnWindowFocus: true,
+  });
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
@@ -38,9 +50,11 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const used = subscription?.usage.callsUsed ?? 0;
-  const quota = subscription?.usage.includedCalls ?? 0;
-  const planName = subscription ? titleCase(subscription.plan_code) : "Free";
+  // Prefer the live query; fall back to the session snapshot for first paint.
+  const used = subQ.data?.usage.calls_used ?? subscription?.usage.callsUsed ?? 0;
+  const quota = subQ.data?.usage.included_calls ?? subscription?.usage.includedCalls ?? 0;
+  const planCode = subQ.data?.plan.code ?? subscription?.plan_code;
+  const planName = planCode ? titleCase(planCode) : "Free";
 
   return (
     <DashboardShell

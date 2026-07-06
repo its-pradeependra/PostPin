@@ -33,7 +33,7 @@ export function PlanUsageCard({
         {formatCompact(used)} / {formatCompact(quota)} calls this month
       </p>
       <Link
-        href="/app/billing"
+        href="/app/billing/plans"
         data-testid="sidebar-upgrade-link"
         className="group mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-gradient px-3 py-2 text-xs font-semibold text-white shadow-glow transition-transform hover:-translate-y-0.5"
       >
