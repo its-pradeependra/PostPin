@@ -11,7 +11,6 @@ export interface Plan {
   priceMonthly: number; // INR
   priceYearly: number; // INR (per month, billed yearly)
   includedCalls: number;
-  overagePer1k: number; // INR per 1000 extra calls
   rateLimitRpm: number; // requests per minute
   features: string[];
   highlight?: boolean;

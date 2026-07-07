@@ -48,7 +48,6 @@ function toPlan(p: PublicPlan): Plan {
     priceMonthly: p.price_monthly_paise < 0 ? -1 : p.price_monthly_paise / 100,
     priceYearly: p.price_yearly_paise < 0 ? -1 : p.price_yearly_paise / 100,
     includedCalls: p.included_calls,
-    overagePer1k: (p.overage_per_1k_paise ?? 0) / 100,
     rateLimitRpm: p.rate_limit.rpm,
     features: p.features,
     highlight: p.code === "growth",
@@ -63,7 +62,7 @@ const COMPARISON: {
   values: Record<Plan["id"], string | null>;
 }[] = [
   { feature: "Monthly rate calls", icon: "calculator", values: { free: "1,000", starter: "25,000", growth: "2,50,000", scale: "15,00,000", enterprise: "Custom" } },
-  { feature: "Overage / 1,000 calls", icon: "coins", values: { free: "Hard block", starter: "₹9", growth: "₹7", scale: "₹5", enterprise: "Negotiated" } },
+  { feature: "Beyond included calls", icon: "coins", values: { free: "Blocked until reset", starter: "Blocked until reset", growth: "Blocked until reset", scale: "Blocked until reset", enterprise: "Custom volume" } },
   { feature: "API keys", icon: "keys", values: { free: "1", starter: "3", growth: "10", scale: "Unlimited", enterprise: "Unlimited" } },
   { feature: "Allowed domains", icon: "globe", values: { free: "1", starter: "5", growth: "Unlimited", scale: "Unlimited", enterprise: "Unlimited" } },
   { feature: "Rate limit (RPM)", icon: "gauge", values: { free: "30", starter: "120", growth: "600", scale: "2,000", enterprise: "10,000+" } },
@@ -74,11 +73,11 @@ const COMPARISON: {
 ];
 
 const FAQS: { q: string; a: string }[] = [
-  { q: "What happens if I exceed my included calls?", a: "On paid plans, extra calls are billed per 1,000 at your plan's overage rate (Starter ₹9, Growth ₹7, Scale ₹5). On the Free plan, requests are hard-blocked once you hit 1,000 calls in a month, so you are never silently billed. Enterprise volume is negotiated up front." },
+  { q: "What happens if I exceed my included calls?", a: "Requests beyond your plan's included calls are blocked until your quota resets at the start of the next period — you are never silently billed for extra usage. We notify you when you reach 80% and 100% of your quota, and you can upgrade to a higher plan at any time to restore service instantly. Enterprise volume is negotiated up front." },
   { q: "Can I switch between monthly and yearly billing?", a: "Yes. Yearly billing is charged annually at roughly a 16-20% discount versus paying monthly, and you can switch at any time. When you upgrade mid-cycle we prorate the difference; downgrades take effect at your next renewal." },
   { q: "How fresh is the India Post pincode data?", a: "Postpin syncs the India Post pincode directory nightly at 00:30 IST. New, updated and retired pincodes are diffed into your serviceability database automatically, with full sync logs and one-click rollback, so quotes are always based on current data on every plan." },
   { q: "Are GST invoices included?", a: "Every paid invoice is a GST-compliant tax invoice with your GSTIN, available to download from the billing dashboard. Listed prices are exclusive of 18% GST, which is added at checkout." },
-  { q: "Do you offer refunds?", a: "Monthly plans can be cancelled any time and simply stop renewing, with no lock-ins. For yearly plans we offer a 14-day money-back guarantee on the first term. Usage-based overages already consumed are non-refundable." },
+  { q: "Do you offer refunds?", a: "Monthly plans can be cancelled any time and simply stop renewing, with no lock-ins. For yearly plans we offer a 14-day money-back guarantee on the first term." },
   { q: "Can I try before I pay?", a: "Absolutely. The Free plan gives you 1,000 live rate calls every month with no credit card required, plus a full test environment with separate test keys so you can build and verify your integration end to end." },
 ];
 
@@ -105,14 +104,6 @@ export default function PricingPage() {
       if (row.feature === "Monthly rate calls") {
         return { ...row, values: fromPlans((p) => (p.includedCalls < 0 ? "Custom" : formatNumber(p.includedCalls))) };
       }
-      if (row.feature === "Overage / 1,000 calls") {
-        return {
-          ...row,
-          values: fromPlans((p) =>
-            p.id === "free" ? "Hard block" : p.id === "enterprise" ? "Negotiated" : formatCurrency(p.overagePer1k, "INR", { maximumFractionDigits: 0 }),
-          ),
-        };
-      }
       if (row.feature === "Rate limit (RPM)") {
         return { ...row, values: fromPlans((p) => p.rateLimitRpm.toLocaleString("en-IN")) };
       }
@@ -132,7 +123,7 @@ export default function PricingPage() {
               Pricing that scales <span className="text-gradient">with every shipment.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
-              Start free with 1,000 calls a month. Flat plans, predictable overages, GST invoices.
+              Start free with 1,000 calls a month. Flat plans, no overage charges, GST invoices.
               Pay only for what you ship.
             </p>
           </Reveal>

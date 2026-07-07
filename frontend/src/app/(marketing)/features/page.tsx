@@ -318,7 +318,7 @@ export default function FeaturesPage() {
         eyebrow="Usage analytics"
         eyebrowIcon="analytics"
         title="See every call, latency percentile and blocked request"
-        body="Your dashboard charts calls over time, success vs blocked, top endpoints, latency percentiles and peak hours. Spot a misbehaving integration, prove your SLA, and forecast overages before the bill lands."
+        body="Your dashboard charts calls over time, success vs blocked, top endpoints, latency percentiles and peak hours. Spot a misbehaving integration, prove your SLA, and see quota pressure before you hit the limit."
         bullets={[
           "Calls over time with success / blocked breakdown",
           "p50 / p95 / p99 latency and peak-hour heat",
@@ -387,7 +387,7 @@ export default function FeaturesPage() {
               { ev: "sync.completed", code: "200", ok: true },
               { ev: "rate.calculated", code: "200", ok: true },
               { ev: "key.rotated", code: "200", ok: true },
-              { ev: "billing.overage", code: "504", ok: false },
+              { ev: "billing.renewal", code: "504", ok: false },
             ].map((d) => (
               <li
                 key={d.ev}

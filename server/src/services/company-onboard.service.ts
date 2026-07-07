@@ -145,7 +145,6 @@ export async function onboardCompany(input: OnboardInput): Promise<OnboardResult
       usage: {
         callsUsed: 0,
         includedCalls: plan.includedCalls,
-        overageCalls: 0,
         periodKey: now.toISOString().slice(0, 7),
       },
       paymentProvider: "manual",

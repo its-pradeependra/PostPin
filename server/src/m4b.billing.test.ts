@@ -19,7 +19,7 @@ async function seed() {
   );
   const common = { version: 1, rateLimit: { rpm: 30, rpd: 0, burst: 10 }, isActive: true, isPublic: true };
   await PlanModel.create({ code: "free", name: "Free", description: "Free", priceMonthlyPaise: 0, priceYearlyPaise: 0, includedCalls: 1000, maxApiKeys: 1, maxTeamMembers: 2, sortOrder: 0, ...common });
-  await PlanModel.create({ code: "growth", name: "Growth", description: "Scale", priceMonthlyPaise: 499_900, priceYearlyPaise: 416_500, includedCalls: 250_000, overagePer1kPaise: 700, maxApiKeys: 10, maxTeamMembers: 10, sortOrder: 2, ...common });
+  await PlanModel.create({ code: "growth", name: "Growth", description: "Scale", priceMonthlyPaise: 499_900, priceYearlyPaise: 416_500, includedCalls: 250_000, maxApiKeys: 10, maxTeamMembers: 10, sortOrder: 2, ...common });
   await CouponModel.create({ code: "SAVE20", discountType: "percent", value: 2000, status: "active" }); // 20%
 }
 

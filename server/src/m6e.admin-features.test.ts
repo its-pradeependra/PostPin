@@ -65,7 +65,6 @@ describe("M6e — plan create", () => {
         price_monthly: 999,
         price_yearly: 9990,
         included_calls: 50000,
-        overage_per_1k: 20,
         rate_limit_rpm: 120,
         max_api_keys: 20,
         max_team_members: 10,
@@ -74,10 +73,9 @@ describe("M6e — plan create", () => {
       },
     });
     expect(res.statusCode).toBe(201);
-    const plan = (res.json() as { plan: { code: string; price_monthly: number; overage_per_1k: number } }).plan;
+    const plan = (res.json() as { plan: { code: string; price_monthly: number } }).plan;
     expect(plan.code).toBe("growth"); // normalized lowercase
     expect(plan.price_monthly).toBe(999);
-    expect(plan.overage_per_1k).toBe(20);
 
     // Stored in paise.
     const doc = await PlanModel.findOne({ code: "growth" }).lean();

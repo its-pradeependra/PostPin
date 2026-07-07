@@ -5,7 +5,7 @@ import { pageMetadata } from "@/lib/seo";
 export const metadata: Metadata = pageMetadata({
   title: "Pricing — Simple Plans for the Shipping Calculation API",
   description:
-    "Transparent pricing for the Postpin shipping rate API. Start free, pay as you grow — no per-seat fees, no surprise overages.",
+    "Transparent pricing for the Postpin shipping rate API. Start free, pay as you grow — no per-seat fees, no overage charges.",
   path: "/pricing",
   keywords: [
     "shipping API pricing",

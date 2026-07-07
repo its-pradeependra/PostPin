@@ -26,7 +26,7 @@ export interface MeSubscription {
   status: string;
   interval: string;
   current_period_end: string;
-  usage: { callsUsed: number; includedCalls: number; overageCalls: number; periodKey: string };
+  usage: { callsUsed: number; includedCalls: number; periodKey: string };
 }
 
 export interface Me {

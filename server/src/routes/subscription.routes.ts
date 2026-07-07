@@ -27,7 +27,6 @@ export async function subscriptionRoutes(appBase: FastifyInstance) {
           included_calls: included,
           rate_limit_rpm: plan?.rateLimit?.rpm ?? null,
           price_monthly_paise: plan?.priceMonthlyPaise ?? 0,
-          overage_per_1k_paise: plan?.overagePer1kPaise ?? null,
           max_api_keys: plan?.maxApiKeys ?? null,
         },
         status: sub.status,
@@ -38,7 +37,6 @@ export async function subscriptionRoutes(appBase: FastifyInstance) {
           calls_used: used,
           included_calls: included,
           remaining: included === -1 ? -1 : Math.max(0, included - used),
-          overage_calls: included === -1 ? 0 : Math.max(0, used - included),
         },
       },
     };

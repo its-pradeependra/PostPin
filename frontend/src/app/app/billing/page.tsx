@@ -44,9 +44,8 @@ export default function BillingPage() {
   const used = sub?.usage.calls_used ?? 0;
   const quota = sub?.usage.included_calls ?? 0;
   const usagePct = quota > 0 ? Math.min(100, (used / quota) * 100) : 0;
-  const overageCalls = sub?.usage.overage_calls ?? 0;
-  const overagePer1k = sub ? (sub.plan.overage_per_1k_paise ?? 0) / 100 : 0;
-  const overageEstimate = (overageCalls / 1000) * overagePer1k;
+  const remaining = sub?.usage.remaining ?? 0;
+  const quotaExhausted = quota > 0 && used >= quota;
   const isFree = sub?.plan.code === "free";
 
   const cancelM = useMutation({
@@ -157,15 +156,19 @@ export default function BillingPage() {
 
                   <Separator />
 
-                  <div className="rounded-xl bg-warning/12 p-3">
+                  <div className={quotaExhausted ? "rounded-xl bg-destructive/10 p-3" : "rounded-xl bg-muted/50 p-3"} data-testid="billing-quota-status">
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-warning">
-                        <Icon name="trending" size={15} className="text-warning" /> Overage estimate
+                      <span className={`flex items-center gap-1.5 text-sm font-medium ${quotaExhausted ? "text-destructive" : ""}`}>
+                        <Icon name="trending" size={15} className={quotaExhausted ? "text-destructive" : "text-muted-foreground"} /> Calls remaining
                       </span>
-                      <span className="font-display font-bold tabular-nums text-warning">{formatCurrency(overageEstimate)}</span>
+                      <span className={`font-display font-bold tabular-nums ${quotaExhausted ? "text-destructive" : ""}`}>
+                        {remaining === -1 ? "Unlimited" : formatNumber(Math.max(0, remaining))}
+                      </span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                      {overageCalls > 0 ? `${formatNumber(overageCalls)} calls over quota @ ${formatCurrency(overagePer1k)}/1k` : "You're within your included quota."}
+                      {quotaExhausted
+                        ? "Quota exhausted — API calls are blocked until your quota resets or you upgrade."
+                        : "Calls beyond your included quota are blocked, never billed — no surprise charges."}
                     </p>
                   </div>
                 </CardContent>

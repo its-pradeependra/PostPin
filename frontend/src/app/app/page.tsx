@@ -110,7 +110,7 @@ export default function DashboardPage() {
           <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span>
               {formatNumber(quotaUsed)} of {formatNumber(quotaTotal)} rate calls used this cycle. Upgrade to avoid
-              overage charges.
+              being blocked at 100%.
             </span>
             <Button
               variant="outline"

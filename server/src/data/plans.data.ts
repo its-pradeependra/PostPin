@@ -5,8 +5,7 @@ export interface SeedPlan {
   description: string;
   priceMonthlyPaise: number;
   priceYearlyPaise: number;
-  includedCalls: number; // -1 = unlimited
-  overagePer1kPaise: number | null; // paise per 1,000 calls; null = hard block
+  includedCalls: number; // -1 = unlimited; calls beyond this are hard-blocked
   rateLimit: { rpm: number; rpd: number; burst: number };
   maxApiKeys: number; // -1 = unlimited
   maxTeamMembers: number; // -1 = unlimited
@@ -26,7 +25,6 @@ export const SEED_PLANS: SeedPlan[] = [
     priceMonthlyPaise: 0,
     priceYearlyPaise: 0,
     includedCalls: 1_000,
-    overagePer1kPaise: null, // hard block
     rateLimit: { rpm: 30, rpd: 0, burst: burst(30) },
     maxApiKeys: 1,
     maxTeamMembers: 2,
@@ -42,7 +40,6 @@ export const SEED_PLANS: SeedPlan[] = [
     priceMonthlyPaise: 149_900,
     priceYearlyPaise: 124_900,
     includedCalls: 25_000,
-    overagePer1kPaise: 900, // ₹9 / 1k
     rateLimit: { rpm: 120, rpd: 0, burst: burst(120) },
     maxApiKeys: 3,
     maxTeamMembers: 3,
@@ -58,7 +55,6 @@ export const SEED_PLANS: SeedPlan[] = [
     priceMonthlyPaise: 499_900,
     priceYearlyPaise: 416_500,
     includedCalls: 250_000,
-    overagePer1kPaise: 700, // ₹7 / 1k
     rateLimit: { rpm: 600, rpd: 0, burst: burst(600) },
     maxApiKeys: 10,
     maxTeamMembers: 10,
@@ -74,7 +70,6 @@ export const SEED_PLANS: SeedPlan[] = [
     priceMonthlyPaise: 1_499_900,
     priceYearlyPaise: 1_249_900,
     includedCalls: 1_500_000,
-    overagePer1kPaise: 500, // ₹5 / 1k
     rateLimit: { rpm: 2_000, rpd: 0, burst: burst(2_000) },
     maxApiKeys: -1,
     maxTeamMembers: 50,
@@ -90,7 +85,6 @@ export const SEED_PLANS: SeedPlan[] = [
     priceMonthlyPaise: -1, // custom / contact sales
     priceYearlyPaise: -1,
     includedCalls: -1, // unlimited (negotiated)
-    overagePer1kPaise: null,
     rateLimit: { rpm: 10_000, rpd: 0, burst: burst(10_000) },
     maxApiKeys: -1,
     maxTeamMembers: -1,

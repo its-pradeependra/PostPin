@@ -9,7 +9,6 @@ export interface BillingPlan {
   priceMonthly: number; // rupees; -1 = custom
   priceYearly: number;
   includedCalls: number;
-  overagePer1k: number;
   rateLimitRpm: number;
   features: string[];
   highlight: boolean;

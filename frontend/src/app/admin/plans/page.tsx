@@ -70,12 +70,6 @@ function limitLabel(value: number) {
   return formatNumber(value);
 }
 
-/** null overage means requests over quota are hard-blocked. */
-function overageLabel(value: number | null) {
-  if (value === null) return "Hard block";
-  return formatCurrency(value, "INR", { maximumFractionDigits: 0 });
-}
-
 function PublicBadge({ plan }: { plan: AdminPlan }) {
   return (
     <Badge
@@ -95,8 +89,6 @@ interface EditorState {
   priceMonthly: string;
   priceYearly: string;
   includedCalls: string;
-  /** Empty string = null = hard block over quota. */
-  overagePer1k: string;
   rateLimitRpm: string;
   maxApiKeys: string;
   maxTeamMembers: string;
@@ -113,7 +105,6 @@ function emptyEditor(): EditorState {
     priceMonthly: "0",
     priceYearly: "0",
     includedCalls: "0",
-    overagePer1k: "",
     rateLimitRpm: "60",
     maxApiKeys: "1",
     maxTeamMembers: "1",
@@ -131,7 +122,6 @@ function editorFromPlan(p: AdminPlan): EditorState {
     priceMonthly: String(p.price_monthly),
     priceYearly: String(p.price_yearly),
     includedCalls: String(p.included_calls),
-    overagePer1k: p.overage_per_1k === null ? "" : String(p.overage_per_1k),
     rateLimitRpm: String(p.rate_limit_rpm),
     maxApiKeys: String(p.max_api_keys),
     maxTeamMembers: String(p.max_team_members),
@@ -237,7 +227,6 @@ export default function AdminPlansPage() {
       price_monthly: num(form.priceMonthly),
       price_yearly: num(form.priceYearly),
       included_calls: num(form.includedCalls),
-      overage_per_1k: form.overagePer1k.trim() === "" ? null : num(form.overagePer1k),
       rate_limit_rpm: num(form.rateLimitRpm),
       max_api_keys: num(form.maxApiKeys),
       max_team_members: num(form.maxTeamMembers),
@@ -322,7 +311,6 @@ export default function AdminPlansPage() {
                       <TableHead className="text-right">Price / yr</TableHead>
                       <TableHead className="text-right">Included calls</TableHead>
                       <TableHead className="text-right">RPM</TableHead>
-                      <TableHead className="text-right">Overage / 1k</TableHead>
                       <TableHead className="text-right">Subscribers</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -358,9 +346,6 @@ export default function AdminPlansPage() {
                         </TableCell>
                         <TableCell className="text-right font-mono tabular-nums">
                           {formatNumber(row.rate_limit_rpm)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono tabular-nums">
-                          {overageLabel(row.overage_per_1k)}
                         </TableCell>
                         <TableCell
                           className="text-right font-mono tabular-nums"
@@ -653,21 +638,8 @@ export default function AdminPlansPage() {
                     className="font-mono tabular-nums"
                     data-testid="plan-included-calls-input"
                   />
-                  <p className="text-xs text-muted-foreground">Use -1 for unlimited.</p>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="plan-overage">Overage / 1k calls (₹)</Label>
-                  <Input
-                    id="plan-overage"
-                    type="number"
-                    value={form.overagePer1k}
-                    onChange={(e) => setField("overagePer1k", e.target.value)}
-                    placeholder="Hard block"
-                    className="font-mono tabular-nums"
-                    data-testid="plan-overage-input"
-                  />
                   <p className="text-xs text-muted-foreground">
-                    Leave empty to hard-block calls over quota.
+                    Use -1 for unlimited. Calls over quota are blocked until the period resets.
                   </p>
                 </div>
                 <div className="space-y-1.5">

@@ -178,8 +178,8 @@ export default function TermsOfServicePage() {
               rate limit (RPM). Requests exceeding your plan&rsquo;s rate limit
               receive an HTTP <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">429</code>{" "}
               response with a <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">Retry-After</code>{" "}
-              header. Calls beyond your monthly allotment are either blocked
-              (Free plan) or billed as overage, per your plan.
+              header. Calls beyond your monthly allotment are blocked until your
+              quota resets or you upgrade — they are never billed as extra usage.
             </p>
             <ul className="list-disc space-y-2 pl-5">
               <li>Do not attempt to bypass, probe or circumvent rate limits or key restrictions.</li>
@@ -209,7 +209,7 @@ export default function TermsOfServicePage() {
             </p>
             <ul className="list-disc space-y-2 pl-5">
               <li>Fees are non-refundable except where required by law or by the SLA credit terms below.</li>
-              <li>Overage charges accrue during the billing period and are invoiced at period close.</li>
+              <li>There are no usage-based overage charges; calls beyond your plan&rsquo;s allotment are blocked, not billed.</li>
               <li>
                 We may suspend the Service for accounts with payments more than 14
                 days overdue, after written notice.

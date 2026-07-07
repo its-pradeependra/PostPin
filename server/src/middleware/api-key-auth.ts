@@ -32,7 +32,6 @@ export async function apiKeyAuth(req: FastifyRequest, reply: FastifyReply): Prom
   const plan = await PlanModel.findById(sub.planId).lean();
   const rpm = plan?.rateLimit?.rpm ?? 30;
   const included = plan?.includedCalls ?? 0;
-  const hasOverage = plan?.overagePer1kPaise != null;
 
   // Rate-limit + quota (Redis). Fail-open if Redis is unavailable.
   if (redisReady()) {
@@ -53,39 +52,58 @@ export async function apiKeyAuth(req: FastifyRequest, reply: FastifyReply): Prom
     const used = await r.incr(qKey);
     if (used === 1) await r.expire(qKey, 60 * 60 * 24 * 40);
     reply.header("x-quota-remaining", included === -1 ? "unlimited" : String(Math.max(0, included - used)));
-    if (included !== -1 && used > included && !hasOverage) {
-      throw new AppError("quota_exceeded", "Monthly quota exceeded — upgrade your plan", 402);
-    }
 
-    // Quota warning: notify the owner ONCE per period when usage crosses the
-    // company's warning threshold (default 80%). SETNX makes it idempotent.
+    // Usage notifications — once per period each (SETNX-idempotent): a warning
+    // when usage crosses the company's threshold (default 80%) and a second
+    // notice at 100%. Scheduled BEFORE the hard block below so exhaustion is
+    // still reported on the very call that hits the limit.
     if (included > 0) {
       void (async () => {
+        const usedPct = (used / included) * 100;
         const { CompanyModel } = await import("@/models/index.js");
         const company = (await CompanyModel.findById(key.companyId).select("quotaWarningPct ownerUserId name").lean()) as {
           quotaWarningPct?: number;
           ownerUserId?: Types.ObjectId | null;
           name?: string;
         } | null;
-        const pctLimit = company?.quotaWarningPct ?? 80;
-        const usedPct = (used / included) * 100;
-        if (usedPct < pctLimit || !company?.ownerUserId) return;
-        const flag = await r.set(`quota_warned:${String(key.companyId)}:${period}`, "1", "EX", 60 * 60 * 24 * 40, "NX");
-        if (flag !== "OK") return; // already warned this period
+        if (!company?.ownerUserId) return;
+        const pctLimit = company.quotaWarningPct ?? 80;
         const { createNotification } = await import("@/services/notification.service.js");
-        await createNotification({
-          recipientId: company.ownerUserId,
-          companyId: key.companyId,
-          kind: "usage",
-          type: "usage.threshold",
-          severity: "warning",
-          title: `You've used ${Math.floor(usedPct)}% of your monthly quota`,
-          body: `${used.toLocaleString("en-IN")} of ${included.toLocaleString("en-IN")} included calls used this period. Upgrade to avoid hitting the limit.`,
-          actionUrl: "/app/billing/plans",
-        });
+
+        if (usedPct >= 100) {
+          const flag = await r.set(`quota_exhausted:${String(key.companyId)}:${period}`, "1", "EX", 60 * 60 * 24 * 40, "NX");
+          if (flag !== "OK") return; // already notified this period
+          await createNotification({
+            recipientId: company.ownerUserId,
+            companyId: key.companyId,
+            kind: "usage",
+            type: "usage.exhausted",
+            severity: "error",
+            title: "You've used 100% of your monthly quota",
+            body: `All ${included.toLocaleString("en-IN")} included calls are used this period — further API calls are blocked until your quota resets or you upgrade.`,
+            actionUrl: "/app/billing/plans",
+          });
+        } else if (usedPct >= pctLimit) {
+          const flag = await r.set(`quota_warned:${String(key.companyId)}:${period}`, "1", "EX", 60 * 60 * 24 * 40, "NX");
+          if (flag !== "OK") return; // already warned this period
+          await createNotification({
+            recipientId: company.ownerUserId,
+            companyId: key.companyId,
+            kind: "usage",
+            type: "usage.threshold",
+            severity: "warning",
+            title: `You've used ${Math.floor(usedPct)}% of your monthly quota`,
+            body: `${used.toLocaleString("en-IN")} of ${included.toLocaleString("en-IN")} included calls used this period. Upgrade to avoid hitting the limit.`,
+            actionUrl: "/app/billing/plans",
+          });
+        }
       })().catch(() => {
-        /* warning is best-effort — never blocks the call */
+        /* notifications are best-effort — never block the call */
       });
+    }
+
+    if (included !== -1 && used > included) {
+      throw new AppError("quota_exceeded", "Monthly quota exceeded — upgrade your plan", 402);
     }
   }
 

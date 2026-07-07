@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import type { TicketCategory, TicketPriority } from "@/lib/types";
 
 const CATEGORIES: { value: TicketCategory; label: string; description: string; icon: IconName }[] = [
-  { value: "billing", label: "Billing", description: "Plans, invoices, payments & overage", icon: "billing" },
+  { value: "billing", label: "Billing", description: "Plans, invoices, payments & quota", icon: "billing" },
   { value: "api", label: "API & integration", description: "Keys, webhooks, errors & SDKs", icon: "code" },
   { value: "pincode-data", label: "Pincode data", description: "Zones, serviceability & rate mapping", icon: "pin" },
   { value: "account", label: "Account", description: "Profile, team, security & access", icon: "profile" },

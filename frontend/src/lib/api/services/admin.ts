@@ -245,7 +245,6 @@ export interface AdminPlan {
   price_monthly: number;
   price_yearly: number;
   included_calls: number;
-  overage_per_1k: number | null;
   rate_limit_rpm: number;
   max_api_keys: number;
   max_team_members: number;

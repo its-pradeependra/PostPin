@@ -48,7 +48,7 @@ const KEY_META: Record<string, KeyMeta> = {
   "engine.defaults": {
     title: "Rate engine defaults",
     description:
-      "Platform-wide defaults the rate engine applies unless a rate card overrides them. Monetary fields are stored in paise, percentages in basis points (bps).",
+      "Platform-wide defaults the rate engine applies unless a rate card overrides them. Enter percentages, rupee amounts and service multipliers directly — conversion to storage units is automatic.",
     icon: "percent",
   },
   "pincode.sync": {
@@ -83,6 +83,58 @@ function humanize(key: string) {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
+/* ── Unit-aware number fields ───────────────────────────────────────
+ * Storage units (paise / basis points) are developer units. Admins see and
+ * type human units; conversion happens on read + save:
+ *   …MultBps  → "×" multiplier   (14000 → 1.4)
+ *   …Bps      → percent          (1800  → 18)
+ *   …Paise    → rupees           (3500  → 35)
+ */
+type UnitKind = "multiplier" | "percent" | "rupees" | null;
+
+function unitOf(field: string): UnitKind {
+  if (/MultBps$/.test(field)) return "multiplier";
+  if (/Bps$/.test(field)) return "percent";
+  if (/Paise$/.test(field)) return "rupees";
+  return null;
+}
+
+function toDisplayValue(field: string, stored: number): number {
+  const unit = unitOf(field);
+  if (unit === "multiplier") return stored / 10_000;
+  if (unit === "percent" || unit === "rupees") return stored / 100;
+  return stored;
+}
+
+function toStoredValue(field: string, display: number): number {
+  const unit = unitOf(field);
+  if (unit === "multiplier") return Math.round(display * 10_000);
+  if (unit === "percent" || unit === "rupees") return Math.round(display * 100);
+  return display;
+}
+
+/** Human label for a unit-suffixed field: "airMultBps" → "Air", "gstBps" → "GST". */
+function unitLabel(field: string): string {
+  const base = field.replace(/(MultBps|Bps|Paise)$/, "");
+  return humanize(base)
+    .replace(/\bGst\b/, "GST")
+    .replace(/\bCod\b/, "COD");
+}
+
+const UNIT_BADGE: Record<Exclude<UnitKind, null>, string> = {
+  multiplier: "× surface",
+  percent: "%",
+  rupees: "₹",
+};
+
+/** Input padding for the unit adornment. */
+function cnUnit(unit: UnitKind): string {
+  const base = "font-mono tabular-nums";
+  if (unit === "rupees" || unit === "multiplier") return `${base} pl-8`;
+  if (unit === "percent") return `${base} pr-8`;
+  return base;
+}
+
 function slugify(key: string) {
   return key.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
 }
@@ -91,10 +143,10 @@ function isScalar(v: unknown): boolean {
   return typeof v === "number" || typeof v === "string" || typeof v === "boolean";
 }
 
-/** Editable draft: numbers → strings; arrays/null/deep objects → JSON strings. */
+/** Editable draft: numbers → display-unit strings; arrays/null/deep objects → JSON strings. */
 function toDraft(value: Record<string, unknown>): Record<string, unknown> {
-  const conv = (v: unknown): unknown => {
-    if (typeof v === "number") return String(v);
+  const conv = (field: string, v: unknown): unknown => {
+    if (typeof v === "number") return String(toDisplayValue(field, v));
     if (typeof v === "string" || typeof v === "boolean") return v;
     return JSON.stringify(v); // array / null / nested object → JSON text
   };
@@ -102,20 +154,21 @@ function toDraft(value: Record<string, unknown>): Record<string, unknown> {
   for (const [k, v] of Object.entries(value)) {
     if (isPlainObject(v)) {
       const nested: Record<string, unknown> = {};
-      for (const [nk, nv] of Object.entries(v)) nested[nk] = conv(nv);
+      for (const [nk, nv] of Object.entries(v)) nested[nk] = conv(nk, nv);
       out[k] = nested;
-    } else out[k] = conv(v);
+    } else out[k] = conv(k, v);
   }
   return out;
 }
 
-function coercePrimitive(original: unknown, draft: unknown): { ok: boolean; value?: unknown } {
+/** Parse a drafted number (typed in display units) back into storage units. */
+function coercePrimitive(field: string, original: unknown, draft: unknown): { ok: boolean; value?: unknown } {
   if (typeof original === "number") {
     const s = typeof draft === "string" ? draft.trim() : String(draft ?? "");
     if (s === "") return { ok: false };
     const n = Number(s);
-    if (!Number.isFinite(n)) return { ok: false };
-    return { ok: true, value: n };
+    if (!Number.isFinite(n) || n < 0) return { ok: false };
+    return { ok: true, value: toStoredValue(field, n) };
   }
   return { ok: true, value: draft };
 }
@@ -146,7 +199,7 @@ function computeChanges(original: Record<string, unknown>, draft: Record<string,
       let nestedChanged = false;
       for (const [nk, nov] of Object.entries(ov)) {
         if (isScalar(nov)) {
-          const res = coercePrimitive(nov, dv[nk]);
+          const res = coercePrimitive(nk, nov, dv[nk]);
           if (!res.ok) {
             invalid.push(`${humanize(k)} › ${humanize(nk)}`);
             merged[nk] = nov;
@@ -167,7 +220,7 @@ function computeChanges(original: Record<string, unknown>, draft: Record<string,
       }
       if (nestedChanged) changed[k] = merged;
     } else if (isScalar(ov)) {
-      const res = coercePrimitive(ov, draft[k]);
+      const res = coercePrimitive(k, ov, draft[k]);
       if (!res.ok) {
         invalid.push(humanize(k));
         continue;
@@ -222,17 +275,55 @@ function FieldRow({
   }
 
   if (typeof original === "number") {
+    const field = path[path.length - 1];
+    const unit = unitOf(field);
+    const displayLabel = unit ? unitLabel(field) : label;
+    const hint =
+      unit === "multiplier"
+        ? "Price factor vs Surface — e.g. 1.4 = 40% costlier"
+        : unit === "percent"
+          ? "Percentage — e.g. 18 = 18%"
+          : unit === "rupees"
+            ? "Amount in rupees"
+            : null;
     return (
       <div className="space-y-1.5">
-        <Label htmlFor={id}>{label}</Label>
-        <Input
-          id={id}
-          type="number"
-          value={String(value ?? "")}
-          onChange={(e) => onChange(e.target.value)}
-          className="font-mono tabular-nums"
-          data-testid={`${id}-input`}
-        />
+        <div className="flex items-center gap-2">
+          <Label htmlFor={id}>{displayLabel}</Label>
+          {unit && (
+            <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium">
+              {UNIT_BADGE[unit]}
+            </Badge>
+          )}
+        </div>
+        <div className="relative">
+          {unit === "rupees" && (
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+              ₹
+            </span>
+          )}
+          {unit === "multiplier" && (
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+              ×
+            </span>
+          )}
+          <Input
+            id={id}
+            type="number"
+            step="any"
+            min={unit === "multiplier" ? 1 : 0}
+            value={String(value ?? "")}
+            onChange={(e) => onChange(e.target.value)}
+            className={cnUnit(unit)}
+            data-testid={`${id}-input`}
+          />
+          {unit === "percent" && (
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+              %
+            </span>
+          )}
+        </div>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       </div>
     );
   }

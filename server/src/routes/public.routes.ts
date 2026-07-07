@@ -138,7 +138,6 @@ export async function publicRoutes(appBase: FastifyInstance) {
         price_monthly_paise: p.priceMonthlyPaise,
         price_yearly_paise: p.priceYearlyPaise,
         included_calls: p.includedCalls,
-        overage_per_1k_paise: p.overagePer1kPaise,
         rate_limit: p.rateLimit,
         max_api_keys: p.maxApiKeys,
         max_team_members: p.maxTeamMembers,

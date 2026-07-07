@@ -26,7 +26,6 @@ function planDto(p: any) {
     priceMonthly: rupees(p.priceMonthlyPaise),
     priceYearly: rupees(p.priceYearlyPaise),
     includedCalls: p.includedCalls,
-    overagePer1k: p.overagePer1kPaise != null ? p.overagePer1kPaise / 100 : 0,
     rateLimitRpm: p.rateLimit?.rpm ?? 0,
     features: p.features ?? [],
     highlight: p.code === "growth",

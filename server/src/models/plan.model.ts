@@ -10,8 +10,7 @@ const planSchema = new Schema(
     description: String,
     priceMonthlyPaise: { type: Number, default: 0 },
     priceYearlyPaise: { type: Number, default: 0 },
-    includedCalls: { type: Number, default: 0 }, // -1 = unlimited
-    overagePer1kPaise: { type: Number, default: null }, // paise per 1,000 calls; null = hard block
+    includedCalls: { type: Number, default: 0 }, // -1 = unlimited; over-quota calls are hard-blocked
     rateLimit: {
       rpm: { type: Number, default: 30 },
       rpd: { type: Number, default: 0 },

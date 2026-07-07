@@ -539,7 +539,6 @@ function planAdminDto(p: any, subscribers = 0) {
     price_monthly: rupees(p.priceMonthlyPaise ?? 0),
     price_yearly: rupees(p.priceYearlyPaise ?? 0),
     included_calls: p.includedCalls ?? 0,
-    overage_per_1k: p.overagePer1kPaise != null ? rupees(p.overagePer1kPaise) : null,
     rate_limit_rpm: p.rateLimit?.rpm ?? 0,
     max_api_keys: p.maxApiKeys ?? 1,
     max_team_members: p.maxTeamMembers ?? 1,
@@ -566,7 +565,6 @@ export interface PlanPatch {
   price_monthly?: number; // rupees
   price_yearly?: number;
   included_calls?: number;
-  overage_per_1k?: number | null;
   rate_limit_rpm?: number;
   max_api_keys?: number;
   max_team_members?: number;
@@ -591,11 +589,6 @@ export async function adminUpdatePlan(code: string, patch: PlanPatch) {
   plan.priceMonthlyPaise = setNum("priceMonthlyPaise", plan.priceMonthlyPaise ?? 0, patch.price_monthly, true);
   plan.priceYearlyPaise = setNum("priceYearlyPaise", plan.priceYearlyPaise ?? 0, patch.price_yearly, true);
   plan.includedCalls = setNum("includedCalls", plan.includedCalls ?? 0, patch.included_calls);
-  if (patch.overage_per_1k !== undefined) {
-    const v = patch.overage_per_1k === null ? null : Math.round(patch.overage_per_1k * 100);
-    if (v !== plan.overagePer1kPaise) changes.push({ field: "overagePer1kPaise", before: plan.overagePer1kPaise, after: v });
-    plan.overagePer1kPaise = v;
-  }
   if (patch.rate_limit_rpm !== undefined) plan.set("rateLimit.rpm", patch.rate_limit_rpm);
   plan.maxApiKeys = setNum("maxApiKeys", plan.maxApiKeys ?? 1, patch.max_api_keys);
   plan.maxTeamMembers = setNum("maxTeamMembers", plan.maxTeamMembers ?? 1, patch.max_team_members);
@@ -649,7 +642,6 @@ export async function adminCreatePlan(input: PlanInput) {
     priceMonthlyPaise: toPaise(input.price_monthly),
     priceYearlyPaise: toPaise(input.price_yearly),
     includedCalls: input.included_calls ?? 0,
-    overagePer1kPaise: input.overage_per_1k == null ? null : Math.round(input.overage_per_1k * 100),
     rateLimit: { rpm: input.rate_limit_rpm ?? 30, rpd: 0, burst: 10 },
     features: input.features ?? [],
     maxApiKeys: input.max_api_keys ?? 1,

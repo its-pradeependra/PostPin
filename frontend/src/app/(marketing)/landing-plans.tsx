@@ -44,7 +44,7 @@ export function LandingPlans() {
     <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6" data-testid="landing-plans-section">
       <Reveal blur className="mx-auto max-w-2xl text-center">
         <h2 className="text-balance font-display text-3xl font-bold tracking-tight sm:text-[2.5rem]">
-          Flat plans, predictable overages
+          Flat plans, no surprise charges
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
           Start free. Scale to millions of calls. Pay only for what you ship.

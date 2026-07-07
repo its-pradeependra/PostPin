@@ -98,7 +98,6 @@ export async function adminRoutes(appBase: FastifyInstance) {
     price_monthly: z.number().min(0).optional(),
     price_yearly: z.number().min(0).optional(),
     included_calls: z.number().int().min(-1).optional(),
-    overage_per_1k: z.number().min(0).nullable().optional(),
     rate_limit_rpm: z.number().int().min(1).optional(),
     max_api_keys: z.number().int().min(-1).optional(),
     max_team_members: z.number().int().min(-1).optional(),

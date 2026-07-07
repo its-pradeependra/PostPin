@@ -56,7 +56,6 @@ export interface PublicPlan {
   price_monthly_paise: number;
   price_yearly_paise: number;
   included_calls: number;
-  overage_per_1k_paise: number | null;
   rate_limit: { rpm: number };
   max_api_keys: number;
   max_team_members: number;

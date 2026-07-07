@@ -25,7 +25,6 @@ const subscriptionSchema = new Schema(
     usage: {
       callsUsed: { type: Number, default: 0 },
       includedCalls: { type: Number, default: 0 },
-      overageCalls: { type: Number, default: 0 },
       periodKey: { type: String, default: null }, // YYYY-MM
     },
     paymentProvider: { type: String, enum: ["razorpay", "manual"], default: "manual" },
