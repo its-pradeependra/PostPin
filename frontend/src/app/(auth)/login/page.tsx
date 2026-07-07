@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Icon } from "@/components/icons";
-import { useSession } from "@/components/providers/session-provider";
+import { postLoginPath, useRedirectIfAuthenticated, useSession } from "@/components/providers/session-provider";
 import { complete2faLogin, login as apiLogin } from "@/lib/api/services/auth";
 import { ApiError } from "@/lib/api/errors";
 
@@ -20,6 +20,9 @@ function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next");
   const { refresh } = useSession();
+
+  // Already signed in? There is nothing to do here — go to the dashboard.
+  useRedirectIfAuthenticated(next);
 
   const [email, setEmail] = React.useState(params.get("email") || "");
   const [password, setPassword] = React.useState("");
@@ -36,7 +39,7 @@ function LoginForm() {
   async function finishLogin(user: { isPlatformStaff: boolean }) {
     await refresh();
     toast.success("Logged in", { description: "Welcome back to Postpin." });
-    router.push(next || (user.isPlatformStaff ? "/admin" : "/app"));
+    router.push(postLoginPath(next, user.isPlatformStaff));
   }
 
   async function handleSubmit(e: React.FormEvent) {

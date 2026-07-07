@@ -17,6 +17,7 @@ import { Icon } from "@/components/icons";
 import { getPublicPlans } from "@/lib/api/services/public";
 import { formatCurrency } from "@/lib/format";
 import { signup as apiSignup } from "@/lib/api/services/auth";
+import { useRedirectIfAuthenticated } from "@/components/providers/session-provider";
 import { ApiError } from "@/lib/api/errors";
 
 type Requirement = { label: string; ok: boolean };
@@ -43,6 +44,9 @@ const STRENGTH_META = [
 function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
+
+  // Already signed in? Signup is guest-only — go to the dashboard.
+  useRedirectIfAuthenticated();
   const planSlug = params.get("plan");
   // Fetch public plans only when a ?plan= param is present (the chip is the sole consumer).
   const plansQ = useQuery({ queryKey: ["public", "plans"], queryFn: getPublicPlans, enabled: !!planSlug });

@@ -59,8 +59,10 @@ function setAuthCookies(reply: FastifyReply, refreshToken: string, csrfToken: st
 }
 
 function clearAuthCookies(reply: FastifyReply) {
-  reply.clearCookie(COOKIE.refresh, { path: REFRESH_COOKIE_PATH });
-  reply.clearCookie(COOKIE.csrf, { path: "/" });
+  // Deletion only works when domain/secure/sameSite match the Set-Cookie that
+  // created them — otherwise the browser keeps the original cookie alive.
+  reply.clearCookie(COOKIE.refresh, { ...baseCookie(), httpOnly: true, path: REFRESH_COOKIE_PATH });
+  reply.clearCookie(COOKIE.csrf, { ...baseCookie(), httpOnly: false, path: "/" });
 }
 
 const ua = (req: { headers: Record<string, unknown> }) => String(req.headers["user-agent"] ?? "");

@@ -33,7 +33,7 @@ export function CookieBanner() {
       aria-label="Cookie consent"
       aria-live="polite"
       data-testid="cookie-banner"
-      className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300 ease-out motion-reduce:animate-none sm:inset-x-6 sm:bottom-6"
+      className="fixed inset-x-4 bottom-4 z-[60] mx-auto max-w-3xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300 ease-out motion-reduce:animate-none sm:inset-x-6 sm:bottom-6"
     >
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-black/10 dark:shadow-black/40">
         {/* Header + copy */}
