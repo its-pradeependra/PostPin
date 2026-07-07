@@ -16,7 +16,7 @@ const rateBody = z.object({
   length: z.number().positive().optional(),
   width: z.number().positive().optional(),
   height: z.number().positive().optional(),
-  service: z.enum(["surface", "express", "same_day"]).default("surface"),
+  service: z.enum(["surface", "air", "express", "same_day"]).default("surface"),
   cod: z.boolean().optional(),
   declared_value: z.number().nonnegative().optional(), // rupees
 });

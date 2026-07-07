@@ -1678,12 +1678,11 @@ export async function adminSimulateRateCard(
   const { simulateCardQuote } = await import("@/services/rate-engine.service.js");
   const doc = await RateCardModel.findOne({ _id: id, isDeleted: false }).lean();
   if (!doc) throw AppError.notFound("Rate card not found");
-  const svc = input.service === "air" ? "surface" : input.service; // engine has no "air" tier
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await simulateCardQuote(doc as any, {
     weightGrams: input.weight_grams,
     zoneCode: input.zone_code,
-    service: (svc as "surface" | "express" | "same_day") ?? "surface",
+    service: input.service ?? "surface",
     cod: input.cod,
     declaredValuePaise: input.declared_value != null ? Math.round(input.declared_value * 100) : undefined,
   });

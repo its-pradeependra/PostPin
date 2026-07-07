@@ -195,7 +195,7 @@ const RATE_PARAMS: Param[] = [
     name: "service",
     type: "enum",
     required: false,
-    desc: "surface (default), express, or same_day.",
+    desc: "surface (default), air, express, or same_day.",
   },
   {
     name: "cod",

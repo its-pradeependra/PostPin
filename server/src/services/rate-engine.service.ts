@@ -147,12 +147,13 @@ export async function simulateCardQuote(card: CardLike, input: CardSimInput): Pr
   };
 }
 
-export type ServiceLevel = "surface" | "express" | "same_day";
+export type ServiceLevel = "surface" | "air" | "express" | "same_day";
 
 // Labels + ETA deltas only — price multipliers live in `engine.defaults`
 // (expressMultBps / sameDayMultBps) so the superadmin can edit them.
 const SERVICE: Record<ServiceLevel, { label: string; etaDelta: number }> = {
   surface: { label: "Surface", etaDelta: 0 },
+  air: { label: "Air", etaDelta: -1 },
   express: { label: "Express", etaDelta: -1 },
   same_day: { label: "Same-day", etaDelta: -2 },
 };
@@ -174,6 +175,7 @@ const FALLBACK_DEFAULTS = {
   volumetricDivisor: 5000,
   // Service-level price multipliers in basis points of the surface freight
   // (10000 = ×1). Surface is always ×1; these price the faster services.
+  airMultBps: 14_000,
   expressMultBps: 16_000,
   sameDayMultBps: 28_000,
 };
@@ -181,6 +183,7 @@ export type EngineDefaults = typeof FALLBACK_DEFAULTS;
 
 /** Resolve the freight multiplier for a service level from the live defaults. */
 export function serviceMultBps(defaults: EngineDefaults, service: ServiceLevel): number {
+  if (service === "air") return defaults.airMultBps;
   if (service === "express") return defaults.expressMultBps;
   if (service === "same_day") return defaults.sameDayMultBps;
   return 10_000;
@@ -213,6 +216,7 @@ export async function getEngineDefaults(): Promise<EngineDefaults> {
       codPercentBps: numOr(v.codPercentBps, FALLBACK_DEFAULTS.codPercentBps),
       volumetricDivisor: numOr(v.volumetricDivisor, FALLBACK_DEFAULTS.volumetricDivisor) || FALLBACK_DEFAULTS.volumetricDivisor,
       // Faster services can never be cheaper than surface (×1 = 10000 bps).
+      airMultBps: Math.max(10_000, numOr(v.airMultBps, FALLBACK_DEFAULTS.airMultBps)),
       expressMultBps: Math.max(10_000, numOr(v.expressMultBps, FALLBACK_DEFAULTS.expressMultBps)),
       sameDayMultBps: Math.max(10_000, numOr(v.sameDayMultBps, FALLBACK_DEFAULTS.sameDayMultBps)),
     };

@@ -162,7 +162,7 @@ export interface Promotion {
 
 // ── Shipping engine ───────────────────────────────────────────────
 export type ShippingZone = "local" | "regional" | "metro" | "national" | "special";
-export type ServiceLevel = "surface" | "express" | "same_day";
+export type ServiceLevel = "surface" | "air" | "express" | "same_day";
 
 export interface RateRequest {
   origin: string;

@@ -70,7 +70,7 @@ async function seedSettings() {
   const settings = [
     {
       key: "engine.defaults",
-      value: { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000, remoteFlatPaise: 5000, minChargePaise: 0, expressMultBps: 16000, sameDayMultBps: 28000 },
+      value: { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000, remoteFlatPaise: 5000, minChargePaise: 0, airMultBps: 14000, expressMultBps: 16000, sameDayMultBps: 28000 },
     },
     {
       key: "pincode.sync",

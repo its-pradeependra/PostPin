@@ -264,6 +264,11 @@ describe("M6f — engine.defaults edits reprice live quotes", () => {
     // Default ×1.6 on freight (surcharges/GST scale along).
     expect(expressBefore).toBeGreaterThan(surface);
 
+    // Air (×1.4 default) prices between surface and express.
+    const air = await quote("air");
+    expect(air).toBeGreaterThan(surface);
+    expect(air).toBeLessThan(expressBefore);
+
     const t = (await login(ADMIN))!;
     const patched = await app.inject({
       method: "PATCH",

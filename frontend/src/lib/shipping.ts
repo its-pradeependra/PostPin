@@ -58,6 +58,7 @@ export const SERVICE_META: Record<
   { label: string; multiplier: number; etaDelta: number }
 > = {
   surface: { label: "Surface", multiplier: 1, etaDelta: 0 },
+  air: { label: "Air", multiplier: 1.4, etaDelta: -1 },
   express: { label: "Express", multiplier: 1.6, etaDelta: -1 },
   same_day: { label: "Same-day", multiplier: 2.8, etaDelta: -2 },
 };

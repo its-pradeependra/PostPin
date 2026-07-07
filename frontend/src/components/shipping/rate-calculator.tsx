@@ -255,6 +255,7 @@ export function RateCalculator({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="surface">Surface</SelectItem>
+            <SelectItem value="air">Air</SelectItem>
             <SelectItem value="express">Express</SelectItem>
             <SelectItem value="same_day">Same-day</SelectItem>
           </SelectContent>
