@@ -121,6 +121,34 @@ function unitLabel(field: string): string {
     .replace(/\bCod\b/, "COD");
 }
 
+/** Plain-language, per-field explanations. One short sentence each — what the
+ * field DOES, not how it's stored. Fields not listed here get no hint. */
+const FIELD_LABELS: Record<string, string> = {
+  gstBps: "GST",
+  fuelBps: "Fuel surcharge",
+  codFlatPaise: "COD fee (fixed)",
+  codPercentBps: "COD fee (% of order value)",
+  remoteFlatPaise: "Remote area fee",
+  minChargePaise: "Minimum charge",
+  volumetricDivisor: "Volumetric divisor",
+  airMultBps: "Air",
+  expressMultBps: "Express",
+  sameDayMultBps: "Same-day",
+};
+
+const FIELD_HELP: Record<string, string> = {
+  gstBps: "Tax added on top of the subtotal of every quote.",
+  fuelBps: "Added as a % of the freight charge.",
+  codFlatPaise: "Fixed fee added to every Cash-on-Delivery shipment.",
+  codPercentBps: "Extra COD fee, charged as a % of the order's declared value.",
+  remoteFlatPaise: "Extra flat fee for remote-area pincodes.",
+  minChargePaise: "A quote never totals below this amount. 0 = no minimum.",
+  volumetricDivisor: "Length × width × height (cm) ÷ this = weight in kg for bulky parcels. Industry standard: 5000.",
+  airMultBps: "Air price vs Surface — 1.4 means 40% costlier than Surface.",
+  expressMultBps: "Express price vs Surface — 1.6 means 60% costlier than Surface.",
+  sameDayMultBps: "Same-day price vs Surface — 2.8 means 2.8× the Surface price.",
+};
+
 const UNIT_BADGE: Record<Exclude<UnitKind, null>, string> = {
   multiplier: "× surface",
   percent: "%",
