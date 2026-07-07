@@ -21,8 +21,8 @@ export const metadata: Metadata = pageMetadata({
   path: "/legal/privacy",
 });
 
-const LAST_UPDATED = "26 Jun 2026";
-const VERSION = "v1.4";
+const LAST_UPDATED = "07 Jul 2026";
+const VERSION = "v1.5";
 
 const TOC = [
   { id: "overview", label: "1. Overview" },
@@ -35,6 +35,46 @@ const TOC = [
   { id: "dpa", label: "8. DPA & sub-processors" },
   { id: "rights", label: "9. Your rights" },
   { id: "contact", label: "10. Contact" },
+] as const;
+
+/** Every cookie Postpin actually sets. Keep this in lock-step with the code:
+ *  - pp_rt / pp_csrf     → server/src/routes/auth.routes.ts (setAuthCookies)
+ *  - pp_cookie_consent   → components/providers/cookie-consent.tsx
+ *  - _ga / _ga_*         → Google Analytics, loaded only after analytics consent
+ */
+const COOKIES = [
+  {
+    id: "pp_rt",
+    name: "pp_rt",
+    category: "Strictly necessary",
+    purpose: "Keeps you signed in — rotating refresh session (HttpOnly, not readable by scripts).",
+    retention: "Session, or up to 30 days with “Remember me”",
+    party: "First-party",
+  },
+  {
+    id: "pp_csrf",
+    name: "pp_csrf",
+    category: "Strictly necessary",
+    purpose: "CSRF protection — pairs with pp_rt to block cross-site request forgery.",
+    retention: "Matches your session",
+    party: "First-party",
+  },
+  {
+    id: "pp_cookie_consent",
+    name: "pp_cookie_consent",
+    category: "Strictly necessary",
+    purpose: "Remembers your cookie choices so we don’t ask on every visit.",
+    retention: "12 months",
+    party: "First-party",
+  },
+  {
+    id: "ga",
+    name: "_ga, _ga_*",
+    category: "Analytics (optional)",
+    purpose: "Google Analytics — aggregate, non-identifying usage stats. Set only if you accept analytics.",
+    retention: "Up to 24 months",
+    party: "Third-party (Google)",
+  },
 ] as const;
 
 const DATA_COLLECTED = [
@@ -234,22 +274,48 @@ export default function PrivacyPolicyPage() {
           >
             <h2>3. Cookies &amp; tracking</h2>
             <p>
-              We use a small set of cookies. Strictly necessary cookies keep you
-              signed in (a JWT session cookie) and remember your theme preference.
-              We use privacy-friendly, self-hosted product analytics to understand
-              dashboard usage in aggregate.
+              We use a small, itemised set of cookies. <strong>Strictly necessary</strong>{" "}
+              cookies are required for the Service to function (sign-in, security) and are
+              always active. <strong>Analytics</strong> cookies load only if you allow them —
+              on your first visit a consent banner lets you accept all, reject everything
+              non-essential, or choose per category. You can change your choice anytime via{" "}
+              <span className="font-medium text-foreground">“Cookie preferences”</span> in the
+              footer. We do not sell your data or use third-party advertising trackers.
             </p>
-            <ul className="list-disc space-y-2 pl-5">
-              <li>
-                <span className="font-medium text-foreground">Essential:</span>{" "}
-                session, CSRF and theme cookies — cannot be disabled.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Analytics:</span>{" "}
-                anonymised usage events; you can opt out in your account settings.
-              </li>
-              <li>We do not sell your data or use third-party advertising trackers.</li>
-            </ul>
+            <div className="overflow-hidden rounded-xl border border-border">
+              <Table data-testid="legal-cookies-table">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cookie</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Purpose</TableHead>
+                    <TableHead>Retention</TableHead>
+                    <TableHead>Type</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {COOKIES.map((row) => (
+                    <TableRow key={row.id} data-testid={`legal-cookie-row-${row.id}`}>
+                      <TableCell className="whitespace-nowrap font-mono text-xs font-medium text-foreground">
+                        {row.name}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{row.category}</TableCell>
+                      <TableCell>{row.purpose}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.retention}</TableCell>
+                      <TableCell className="whitespace-nowrap">{row.party}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs">
+              Analytics is provided by Google Analytics 4; see{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
+                Google’s Privacy Policy
+              </a>
+              . If you decline analytics, these cookies are never set. Signed-in users can also
+              opt in or out of product-update emails under Settings → Communication.
+            </p>
           </section>
 
           <section

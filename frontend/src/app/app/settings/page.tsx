@@ -195,6 +195,60 @@ function NotificationPrefsCard() {
   );
 }
 
+/** Marketing-email opt-in — the deliberate, revocable counterpart to the
+ * signup checkbox. Toggling persists immediately via the profile endpoint. */
+function CommunicationCard() {
+  const { user, refresh } = useSession();
+  const [optIn, setOptIn] = useState(false);
+  useEffect(() => {
+    if (user) setOptIn(user.marketing_consent);
+  }, [user]);
+
+  const saveM = useMutation({
+    mutationFn: (next: boolean) => updateProfile({ marketing_consent: next }),
+    onSuccess: async (_res, next) => {
+      await refresh();
+      toast.success(next ? "You're subscribed to product updates." : "You've unsubscribed from product updates.");
+    },
+    onError: (e) => {
+      setOptIn((v) => !v); // revert the optimistic flip
+      toast.error(e instanceof ApiError ? e.message : "Couldn't update your preference");
+    },
+  });
+
+  return (
+    <Card id="communication" data-testid="comms-prefs-card" className="scroll-mt-24">
+      <CardHeader>
+        <CardTitle className="text-base">Communication preferences</CardTitle>
+        <CardDescription>
+          Choose whether we can email you product updates and shipping insights. Account and billing
+          emails are always sent.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="comms-marketing" className="cursor-pointer text-sm font-medium">
+              Product updates &amp; shipping insights
+            </Label>
+            <p className="text-xs text-muted-foreground">Occasional emails — no spam, unsubscribe anytime.</p>
+          </div>
+          <Switch
+            id="comms-marketing"
+            checked={optIn}
+            disabled={saveM.isPending}
+            onCheckedChange={(v) => {
+              setOptIn(v);
+              saveM.mutate(v);
+            }}
+            data-testid="comms-marketing-switch"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProfileSettingsPage() {
   const { user, company: sessionCompany, refresh } = useSession();
   const [name, setName] = useState("");
@@ -466,6 +520,8 @@ export default function ProfileSettingsPage() {
       </form>
 
       <NotificationPrefsCard />
+
+      <CommunicationCard />
     </div>
   );
 }

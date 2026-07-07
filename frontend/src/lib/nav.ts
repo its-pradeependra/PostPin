@@ -73,7 +73,10 @@ export const adminNav: NavSection[] = [
   },
   {
     heading: "Content",
-    items: [{ title: "Blog", href: "/admin/blog", icon: "fileText" }],
+    items: [
+      { title: "Blog", href: "/admin/blog", icon: "fileText" },
+      { title: "Product Updates", href: "/admin/broadcast", icon: "send" },
+    ],
   },
   {
     heading: "Platform",

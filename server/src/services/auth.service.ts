@@ -23,7 +23,7 @@ function invalidCreds(): never {
 
 // ── Signup / verify ──────────────────────────────────────────────────────────
 
-export async function signup(input: { email: string; password: string; name: string; companyName: string }) {
+export async function signup(input: { email: string; password: string; name: string; companyName: string; marketingConsent?: boolean }) {
   if (input.password.length < AUTH.minPasswordLength) {
     throw AppError.badRequest(`Password must be at least ${AUTH.minPasswordLength} characters`, "weak_password");
   }
@@ -33,6 +33,7 @@ export async function signup(input: { email: string; password: string; name: str
     ownerEmail: input.email,
     password: input.password,
     emailVerified: false,
+    marketingConsent: input.marketingConsent,
   });
   if (res.rawVerifyToken) await sendVerifyEmail(input.email, res.rawVerifyToken);
   await writeAudit({
@@ -98,6 +99,7 @@ export interface LoginResult {
   refreshToken: string;
   csrfToken: string;
   refreshExpiresAt: Date;
+  persistent: boolean;
   user: {
     id: string;
     name: string;
@@ -114,6 +116,7 @@ export async function login(input: {
   password: string;
   ip: string;
   userAgent: string;
+  remember?: boolean;
 }): Promise<LoginResult | MfaChallenge> {
   const email = input.email.toLowerCase().trim();
   const user = await UserModel.findOne({ email });
@@ -175,17 +178,18 @@ export async function login(input: {
   // return a short-lived challenge the client redeems with a code.
   if ((user.mfa as { enabled?: boolean } | undefined)?.enabled) {
     const { signPurposeToken } = await import("@/lib/jwt.js");
-    const mfaToken = await signPurposeToken("mfa_login", { sub: String(user._id) }, 300);
+    // Carry the remember-me choice through the 2FA step so it survives to session mint.
+    const mfaToken = await signPurposeToken("mfa_login", { sub: String(user._id), remember: input.remember !== false }, 300);
     return { mfaRequired: true as const, mfaToken };
   }
 
-  return issueLoginResult(user, input.ip, input.userAgent, ["pwd"]);
+  return issueLoginResult(user, input.ip, input.userAgent, ["pwd"], input.remember);
 }
 
 /** Mint the session + access token for an authenticated user. Shared by the
  * password path and the 2FA-completion path. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function issueLoginResult(user: any, ip: string, userAgent: string, amr: string[]): Promise<LoginResult> {
+export async function issueLoginResult(user: any, ip: string, userAgent: string, amr: string[], remember?: boolean): Promise<LoginResult> {
   user.failedLoginCount = 0;
   user.lockedUntil = null;
   user.lastLoginAt = new Date();
@@ -199,6 +203,7 @@ export async function issueLoginResult(user: any, ip: string, userAgent: string,
     ip,
     userAgent,
     amr,
+    persistent: remember !== false,
   });
   const accessToken = await signAccessToken({
     sub: String(user._id),
@@ -226,6 +231,7 @@ export async function issueLoginResult(user: any, ip: string, userAgent: string,
     refreshToken: session.rawRefreshToken,
     csrfToken: randomToken(24),
     refreshExpiresAt: session.expiresAt,
+    persistent: session.persistent,
     user: {
       id: String(user._id),
       name: user.name,
@@ -247,9 +253,11 @@ export interface MfaChallenge {
 export async function completeMfaLogin(input: { mfaToken: string; code: string; ip: string; userAgent: string }): Promise<LoginResult> {
   const { verifyPurposeToken } = await import("@/lib/jwt.js");
   let sub: string;
+  let remember = true;
   try {
     const payload = await verifyPurposeToken(input.mfaToken, "mfa_login");
     sub = String(payload.sub);
+    remember = (payload as { remember?: boolean }).remember !== false;
   } catch {
     throw new AppError("mfa_challenge_invalid", "This 2FA session expired — sign in again", 401);
   }
@@ -262,7 +270,7 @@ export async function completeMfaLogin(input: { mfaToken: string; code: string; 
     await writeAudit({ action: "auth.2fa_failed", category: "security", outcome: "failure", actorId: user._id, actorEmail: user.email });
     throw new AppError("invalid_totp", "That code is incorrect", 401);
   }
-  return issueLoginResult(user, input.ip, input.userAgent, ["pwd", "otp"]);
+  return issueLoginResult(user, input.ip, input.userAgent, ["pwd", "otp"], remember);
 }
 
 /** Re-verify the current user (password + 2FA if enabled) and mint a short-lived
@@ -319,6 +327,7 @@ export async function refresh(input: { rawToken: string; ip: string; userAgent: 
     refreshToken: result.rawRefreshToken,
     csrfToken: randomToken(24),
     refreshExpiresAt: result.expiresAt,
+    persistent: result.persistent,
   };
 }
 
@@ -411,12 +420,16 @@ export async function acceptInvite(input: { token: string; name: string; passwor
 
 export async function updateProfile(
   userId: Types.ObjectId,
-  patch: { name?: string; locale?: string; timezone?: string },
+  patch: { name?: string; locale?: string; timezone?: string; marketingConsent?: boolean },
 ) {
   const set: Record<string, unknown> = {};
   if (patch.name !== undefined) set.name = patch.name;
   if (patch.locale !== undefined) set.locale = patch.locale;
   if (patch.timezone !== undefined) set.timezone = patch.timezone;
+  if (patch.marketingConsent !== undefined) {
+    set.marketingConsent = patch.marketingConsent;
+    set.marketingConsentAt = patch.marketingConsent ? new Date() : null;
+  }
   const user = await UserModel.findByIdAndUpdate(userId, { $set: set }, { new: true }).lean();
   if (!user) throw AppError.notFound("User not found");
   await writeAudit({
@@ -426,7 +439,16 @@ export async function updateProfile(
     actorEmail: user.email,
     companyId: user.companyId,
   });
-  return { user: { id: String(user._id), name: user.name, email: user.email, locale: user.locale, timezone: user.timezone } };
+  return {
+    user: {
+      id: String(user._id),
+      name: user.name,
+      email: user.email,
+      locale: user.locale,
+      timezone: user.timezone,
+      marketing_consent: user.marketingConsent ?? false,
+    },
+  };
 }
 
 export async function changePassword(
@@ -498,6 +520,7 @@ export async function getMe(userId: Types.ObjectId) {
       avatar_url: user.avatarUrl ?? null,
       locale: user.locale,
       timezone: user.timezone,
+      marketing_consent: user.marketingConsent ?? false,
     },
     company,
     subscription,

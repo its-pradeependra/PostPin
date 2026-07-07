@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Icon, type IconName } from "@/components/icons";
 import { cn } from "@/lib/utils";
@@ -113,6 +113,12 @@ export default function NotificationsPage() {
         <Badge variant={unreadCount > 0 ? "gradient" : "muted"} data-testid="notif-unread-badge">
           {unreadCount > 0 ? `${unreadCount} unread` : "All read"}
         </Badge>
+        <Button variant="ghost" asChild className="group" data-testid="notif-preferences-link">
+          <Link href="/app/settings#notifications">
+            <Icon name="settings2" size={16} />
+            Preferences
+          </Link>
+        </Button>
         <Button
           variant="outline"
           className="group"
@@ -141,38 +147,13 @@ export default function NotificationsPage() {
             </Button>
           </EmptyState>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <div className="space-y-8" data-testid="notif-feed">
-              {today.length > 0 && (
-                <NotificationGroup heading="Today" count={today.length} items={today} onRead={(id) => readM.mutate(id)} testId="notif-group-today" />
-              )}
-              {earlier.length > 0 && (
-                <NotificationGroup heading="Earlier" count={earlier.length} items={earlier} onRead={(id) => readM.mutate(id)} testId="notif-group-earlier" />
-              )}
-            </div>
-
-            <aside className="space-y-4">
-              <Card data-testid="notif-preferences-card">
-                <CardHeader>
-                  <span className="grid size-10 place-items-center rounded-xl bg-brand-gradient-soft text-primary">
-                    <Icon name="settings2" size={20} />
-                  </span>
-                  <CardTitle className="mt-3 text-base">Notification preferences</CardTitle>
-                  <CardDescription>
-                    Choose which events reach you and on which channels — in-app and email.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="gradient" asChild className="group w-full" data-testid="notif-preferences-link">
-                    <Link href="/app/settings#notifications">
-                      <Icon name="settings" size={16} className="text-white" />
-                      Manage preferences
-                      <Icon name="arrowRight" size={16} className="ml-auto text-white" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </aside>
+          <div className="mx-auto max-w-3xl space-y-8" data-testid="notif-feed">
+            {today.length > 0 && (
+              <NotificationGroup heading="Today" count={today.length} items={today} onRead={(id) => readM.mutate(id)} testId="notif-group-today" />
+            )}
+            {earlier.length > 0 && (
+              <NotificationGroup heading="Earlier" count={earlier.length} items={earlier} onRead={(id) => readM.mutate(id)} testId="notif-group-earlier" />
+            )}
           </div>
         )}
       </QueryBoundary>

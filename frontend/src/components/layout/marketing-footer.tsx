@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { Icon } from "@/components/icons";
 import { FooterStatusPill } from "@/components/layout/footer-status-pill";
+import { CookiePreferencesLink } from "@/components/layout/cookie-preferences-link";
 import { marketingFooter, site, socialLinks } from "@/lib/site";
 
 const testId = (value: string) =>
@@ -73,7 +74,10 @@ export function MarketingFooter() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-sm text-muted-foreground sm:flex-row">
           <p>© 2026 {site.name}. Shipping rates for every Indian pincode.</p>
-          <p className="font-mono text-xs">Made in India 🇮🇳 · {site.apiBase}</p>
+          <div className="flex items-center gap-4">
+            <CookiePreferencesLink />
+            <p className="font-mono text-xs">Made in India 🇮🇳 · {site.apiBase}</p>
+          </div>
         </div>
       </div>
     </footer>

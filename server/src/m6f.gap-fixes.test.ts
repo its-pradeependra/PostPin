@@ -243,6 +243,45 @@ describe("M6f — engine.defaults edits reprice live quotes", () => {
     expect(after.breakdown.find((l) => l.label === "GST")?.hint).toBe("9%");
     expect(after.total).toBeLessThan(before.total);
   });
+
+  it("service-level multipliers (expressMultBps) are admin-editable and reprice express quotes", async () => {
+    await SettingsModel.create({
+      scope: "platform",
+      companyId: null,
+      key: "engine.defaults",
+      value: { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000, expressMultBps: 16000, sameDayMultBps: 28000 },
+      editableBy: "super_admin",
+    });
+    invalidateEngineDefaults();
+
+    const quote = (service: string) =>
+      app
+        .inject({ method: "POST", url: "/v1/public/rates/calculate", payload: { origin: "302001", destination: "302015", weight: 1000, service } })
+        .then((r) => (r.json() as { data: { total: number } }).data.total);
+
+    const surface = await quote("surface");
+    const expressBefore = await quote("express");
+    // Default ×1.6 on freight (surcharges/GST scale along).
+    expect(expressBefore).toBeGreaterThan(surface);
+
+    const t = (await login(ADMIN))!;
+    const patched = await app.inject({
+      method: "PATCH",
+      url: "/v1/admin/settings/engine.defaults",
+      headers: auth(t),
+      payload: { expressMultBps: 20000 },
+    });
+    expect(patched.statusCode).toBe(200);
+
+    const expressAfter = await quote("express");
+    expect(expressAfter).toBeGreaterThan(expressBefore);
+    // Surface is pinned at ×1 and must not move.
+    expect(await quote("surface")).toBe(surface);
+
+    // Floor guard: a multiplier below ×1 clamps to surface pricing, never cheaper.
+    await app.inject({ method: "PATCH", url: "/v1/admin/settings/engine.defaults", headers: auth(t), payload: { expressMultBps: 5000 } });
+    expect(await quote("express")).toBe(surface);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────────────

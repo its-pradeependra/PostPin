@@ -64,7 +64,8 @@ function SignupForm() {
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [consent, setConsent] = React.useState(false);
-  const [marketing, setMarketing] = React.useState(true);
+  // Opt-in must be a deliberate action — default OFF (never pre-ticked).
+  const [marketing, setMarketing] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

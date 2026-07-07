@@ -10,6 +10,7 @@ export interface MeUser {
   avatar_url: string | null;
   locale: string;
   timezone: string;
+  marketing_consent: boolean;
 }
 
 export interface MeCompany {

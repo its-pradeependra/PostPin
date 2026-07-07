@@ -40,6 +40,10 @@ const userSchema = new Schema(
     locale: { type: String, default: "en-IN" },
     timezone: { type: String, default: "Asia/Kolkata" },
     notificationPrefs: { type: Schema.Types.Mixed, default: {} },
+    // Explicit opt-in for product-update / marketing emails (default OFF —
+    // consent must be a deliberate action). `at` gives an auditable timestamp.
+    marketingConsent: { type: Boolean, default: false },
+    marketingConsentAt: { type: Date, default: null },
     schemaVersion: { type: Number, default: 1 },
     deletedAt: { type: Date, default: null },
   },

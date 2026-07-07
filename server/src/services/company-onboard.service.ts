@@ -45,6 +45,7 @@ export interface OnboardInput {
   ownerEmail: string;
   password: string;
   emailVerified?: boolean; // seed sets true so the demo tenant is immediately loginable
+  marketingConsent?: boolean; // opt-in for product-update emails (default off)
 }
 
 export interface OnboardResult {
@@ -125,6 +126,8 @@ export async function onboardCompany(input: OnboardInput): Promise<OnboardResult
       emailVerifyExpiresAt: rawVerifyToken ? new Date(Date.now() + AUTH.emailVerifyTtlMs) : null,
       passwordUpdatedAt: new Date(),
       permVersion: 1,
+      marketingConsent: input.marketingConsent === true,
+      marketingConsentAt: input.marketingConsent === true ? new Date() : null,
     });
     created.ownerId = owner._id;
 

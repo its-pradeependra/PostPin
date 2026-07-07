@@ -60,12 +60,12 @@ describe("Notification preferences", () => {
     });
     expect(patch.statusCode).toBe(200);
     const updated = (patch.json() as { preferences: { kinds: Record<string, { in_app: boolean; email: boolean }> } }).preferences;
-    expect(updated.kinds.key.in_app).toBe(false);
-    expect(updated.kinds.sync.email).toBe(true);
+    expect(updated.kinds.key!.in_app).toBe(false);
+    expect(updated.kinds.sync!.email).toBe(true);
 
     // Persisted — a fresh GET returns the same.
     const again = await app.inject({ method: "GET", url: "/v1/notifications/preferences", headers: auth(t) });
-    expect((again.json() as { preferences: { kinds: Record<string, { in_app: boolean }> } }).preferences.kinds.key.in_app).toBe(false);
+    expect((again.json() as { preferences: { kinds: Record<string, { in_app: boolean }> } }).preferences.kinds.key!.in_app).toBe(false);
   });
 
   it("emails kinds with email enabled; suppresses kinds with in-app disabled", async () => {

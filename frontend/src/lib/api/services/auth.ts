@@ -12,10 +12,10 @@ export interface AuthUser {
 
 export type LoginResult = { kind: "ok"; user: AuthUser } | { kind: "mfa"; mfaToken: string };
 
-export async function login(email: string, password: string): Promise<LoginResult> {
+export async function login(email: string, password: string, remember = true): Promise<LoginResult> {
   const res = await apiFetch<{ access_token?: string; user?: AuthUser; mfa_required?: boolean; mfa_token?: string }>(
     "/auth/login",
-    { method: "POST", body: { email, password }, noRetry: true },
+    { method: "POST", body: { email, password, remember }, noRetry: true },
   );
   if (res.mfa_required && res.mfa_token) return { kind: "mfa", mfaToken: res.mfa_token };
   setAccessToken(res.access_token!);

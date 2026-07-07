@@ -50,9 +50,12 @@ function baseCookie(expires?: Date) {
   };
 }
 
-function setAuthCookies(reply: FastifyReply, refreshToken: string, csrfToken: string, expires: Date) {
-  reply.setCookie(COOKIE.refresh, refreshToken, { ...baseCookie(expires), httpOnly: true, path: REFRESH_COOKIE_PATH });
-  reply.setCookie(COOKIE.csrf, csrfToken, { ...baseCookie(expires), httpOnly: false, path: "/" });
+function setAuthCookies(reply: FastifyReply, refreshToken: string, csrfToken: string, expires: Date, persistent = true) {
+  // persistent=false → omit `expires` so the browser treats these as session
+  // cookies (cleared on close). "Remember me" off ⇒ no persistent login.
+  const exp = persistent ? expires : undefined;
+  reply.setCookie(COOKIE.refresh, refreshToken, { ...baseCookie(exp), httpOnly: true, path: REFRESH_COOKIE_PATH });
+  reply.setCookie(COOKIE.csrf, csrfToken, { ...baseCookie(exp), httpOnly: false, path: "/" });
 }
 
 function clearAuthCookies(reply: FastifyReply) {
@@ -81,7 +84,7 @@ export async function authRoutes(appBase: FastifyInstance) {
     },
     async (req, reply) => {
       const b = req.body;
-      const result = await auth.signup({ email: b.email, password: b.password, name: b.name, companyName: b.company_name });
+      const result = await auth.signup({ email: b.email, password: b.password, name: b.name, companyName: b.company_name, marketingConsent: b.marketing_consent });
       return reply.code(201).send(result);
     },
   );
@@ -100,13 +103,13 @@ export async function authRoutes(appBase: FastifyInstance) {
 
   app.post(
     "/login",
-    { schema: { body: z.object({ email: z.string().email(), password: z.string().min(1) }) }, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    { schema: { body: z.object({ email: z.string().email(), password: z.string().min(1), remember: z.boolean().optional() }) }, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      const r = await auth.login({ email: req.body.email, password: req.body.password, ip: req.ip, userAgent: ua(req) });
+      const r = await auth.login({ email: req.body.email, password: req.body.password, ip: req.ip, userAgent: ua(req), remember: req.body.remember });
       if ("mfaRequired" in r) {
         return reply.send({ mfa_required: true, mfa_token: r.mfaToken });
       }
-      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt);
+      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt, r.persistent);
       return reply.send({ access_token: r.accessToken, token_type: "Bearer", expires_in: r.expiresIn, user: r.user });
     },
   );
@@ -119,7 +122,7 @@ export async function authRoutes(appBase: FastifyInstance) {
     },
     async (req, reply) => {
       const r = await auth.completeMfaLogin({ mfaToken: req.body.mfa_token, code: req.body.code, ip: req.ip, userAgent: ua(req) });
-      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt);
+      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt, r.persistent);
       return reply.send({ access_token: r.accessToken, token_type: "Bearer", expires_in: r.expiresIn, user: r.user });
     },
   );
@@ -131,7 +134,7 @@ export async function authRoutes(appBase: FastifyInstance) {
       const rawToken = req.cookies?.[COOKIE.refresh];
       if (!rawToken) throw AppError.unauthorized("No active session", "refresh_invalid");
       const r = await auth.refresh({ rawToken, ip: req.ip, userAgent: ua(req) });
-      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt);
+      setAuthCookies(reply, r.refreshToken, r.csrfToken, r.refreshExpiresAt, r.persistent);
       return reply.send({ access_token: r.accessToken, token_type: "Bearer", expires_in: r.expiresIn });
     },
   );
@@ -184,12 +187,14 @@ export async function authRoutes(appBase: FastifyInstance) {
           name: z.string().min(2).max(120).optional(),
           locale: z.string().min(2).max(20).optional(),
           timezone: z.string().min(2).max(64).optional(),
+          marketing_consent: z.boolean().optional(),
         }),
       },
     },
     async (req) => {
       const ctx = getContext();
-      return auth.updateProfile(ctx.userId!, req.body);
+      const b = req.body;
+      return auth.updateProfile(ctx.userId!, { name: b.name, locale: b.locale, timezone: b.timezone, marketingConsent: b.marketing_consent });
     },
   );
 

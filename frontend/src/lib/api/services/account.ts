@@ -10,8 +10,8 @@ export interface SessionDto {
   current: boolean;
 }
 
-export function updateProfile(patch: { name?: string; locale?: string; timezone?: string }) {
-  return apiFetch<{ user: { id: string; name: string; email: string; locale: string; timezone: string } }>("/auth/profile", {
+export function updateProfile(patch: { name?: string; locale?: string; timezone?: string; marketing_consent?: boolean }) {
+  return apiFetch<{ user: { id: string; name: string; email: string; locale: string; timezone: string; marketing_consent: boolean } }>("/auth/profile", {
     method: "PATCH",
     body: patch,
   });

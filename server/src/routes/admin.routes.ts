@@ -379,6 +379,23 @@ export async function adminRoutes(appBase: FastifyInstance) {
     async (req) => admin.updatePlatformSetting(req.params.key, req.body as Record<string, unknown>),
   );
 
+  // ── Product-update broadcast (to opted-in users only) ─────────────────────
+  app.get("/broadcast/audience", { preHandler: guard("admin:write") }, async () => {
+    const { broadcastAudience } = await import("@/services/broadcast.service.js");
+    return broadcastAudience();
+  });
+  app.post(
+    "/broadcast",
+    {
+      preHandler: guard("admin:write"),
+      schema: { body: z.object({ subject: z.string().min(3).max(160), body: z.string().min(10).max(20_000) }) },
+    },
+    async (req) => {
+      const { sendBroadcast } = await import("@/services/broadcast.service.js");
+      return sendBroadcast(req.body);
+    },
+  );
+
   // ── Notification channels (platform alerts) ───────────────────────────────
   app.get("/notifications/config", { preHandler: guard("settings:write") }, async () => {
     const { getNotificationConfig } = await import("@/services/platform-alerts.service.js");

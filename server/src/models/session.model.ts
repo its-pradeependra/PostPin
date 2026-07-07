@@ -16,6 +16,10 @@ const sessionSchema = new Schema(
     revokedAt: { type: Date, default: null },
     replacedBySessionId: { type: Schema.Types.ObjectId, ref: "Session", default: null },
     amr: { type: [String], default: [] },
+    // "Remember me": true → the refresh cookie is persistent (survives browser
+    // restart up to expiresAt); false → a session cookie (cleared on close).
+    // Carried across rotations so refreshes keep the original choice.
+    persistent: { type: Boolean, default: true },
   },
   baseOptions,
 );

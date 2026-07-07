@@ -6,16 +6,23 @@ import { usePathname } from "next/navigation";
 import { useScroll, useMotionValueEvent } from "motion/react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Icon } from "@/components/icons";
+import { useSession } from "@/components/providers/session-provider";
 import { marketingNav } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 
 export function MarketingNav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+
+  // Session-aware auth area: logged-in visitors see their profile, not "Log in".
+  const { status, user } = useSession();
+  const dashboardHref = user?.is_platform_staff ? "/admin" : "/app";
+  const firstName = user?.name.split(" ")[0] ?? "";
 
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 8));
@@ -71,19 +78,41 @@ export function MarketingNav() {
           <div className="flex items-center gap-2">
             <ThemeToggle className="border-transparent bg-transparent" />
             <span aria-hidden="true" className="mx-0.5 hidden h-5 w-px bg-border sm:block" />
-            <Link
-              href="/login"
-              data-testid="marketing-login-link"
-              className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent sm:inline-flex"
-            >
-              Log in
-            </Link>
-            <Button asChild variant="gradient" size="sm" className="hidden sm:inline-flex">
-              <Link href="/signup" data-testid="marketing-signup-btn">
-                Start free
-                <Icon name="arrowRight" size={15} className="text-white" />
+            {status === "loading" ? (
+              // Placeholder keeps the header width stable while the session resolves.
+              <span aria-hidden className="hidden h-9 w-36 animate-pulse rounded-full bg-muted sm:block" />
+            ) : status === "authenticated" && user ? (
+              <Link
+                href={dashboardHref}
+                data-testid="marketing-account-link"
+                className="hidden items-center gap-2 rounded-full border border-border py-1 pl-1 pr-2 text-sm font-semibold transition-colors hover:bg-accent sm:inline-flex"
+              >
+                <Avatar className="size-7">
+                  {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+                  <AvatarFallback className="bg-brand-gradient text-[11px] text-white">
+                    {initials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span data-testid="marketing-account-name">{firstName}</span>
+                <Icon name="arrowRight" size={14} className="text-muted-foreground" />
               </Link>
-            </Button>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  data-testid="marketing-login-link"
+                  className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent sm:inline-flex"
+                >
+                  Log in
+                </Link>
+                <Button asChild variant="gradient" size="sm" className="hidden sm:inline-flex">
+                  <Link href="/signup" data-testid="marketing-signup-btn">
+                    Start free
+                    <Icon name="arrowRight" size={15} className="text-white" />
+                  </Link>
+                </Button>
+              </>
+            )}
 
             {/* Mobile */}
             <Sheet open={open} onOpenChange={setOpen}>
@@ -117,16 +146,30 @@ export function MarketingNav() {
                     </Link>
                   ))}
                   <div className="my-3 h-px bg-border" />
-                  <Button asChild variant="outline" className="justify-start">
-                    <Link href="/login" onClick={() => setOpen(false)}>
-                      Log in
-                    </Link>
-                  </Button>
-                  <Button asChild variant="gradient" className="mt-2 justify-center">
-                    <Link href="/signup" onClick={() => setOpen(false)}>
-                      Start free
-                    </Link>
-                  </Button>
+                  {status === "authenticated" && user ? (
+                    <Button asChild variant="gradient" className="justify-center" data-testid="marketing-mobile-dashboard-btn">
+                      <Link href={dashboardHref} onClick={() => setOpen(false)}>
+                        <Avatar className="size-6">
+                          {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.name} />}
+                          <AvatarFallback className="text-[10px]">{initials(user.name)}</AvatarFallback>
+                        </Avatar>
+                        Open dashboard
+                      </Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <Button asChild variant="outline" className="justify-start">
+                        <Link href="/login" onClick={() => setOpen(false)}>
+                          Log in
+                        </Link>
+                      </Button>
+                      <Button asChild variant="gradient" className="mt-2 justify-center">
+                        <Link href="/signup" onClick={() => setOpen(false)}>
+                          Start free
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

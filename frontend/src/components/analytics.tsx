@@ -1,13 +1,16 @@
+"use client";
+
 import Script from "next/script";
+import { useCookieConsent } from "@/components/providers/cookie-consent";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? "G-QJXXK2S5R6";
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID; // optional, e.g. "GTM-XXXXXXX"
 
 /**
- * Google Analytics 4 (gtag.js) + optional Google Tag Manager. Loads after
- * hydration on every page; GA4's enhanced measurement tracks SPA route changes
- * automatically. Rendered only in production so local dev traffic never
- * pollutes the property.
+ * Google Analytics 4 (gtag.js) + optional Google Tag Manager. Loads ONLY when
+ * the visitor has granted analytics consent (see CookieConsentProvider) and
+ * only in production, so local dev traffic never pollutes the property and
+ * non-consenting/EU visitors are never tracked.
  *
  * GA4 direct (GA_ID) is all that's needed for analytics. Set NEXT_PUBLIC_GTM_ID
  * only if you also manage other tags (ads pixels, remarketing) through GTM —
@@ -15,7 +18,9 @@ const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID; // optional, e.g. "GTM-XXXXXXX"
  * or events will be double-counted.
  */
 export function GoogleAnalytics() {
+  const { consent } = useCookieConsent();
   if (process.env.NODE_ENV !== "production") return null;
+  if (!consent.analytics) return null; // no analytics cookie/script without consent
   return (
     <>
       {GTM_ID && (

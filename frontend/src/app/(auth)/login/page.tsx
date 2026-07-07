@@ -54,7 +54,7 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const res = await apiLogin(email, password);
+      const res = await apiLogin(email, password, remember);
       if (res.kind === "mfa") {
         setMfaToken(res.mfaToken);
         setLoading(false);

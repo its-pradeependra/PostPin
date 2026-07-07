@@ -9,6 +9,7 @@ export interface NewSession {
   rawRefreshToken: string;
   family: string;
   expiresAt: Date;
+  persistent: boolean;
 }
 
 function refreshExpiry(): Date {
@@ -22,10 +23,12 @@ export async function createSession(params: {
   userAgent: string;
   amr: string[];
   family?: string;
+  persistent?: boolean;
 }): Promise<NewSession> {
   const rawRefreshToken = randomToken(32);
   const family = params.family ?? ulid();
   const expiresAt = refreshExpiry();
+  const persistent = params.persistent !== false;
   const doc = await SessionModel.create({
     userId: params.userId,
     companyId: params.companyId ?? null,
@@ -36,8 +39,9 @@ export async function createSession(params: {
     lastSeenAt: new Date(),
     expiresAt,
     amr: params.amr,
+    persistent,
   });
-  return { sessionId: String(doc._id), rawRefreshToken, family, expiresAt };
+  return { sessionId: String(doc._id), rawRefreshToken, family, expiresAt, persistent };
 }
 
 export type RotateResult =
@@ -48,6 +52,7 @@ export type RotateResult =
       companyId: Types.ObjectId | null;
       rawRefreshToken: string;
       expiresAt: Date;
+      persistent: boolean;
     }
   | { ok: false; reason: "not_found" | "expired" | "reuse" };
 
@@ -68,6 +73,7 @@ export async function rotateSession(rawToken: string, ctx: { ip: string; userAge
 
   const rawRefreshToken = randomToken(32);
   const expiresAt = refreshExpiry();
+  const persistent = existing.persistent !== false; // carry the remember-me choice forward
   const next = await SessionModel.create({
     userId: existing.userId,
     companyId: existing.companyId,
@@ -78,6 +84,7 @@ export async function rotateSession(rawToken: string, ctx: { ip: string; userAge
     lastSeenAt: new Date(),
     expiresAt,
     amr: existing.amr,
+    persistent,
   });
 
   existing.revokedAt = new Date();
@@ -91,6 +98,7 @@ export async function rotateSession(rawToken: string, ctx: { ip: string; userAge
     companyId: next.companyId ?? null,
     rawRefreshToken,
     expiresAt,
+    persistent,
   };
 }
 

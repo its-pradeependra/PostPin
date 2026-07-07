@@ -111,7 +111,8 @@ export async function simulateCardQuote(card: CardLike, input: CardSimInput): Pr
   if (freight == null) return null;
 
   const DEFAULTS = await getEngineDefaults();
-  const basePaise = Math.round((freight * svc.multBps) / 10_000);
+  const multBps = serviceMultBps(DEFAULTS, input.service ?? "surface");
+  const basePaise = Math.round((freight * multBps) / 10_000);
   const fuelPaise = Math.round((basePaise * DEFAULTS.fuelBps) / 10_000);
   const breakdown: RateBreakdownLine[] = [
     { label: "Rate card freight", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
@@ -148,10 +149,12 @@ export async function simulateCardQuote(card: CardLike, input: CardSimInput): Pr
 
 export type ServiceLevel = "surface" | "express" | "same_day";
 
-const SERVICE: Record<ServiceLevel, { label: string; multBps: number; etaDelta: number }> = {
-  surface: { label: "Surface", multBps: 10_000, etaDelta: 0 },
-  express: { label: "Express", multBps: 16_000, etaDelta: -1 },
-  same_day: { label: "Same-day", multBps: 28_000, etaDelta: -2 },
+// Labels + ETA deltas only — price multipliers live in `engine.defaults`
+// (expressMultBps / sameDayMultBps) so the superadmin can edit them.
+const SERVICE: Record<ServiceLevel, { label: string; etaDelta: number }> = {
+  surface: { label: "Surface", etaDelta: 0 },
+  express: { label: "Express", etaDelta: -1 },
+  same_day: { label: "Same-day", etaDelta: -2 },
 };
 
 const ZONE_LABEL: Record<string, string> = {
@@ -163,8 +166,25 @@ const ZONE_LABEL: Record<string, string> = {
 };
 
 // Built-in fallback when the `engine.defaults` platform setting is absent.
-const FALLBACK_DEFAULTS = { gstBps: 1800, fuelBps: 1200, codFlatPaise: 3500, codPercentBps: 150, volumetricDivisor: 5000 };
+const FALLBACK_DEFAULTS = {
+  gstBps: 1800,
+  fuelBps: 1200,
+  codFlatPaise: 3500,
+  codPercentBps: 150,
+  volumetricDivisor: 5000,
+  // Service-level price multipliers in basis points of the surface freight
+  // (10000 = ×1). Surface is always ×1; these price the faster services.
+  expressMultBps: 16_000,
+  sameDayMultBps: 28_000,
+};
 export type EngineDefaults = typeof FALLBACK_DEFAULTS;
+
+/** Resolve the freight multiplier for a service level from the live defaults. */
+export function serviceMultBps(defaults: EngineDefaults, service: ServiceLevel): number {
+  if (service === "express") return defaults.expressMultBps;
+  if (service === "same_day") return defaults.sameDayMultBps;
+  return 10_000;
+}
 const SPECIAL_PREFIXES = ["19", "18", "74", "79", "78", "73"];
 
 // DB-backed engine defaults, cached like zone pricing. Admin edits to the
@@ -192,6 +212,9 @@ export async function getEngineDefaults(): Promise<EngineDefaults> {
       codFlatPaise: numOr(v.codFlatPaise, FALLBACK_DEFAULTS.codFlatPaise),
       codPercentBps: numOr(v.codPercentBps, FALLBACK_DEFAULTS.codPercentBps),
       volumetricDivisor: numOr(v.volumetricDivisor, FALLBACK_DEFAULTS.volumetricDivisor) || FALLBACK_DEFAULTS.volumetricDivisor,
+      // Faster services can never be cheaper than surface (×1 = 10000 bps).
+      expressMultBps: Math.max(10_000, numOr(v.expressMultBps, FALLBACK_DEFAULTS.expressMultBps)),
+      sameDayMultBps: Math.max(10_000, numOr(v.sameDayMultBps, FALLBACK_DEFAULTS.sameDayMultBps)),
     };
     engineDefaultsAt = Date.now();
     return engineDefaultsCache;
@@ -284,6 +307,7 @@ export async function calculateRate(input: RateInput): Promise<RateResultDTO> {
   const zone = classifyZone(input.origin, input.destination, oMeta, dMeta);
   const pricing = await getZonePricing(zone);
   const svc = SERVICE[input.service];
+  const multBps = serviceMultBps(DEFAULTS, input.service);
 
   const volGrams = volumetricGrams(DEFAULTS.volumetricDivisor, input.length, input.width, input.height);
   const chargeable = Math.max(input.weightGrams, volGrams);
@@ -303,12 +327,12 @@ export async function calculateRate(input: RateInput): Promise<RateResultDTO> {
   let weightPaise: number;
   const breakdown: RateBreakdownLine[] = [];
   if (cardFreight != null) {
-    basePaise = Math.round((cardFreight * svc.multBps) / 10_000);
+    basePaise = Math.round((cardFreight * multBps) / 10_000);
     weightPaise = 0;
     breakdown.push({ label: "Rate card freight", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` });
   } else {
-    basePaise = Math.round((pricing.baseChargePaise * svc.multBps) / 10_000);
-    weightPaise = Math.round((billableKg * pricing.perKgPaise * svc.multBps) / 10_000);
+    basePaise = Math.round((pricing.baseChargePaise * multBps) / 10_000);
+    weightPaise = Math.round((billableKg * pricing.perKgPaise * multBps) / 10_000);
     breakdown.push(
       { label: "Base charge", amount: toRupees(basePaise), hint: `${ZONE_LABEL[zone] ?? zone} · ${svc.label}` },
       { label: "Weight charge", amount: toRupees(weightPaise), hint: `${billableKg.toFixed(2)} kg billable` },

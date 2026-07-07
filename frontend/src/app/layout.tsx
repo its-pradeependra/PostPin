@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProviders } from "@/components/providers/app-providers";
-import { GoogleAnalytics } from "@/components/analytics";
 import { Toaster } from "@/components/ui/sonner";
 import { site } from "@/lib/site";
 import { baseKeywords } from "@/lib/seo";
@@ -96,7 +95,6 @@ export default function RootLayout({
           <AppProviders>{children}</AppProviders>
           <Toaster />
         </ThemeProvider>
-        <GoogleAnalytics />
       </body>
     </html>
   );

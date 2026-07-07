@@ -756,3 +756,13 @@ export function adminSimulateRateCard(
 ) {
   return apiFetch<{ result: RateSimResult }>(`/admin/rate-cards/${id}/simulate`, { method: "POST", body: input }).then((r) => r.result);
 }
+
+/* ── Product-update broadcast (opted-in users) ────────────────────── */
+
+export function getBroadcastAudience() {
+  return apiFetch<{ recipients: number }>("/admin/broadcast/audience");
+}
+
+export function sendBroadcast(input: { subject: string; body: string }) {
+  return apiFetch<{ sent: number; failed: number }>("/admin/broadcast", { method: "POST", body: input });
+}
