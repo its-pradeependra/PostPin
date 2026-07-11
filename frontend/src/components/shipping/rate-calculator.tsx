@@ -169,7 +169,7 @@ export function RateCalculator({
       </Label>
       <span aria-hidden className="size-9" />
       <Label htmlFor="calc-dest" className="text-xs text-muted-foreground">
-        <Icon name="pin" size={13} className="text-fuchsia" /> To
+        <Icon name="pin" size={13} className="text-brand-accent" /> To
       </Label>
 
       {/* inputs + swap */}

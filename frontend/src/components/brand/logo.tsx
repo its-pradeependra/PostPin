@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Icon } from "@/components/icons";
 import { site } from "@/lib/site";
 
 interface LogoProps {
@@ -10,33 +10,43 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
 }
 
+// logo.png is 1774x506 (≈3.5:1); heights below keep it crisp at each slot.
 const sizes = {
-  sm: { box: "size-8 rounded-lg", icon: 17, text: "text-base" },
-  md: { box: "size-9 rounded-xl", icon: 20, text: "text-xl" },
-  lg: { box: "size-11 rounded-2xl", icon: 24, text: "text-2xl" },
+  sm: { wordmark: "h-6", mark: "size-8" },
+  md: { wordmark: "h-8", mark: "size-9" },
+  lg: { wordmark: "h-10", mark: "size-11" },
 };
+
+/* The wordmark's navy "Post" disappears on the dark navy theme;
+   invert + hue-rotate keeps the text light and the pin red. */
+const darkModeFix = "dark:[filter:invert(1)_hue-rotate(180deg)]";
 
 export function Logo({ className, href = "/", showWordmark = true, size = "md" }: LogoProps) {
   const s = sizes[size];
-  const content = (
-    <span className={cn("group flex items-center gap-2", className)}>
-      <span
-        className={cn(
-          "grid shrink-0 place-items-center bg-brand-gradient text-white shadow-glow",
-          s.box,
-        )}
-      >
-        <Icon name="pin" size={s.icon} className="text-white" />
-      </span>
-      {showWordmark && (
-        <span className={cn("font-display font-bold tracking-tight", s.text)}>{site.name}</span>
-      )}
-    </span>
+  const content = showWordmark ? (
+    <Image
+      src="/logo.png"
+      alt={site.name}
+      width={1774}
+      height={506}
+      priority
+      data-testid="brand-logo-img"
+      className={cn("w-auto", s.wordmark, darkModeFix, className)}
+    />
+  ) : (
+    <Image
+      src="/favicon/favicon-96x96.png"
+      alt={site.name}
+      width={96}
+      height={96}
+      data-testid="brand-logo-img"
+      className={cn("shrink-0", s.mark, className)}
+    />
   );
 
   if (href) {
     return (
-      <Link href={href} data-testid="brand-logo-link" aria-label={site.name}>
+      <Link href={href} data-testid="brand-logo-link" aria-label={site.name} className="flex items-center">
         {content}
       </Link>
     );

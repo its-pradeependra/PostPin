@@ -131,7 +131,7 @@ export function DashboardShell({
               <Icon name="notifications" size={18} />
               {unreadCount > 0 && (
                 <span
-                  className="absolute right-2 top-2 size-2 rounded-full bg-fuchsia ring-2 ring-background"
+                  className="absolute right-2 top-2 size-2 rounded-full bg-primary ring-2 ring-background"
                   aria-label={`${unreadCount} unread notifications`}
                   data-testid="topbar-notifications-unread-dot"
                 />

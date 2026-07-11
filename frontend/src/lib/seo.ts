@@ -108,7 +108,7 @@ export function articleJsonLd(post: {
     publisher: {
       "@type": "Organization",
       name: site.name,
-      logo: { "@type": "ImageObject", url: `${site.url}/favicon.svg` },
+      logo: { "@type": "ImageObject", url: `${site.url}/favicon/web-app-manifest-512x512.png` },
     },
   };
 }
@@ -124,7 +124,7 @@ export function landingJsonLd() {
         name: site.name,
         url: site.url,
         email: site.email,
-        logo: `${site.url}/favicon.svg`,
+        logo: `${site.url}/favicon/web-app-manifest-512x512.png`,
         sameAs: socialLinks.map((s) => s.href),
       },
       {

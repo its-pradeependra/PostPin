@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================================
-   POSTPIN DESIGN TOKENS — Bold & Vibrant (violet → fuchsia)
+   POSTPIN DESIGN TOKENS — Brand palette from logo.png (red #FC3229 / navy #17253B)
    Light is the default theme; .dark holds the dark overrides.
    All values are full color values so Tailwind opacity modifiers (e.g.
    bg-primary/10) work via color-mix.
@@ -14,27 +14,27 @@
   --radius: 0.75rem;
 
   --background: #ffffff;
-  --foreground: #0a0a0b;
+  --foreground: #17253b;       /* logo navy */
 
   --card: #ffffff;
-  --card-foreground: #0a0a0b;
+  --card-foreground: #17253b;
 
   --popover: #ffffff;
-  --popover-foreground: #0a0a0b;
+  --popover-foreground: #17253b;
 
-  --primary: #7c3aed;          /* violet-600 */
+  --primary: #e12a22;          /* brand red, deepened to pass 4.5:1 on white */
   --primary-foreground: #ffffff;
 
-  --secondary: #f4f4f5;        /* zinc-100 */
-  --secondary-foreground: #18181b;
+  --secondary: #f4f6f9;        /* navy-tinted gray */
+  --secondary-foreground: #17253b;
 
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a; /* zinc-500 */
+  --muted: #f4f6f9;
+  --muted-foreground: #5d6b81; /* desaturated navy */
 
-  --accent: #faf5ff;           /* violet-50 */
-  --accent-foreground: #6d28d9;/* violet-700 */
+  --accent: #fef1f0;           /* soft red tint */
+  --accent-foreground: #c2201a;
 
-  --destructive: #dc2626;
+  --destructive: #b91c1c;      /* deeper than primary so the two stay distinct */
   --destructive-foreground: #ffffff;
 
   --success: #16a34a;
@@ -44,55 +44,55 @@
   --info: #2563eb;
   --info-foreground: #ffffff;
 
-  --border: #e4e4e7;           /* zinc-200 */
-  --input: #e4e4e7;
-  --ring: #7c3aed;
+  --border: #e5e9f0;           /* navy-tinted */
+  --input: #e5e9f0;
+  --ring: #e12a22;
 
-  /* Brand gradient stops */
-  --brand-from: #7c3aed;       /* violet-600 */
-  --brand-via: #9333ea;        /* purple-600 */
-  --brand-to: #db2777;         /* pink-600 */
-  --fuchsia: #db2777;
+  /* Brand gradient stops — warm red span around the logo red */
+  --brand-from: #ff5f45;
+  --brand-via: #fc3229;        /* exact logo red */
+  --brand-to: #d81e3e;
+  --brand-accent: #31517e;     /* steel blue drawn from the logo navy */
 
   /* Chart palette */
-  --chart-1: #7c3aed;
-  --chart-2: #db2777;
-  --chart-3: #2563eb;
-  --chart-4: #f59e0b;
+  --chart-1: #fc3229;
+  --chart-2: #31517e;
+  --chart-3: #f59e0b;
+  --chart-4: #0ea5e9;
   --chart-5: #10b981;
 
   /* Sidebar */
   --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0b;
-  --sidebar-primary: #7c3aed;
+  --sidebar-foreground: #17253b;
+  --sidebar-primary: #e12a22;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #faf5ff;
-  --sidebar-accent-foreground: #6d28d9;
-  --sidebar-border: #e4e4e7;
-  --sidebar-ring: #7c3aed;
+  --sidebar-accent: #fef1f0;
+  --sidebar-accent-foreground: #c2201a;
+  --sidebar-border: #e5e9f0;
+  --sidebar-ring: #e12a22;
 }
 
 .dark {
-  --background: #09090b;        /* zinc-950 */
-  --foreground: #fafafa;
+  --background: #0b1322;        /* deep logo navy */
+  --foreground: #eef3fa;
 
-  --card: #121214;
-  --card-foreground: #fafafa;
+  --card: #111d31;
+  --card-foreground: #eef3fa;
 
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
+  --popover: #15223a;
+  --popover-foreground: #eef3fa;
 
-  --primary: #8b5cf6;          /* violet-500 — brighter on dark */
+  --primary: #ff544b;          /* brand red — brighter on dark */
   --primary-foreground: #ffffff;
 
-  --secondary: #27272a;        /* zinc-800 */
-  --secondary-foreground: #fafafa;
+  --secondary: #1b2a44;        /* navy raise */
+  --secondary-foreground: #eef3fa;
 
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa; /* zinc-400 */
+  --muted: #141f34;
+  --muted-foreground: #9aabc4; /* steel */
 
-  --accent: #1e1b2e;           /* deep violet tint */
-  --accent-foreground: #ddd6fe;
+  --accent: #1c2b47;           /* navy tint */
+  --accent-foreground: #dbe6f6;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -104,29 +104,29 @@
   --info: #3b82f6;
   --info-foreground: #ffffff;
 
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #8b5cf6;
+  --border: #223150;
+  --input: #223150;
+  --ring: #ff544b;
 
-  --brand-from: #8b5cf6;
-  --brand-via: #a855f7;
-  --brand-to: #ec4899;
-  --fuchsia: #ec4899;
+  --brand-from: #ff6d55;
+  --brand-via: #fc3d34;
+  --brand-to: #e8264a;
+  --brand-accent: #82a7dd;
 
-  --chart-1: #a78bfa;
-  --chart-2: #f472b6;
-  --chart-3: #60a5fa;
-  --chart-4: #fbbf24;
+  --chart-1: #ff6259;
+  --chart-2: #7fa3d8;
+  --chart-3: #fbbf24;
+  --chart-4: #38bdf8;
   --chart-5: #34d399;
 
-  --sidebar: #0a0a0c;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #8b5cf6;
+  --sidebar: #091020;
+  --sidebar-foreground: #eef3fa;
+  --sidebar-primary: #ff544b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e1b2e;
-  --sidebar-accent-foreground: #ddd6fe;
-  --sidebar-border: #27272a;
-  --sidebar-ring: #8b5cf6;
+  --sidebar-accent: #1c2b47;
+  --sidebar-accent-foreground: #dbe6f6;
+  --sidebar-border: #223150;
+  --sidebar-ring: #ff544b;
 }
 
 /* ============================================================================
@@ -163,7 +163,7 @@
   --color-brand-from: var(--brand-from);
   --color-brand-via: var(--brand-via);
   --color-brand-to: var(--brand-to);
-  --color-fuchsia: var(--fuchsia);
+  --color-brand-accent: var(--brand-accent);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -353,8 +353,8 @@
   .shadow-glow {
     box-shadow: 0 10px 40px -10px color-mix(in oklab, var(--primary) 55%, transparent);
   }
-  .shadow-glow-fuchsia {
-    box-shadow: 0 10px 40px -10px color-mix(in oklab, var(--fuchsia) 55%, transparent);
+  .shadow-glow-accent {
+    box-shadow: 0 10px 40px -10px color-mix(in oklab, var(--brand-accent) 55%, transparent);
   }
 
   /* Shimmer text/skeleton helper */

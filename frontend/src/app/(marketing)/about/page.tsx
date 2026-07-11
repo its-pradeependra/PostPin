@@ -291,7 +291,7 @@ export default function AboutPage() {
           </h2>
         </div>
 
-        <ol className="relative mt-12 space-y-8 before:absolute before:left-[19px] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-gradient-to-b before:from-primary before:to-fuchsia-500/40 sm:before:left-[23px]">
+        <ol className="relative mt-12 space-y-8 before:absolute before:left-[19px] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-gradient-to-b before:from-primary before:to-brand-accent/40 sm:before:left-[23px]">
           {TIMELINE.map((m) => (
             <li
               key={m.id}

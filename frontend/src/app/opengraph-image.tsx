@@ -17,7 +17,7 @@ export default function OgImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 72,
-          background: "linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #db2777 100%)",
+          background: "linear-gradient(135deg, #17253b 0%, #1e3049 55%, #0b1322 100%)",
           color: "#ffffff",
           fontFamily: "sans-serif",
         }}
@@ -31,7 +31,7 @@ export default function OgImage() {
               width: 64,
               height: 64,
               borderRadius: 16,
-              background: "rgba(255,255,255,0.18)",
+              background: "#fc3229",
               fontSize: 40,
               fontWeight: 700,
             }}

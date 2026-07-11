@@ -44,7 +44,7 @@ const ZONE_DOT: Record<FeZone, string> = {
   local: "bg-success",
   regional: "bg-info",
   metro: "bg-primary",
-  national: "bg-fuchsia-500",
+  national: "bg-brand-accent",
   special: "bg-warning",
 };
 

@@ -355,7 +355,7 @@ function K({ children }: { children: React.ReactNode }) {
   return <span className="text-foreground">{children}</span>;
 }
 function S({ children }: { children: React.ReactNode }) {
-  return <span className="text-fuchsia">{children}</span>;
+  return <span className="text-brand-accent">{children}</span>;
 }
 function N({ children }: { children: React.ReactNode }) {
   return <span className="text-info">{children}</span>;
