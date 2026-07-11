@@ -264,7 +264,7 @@ export default function WebhooksPage() {
   const hooksQ = useQuery({ queryKey: ["webhooks"], queryFn: listWebhooks });
   const deliveriesQ = useQuery({ queryKey: ["webhooks", "deliveries"], queryFn: () => listDeliveries(20) });
 
-  const hooks = hooksQ.data?.webhooks ?? [];
+  const hooks = React.useMemo(() => hooksQ.data?.webhooks ?? [], [hooksQ.data]);
   // Endpoint cap comes from the server — the single source of truth it enforces.
   const cap = hooksQ.data?.cap ?? PLAN_CAP;
   const deliveries = deliveriesQ.data ?? [];

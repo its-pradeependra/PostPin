@@ -56,7 +56,7 @@ export default function PlansPage() {
 
   const plansQ = useQuery({ queryKey: ["billing", "plans"], queryFn: getBillingPlans });
   const subQ = useQuery({ queryKey: ["subscription"], queryFn: getSubscription });
-  const plans = plansQ.data ?? [];
+  const plans = useMemo(() => plansQ.data ?? [], [plansQ.data]);
   const currentCode = subQ.data?.plan.code ?? "free";
   const order = useMemo(() => new Map(plans.map((p, i) => [p.id, i])), [plans]);
 

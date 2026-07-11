@@ -34,6 +34,7 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
+  appleWebApp: { title: site.name },
   keywords: baseKeywords,
   category: "technology",
   metadataBase: new URL(site.url),

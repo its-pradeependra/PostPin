@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { getKey, revokeKey, updateKey, type ApiKeyDto } from "@/lib/api/services/keys";
+import { getKey, revokeKey, updateKey } from "@/lib/api/services/keys";
 import { getUsageLogs } from "@/lib/api/services/usage";
 import { ApiError } from "@/lib/api/errors";
 import { formatNumber, formatDate, formatRelativeTime, formatLatency } from "@/lib/format";

@@ -59,7 +59,7 @@ import {
   type RateSimResult,
 } from "@/lib/api/services/admin";
 import { ApiError } from "@/lib/api/errors";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 type OverviewCard = Awaited<ReturnType<typeof getAdminRateCards>>["custom"][number];
 

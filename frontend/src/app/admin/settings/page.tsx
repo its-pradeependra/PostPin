@@ -305,15 +305,16 @@ function FieldRow({
   if (typeof original === "number") {
     const field = path[path.length - 1];
     const unit = unitOf(field);
-    const displayLabel = unit ? unitLabel(field) : label;
+    const displayLabel = FIELD_LABELS[field] ?? (unit ? unitLabel(field) : label);
     const hint =
-      unit === "multiplier"
+      FIELD_HELP[field] ??
+      (unit === "multiplier"
         ? "Price factor vs Surface — e.g. 1.4 = 40% costlier"
         : unit === "percent"
           ? "Percentage — e.g. 18 = 18%"
           : unit === "rupees"
             ? "Amount in rupees"
-            : null;
+            : null);
     return (
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">

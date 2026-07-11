@@ -114,7 +114,6 @@ interface RazorpayResult {
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === "undefined") return resolve(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).Razorpay) return resolve(true);
     const s = document.createElement("script");
     s.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -128,7 +127,6 @@ export async function openRazorpayCheckout(co: CheckoutResponse, opts: { name: s
   const ok = await loadRazorpayScript();
   if (!ok) throw new Error("Could not load the Razorpay checkout.");
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rzp = new (window as any).Razorpay({
       key: co.key_id,
       order_id: co.order_id,

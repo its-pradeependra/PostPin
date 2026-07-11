@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-import { changeMemberRole, inviteMember, listMembers, removeMember, type TeamMemberDto, type TenantRole } from "@/lib/api/services/members";
+import { changeMemberRole, inviteMember, listMembers, removeMember, type TenantRole } from "@/lib/api/services/members";
 import { ApiError } from "@/lib/api/errors";
 import { formatRelativeTime } from "@/lib/format";
 

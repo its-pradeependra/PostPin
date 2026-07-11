@@ -74,7 +74,7 @@ export default function SyncLogsPage() {
     queryKey: ["admin", "pincodes", "sync-logs"],
     queryFn: () => listSyncLogs(25),
   });
-  const logs = logsQ.data ?? [];
+  const logs = React.useMemo(() => logsQ.data ?? [], [logsQ.data]);
 
   const filtered = React.useMemo(() => {
     if (statusFilter === "all") return logs;
