@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { ImageResponse } from "next/og";
 import { fetchBlogPost } from "@/lib/blog";
 import { site } from "@/lib/site";
@@ -5,6 +7,10 @@ import { site } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 const size = { width: 1200, height: 630 };
+
+// Inlined so generation never depends on fetching our own origin.
+// Logo is 1774×506 (≈3.5:1); dark wordmark → rendered on a white chip.
+const logoSrc = `data:image/png;base64,${readFileSync(join(process.cwd(), "public", "logo.png")).toString("base64")}`;
 
 /**
  * Per-post share image at the stable URL /blog/<slug>/og — article title on the
@@ -32,21 +38,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 34, fontWeight: 700 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 34, fontWeight: 700 }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              width: 52,
-              height: 52,
+              background: "#ffffff",
               borderRadius: 14,
-              background: "#fc3229",
+              padding: "10px 18px",
             }}
           >
-            P
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoSrc} alt={site.name} width={196} height={56} />
           </div>
-          {site.name} · Blog
+          · Blog
         </div>
 
         <div

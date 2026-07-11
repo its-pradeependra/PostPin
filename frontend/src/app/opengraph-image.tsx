@@ -1,9 +1,15 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { ImageResponse } from "next/og";
 import { site } from "@/lib/site";
 
 export const alt = `${site.name} — Shipping Calculation API for India`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+// Inlined so generation never depends on fetching our own origin.
+// Logo is 1774×506 (≈3.5:1); dark wordmark → rendered on a white chip.
+const logoSrc = `data:image/png;base64,${readFileSync(join(process.cwd(), "public", "logo.png")).toString("base64")}`;
 
 /** Default social share image for every page (blog posts override with their own). */
 export default function OgImage() {
@@ -22,23 +28,19 @@ export default function OgImage() {
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-              background: "#fc3229",
-              fontSize: 40,
-              fontWeight: 700,
+              background: "#ffffff",
+              borderRadius: 20,
+              padding: "16px 26px",
             }}
           >
-            P
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoSrc} alt={site.name} width={280} height={80} />
           </div>
-          <div style={{ fontSize: 44, fontWeight: 700 }}>{site.name}</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
