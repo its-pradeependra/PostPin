@@ -73,6 +73,13 @@ export async function GET() {
     `- [Live demo](${site.url}/#calculator): Try a real quote between two pincodes without signing up`,
     `- [Status](${site.url}/status): Live uptime and API latency`,
     `- [Sign up](${site.url}/signup): Free plan, no credit card required`,
+    "",
+    "## Free tools",
+    "",
+    `- [Shipping rate calculator](${site.url}/tools/shipping-rate-calculator): Live courier charges between any two Indian pincodes`,
+    `- [Volumetric weight calculator](${site.url}/tools/volumetric-weight-calculator): (L×W×H)÷5000 chargeable-weight math`,
+    `- [Pincode lookup](${site.url}/tools/pincode-lookup): City, state and COD/prepaid serviceability for any PIN code`,
+    `- [Pincode directory](${site.url}/pincodes): Every serviceable Indian pincode, browsable by state and district`,
   ];
 
   if (plans.length) {

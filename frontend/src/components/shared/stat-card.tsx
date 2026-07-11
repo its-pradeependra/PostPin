@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Icon, type IconName } from "@/components/icons";
@@ -11,9 +12,12 @@ interface StatCardProps {
   hint?: string;
   testId?: string;
   className?: string;
+  /** Optional visual (e.g. a Sparkline) rendered BELOW the value, in flow —
+   * never overlapping the number. */
+  chart?: ReactNode;
 }
 
-export function StatCard({ label, value, icon, deltaPct, hint, testId, className }: StatCardProps) {
+export function StatCard({ label, value, icon, deltaPct, hint, testId, className, chart }: StatCardProps) {
   const up = (deltaPct ?? 0) >= 0;
   return (
     <Card
@@ -42,6 +46,7 @@ export function StatCard({ label, value, icon, deltaPct, hint, testId, className
         <p className="mt-1 font-display text-2xl font-bold tracking-tight tabular-nums">{value}</p>
         {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       </div>
+      {chart && <div className="mt-3 opacity-70">{chart}</div>}
     </Card>
   );
 }

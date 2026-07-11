@@ -54,6 +54,7 @@ export const marketingFooter: { heading: string; links: NavItem[] }[] = [
     links: [
       { title: "Features", href: "/features" },
       { title: "Pricing", href: "/pricing" },
+      { title: "Free tools", href: "/tools" },
       { title: "Live demo", href: "/#calculator" },
       { title: "Changelog", href: "/docs#changelog" },
     ],
@@ -63,6 +64,7 @@ export const marketingFooter: { heading: string; links: NavItem[] }[] = [
     links: [
       { title: "Documentation", href: "/docs" },
       { title: "API reference", href: "/docs#endpoints" },
+      { title: "Pincode directory", href: "/pincodes" },
       { title: "Status", href: "/status" },
       { title: "Quickstart", href: "/docs#quickstart" },
     ],

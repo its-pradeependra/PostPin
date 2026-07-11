@@ -9,6 +9,11 @@ import { publicBlogSitemap, publicGetBlogPost, publicListBlogPosts } from "@/ser
 
 const PIN = z.string().regex(/^\d{6}$/);
 
+/** URL slug for directory segments ("Madhya Pradesh" → "madhya-pradesh"). */
+function dirSlug(input: string): string {
+  return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 const rateBody = z.object({
   origin: PIN,
   destination: PIN,
@@ -114,19 +119,141 @@ export async function publicRoutes(appBase: FastifyInstance) {
   app.get("/pincodes/:code", { schema: { params: z.object({ code: PIN }) }, config: rl(60) }, async (req) => {
     const doc = await PincodeModel.findOne({ pincode: req.params.code, status: "active" }).lean();
     if (!doc) throw AppError.notFound("Pincode not found");
+    // A few numerically-adjacent pincodes in the same district — used by the
+    // public pincode-directory pages for internal linking.
+    const nearby = await PincodeModel.find({
+      status: "active",
+      state: doc.state,
+      district: doc.district,
+      pincode: { $ne: doc.pincode },
+    })
+      .select("pincode city district isMetro")
+      .sort({ pincode: 1 })
+      .limit(8)
+      .lean();
     return {
       data: {
         pincode: doc.pincode,
+        office_name: doc.officeName ?? null,
         city: doc.city ?? doc.district ?? null,
+        district: doc.district ?? null,
         state: doc.state ?? null,
         state_code: doc.stateCode ?? null,
+        state_slug: doc.state ? dirSlug(doc.state) : null,
+        district_slug: doc.district ? dirSlug(doc.district) : null,
         is_metro: doc.isMetro,
         is_remote: doc.isRemote,
         serviceable: doc.serviceable,
+        nearby: nearby.map((n) => ({ pincode: n.pincode, city: n.city ?? n.district ?? null, is_metro: n.isMetro })),
       },
       meta: meta(req),
     };
   });
+
+  // ── Pincode directory (public SEO surface) ────────────────────────────────
+  // State → district → pincode tree, aggregated once and cached in memory.
+
+  interface DirDistrict {
+    district: string;
+    slug: string;
+    count: number;
+  }
+  interface DirState {
+    state: string;
+    slug: string;
+    count: number;
+    metros: number;
+    districts: DirDistrict[];
+  }
+
+  let dirCache: { at: number; states: DirState[] } | null = null;
+  const DIR_TTL_MS = 6 * 60 * 60 * 1000;
+
+  async function directory(): Promise<DirState[]> {
+    if (dirCache && Date.now() - dirCache.at < DIR_TTL_MS) return dirCache.states;
+    const rows: Array<{ _id: { state: string; district: string | null }; count: number; metros: number }> =
+      await PincodeModel.aggregate([
+        { $match: { status: "active", state: { $nin: [null, ""] } } },
+        {
+          $group: {
+            _id: { state: "$state", district: { $ifNull: ["$district", "Other"] } },
+            count: { $sum: 1 },
+            metros: { $sum: { $cond: ["$isMetro", 1, 0] } },
+          },
+        },
+      ]);
+    const byState = new Map<string, DirState>();
+    for (const r of rows) {
+      const stateName = r._id.state;
+      let s = byState.get(stateName);
+      if (!s) {
+        s = { state: stateName, slug: dirSlug(stateName), count: 0, metros: 0, districts: [] };
+        byState.set(stateName, s);
+      }
+      s.count += r.count;
+      s.metros += r.metros;
+      const districtName = r._id.district || "Other";
+      s.districts.push({ district: districtName, slug: dirSlug(districtName), count: r.count });
+    }
+    const states = [...byState.values()]
+      .map((s) => ({ ...s, districts: s.districts.sort((a, b) => a.district.localeCompare(b.district)) }))
+      .sort((a, b) => a.state.localeCompare(b.state));
+    dirCache = { at: Date.now(), states };
+    return states;
+  }
+
+  app.get("/pincodes/states", { config: rl(60) }, async (req) => {
+    const states = await directory();
+    return {
+      data: states.map(({ state, slug, count, metros }) => ({ state, slug, count, metros })),
+      meta: meta(req),
+    };
+  });
+
+  const SLUG = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
+
+  app.get(
+    "/pincodes/states/:stateSlug",
+    { schema: { params: z.object({ stateSlug: SLUG }) }, config: rl(60) },
+    async (req) => {
+      const states = await directory();
+      const s = states.find((x) => x.slug === req.params.stateSlug);
+      if (!s) throw AppError.notFound("State not found");
+      return { data: s, meta: meta(req) };
+    },
+  );
+
+  app.get(
+    "/pincodes/states/:stateSlug/:districtSlug",
+    { schema: { params: z.object({ stateSlug: SLUG, districtSlug: SLUG }) }, config: rl(60) },
+    async (req) => {
+      const states = await directory();
+      const s = states.find((x) => x.slug === req.params.stateSlug);
+      const d = s?.districts.find((x) => x.slug === req.params.districtSlug);
+      if (!s || !d) throw AppError.notFound("District not found");
+      const pins = await PincodeModel.find({ status: "active", state: s.state, district: d.district === "Other" ? { $in: [null, ""] } : d.district })
+        .select("pincode city officeName isMetro isRemote")
+        .sort({ pincode: 1 })
+        .limit(600)
+        .lean();
+      return {
+        data: {
+          state: s.state,
+          state_slug: s.slug,
+          district: d.district,
+          district_slug: d.slug,
+          count: d.count,
+          pincodes: pins.map((p) => ({
+            pincode: p.pincode,
+            area: p.city ?? p.officeName ?? null,
+            is_metro: p.isMetro,
+            is_remote: p.isRemote,
+          })),
+        },
+        meta: meta(req),
+      };
+    },
+  );
 
   app.get("/plans", { config: rl(60) }, async (req) => {
     const plans = await PlanModel.find({ isActive: true, isPublic: true }).sort({ sortOrder: 1 }).lean();

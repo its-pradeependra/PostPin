@@ -66,3 +66,24 @@ export interface PublicPlan {
 export function getPublicPlans() {
   return apiFetch<{ data: PublicPlan[] }>("/public/plans").then((r) => r.data);
 }
+
+/* ── Pincode lookup (tools + directory widgets) ─────────────────────── */
+
+export interface PublicPincodeDetail {
+  pincode: string;
+  office_name: string | null;
+  city: string | null;
+  district: string | null;
+  state: string | null;
+  state_slug: string | null;
+  district_slug: string | null;
+  is_metro: boolean;
+  is_remote: boolean;
+  serviceable: { prepaid: boolean; cod: boolean; pickup: boolean };
+  nearby: { pincode: string; city: string | null; is_metro: boolean }[];
+}
+
+/** Full public detail for one pincode. Throws ApiError(404) when unknown. */
+export function getPublicPincode(code: string) {
+  return apiFetch<{ data: PublicPincodeDetail }>(`/public/pincodes/${code}`).then((r) => r.data);
+}

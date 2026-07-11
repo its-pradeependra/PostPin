@@ -120,20 +120,19 @@ export default function AdminDashboardPage() {
             {/* ── KPI grid (metrics, each with a sparkline) ─────────── */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {overview.metrics.map((m, i) => (
-                <div key={m.key} className="relative" data-testid={`admin-kpi-${i}`}>
+                <div key={m.key} data-testid={`admin-kpi-${i}`}>
                   <StatCard
                     label={m.label}
                     value={metricValue(m)}
                     icon={m.icon as IconName}
                     deltaPct={m.delta_pct}
                     testId={`admin-stat-${m.label.toLowerCase().replace(/[^a-z]+/g, "-")}-card`}
+                    chart={
+                      <div className="pointer-events-none" aria-hidden>
+                        <Sparkline data={m.spark} color={sparkColors[i % sparkColors.length]} height={28} />
+                      </div>
+                    }
                   />
-                  <div
-                    className="pointer-events-none absolute inset-x-5 bottom-4 opacity-70"
-                    aria-hidden
-                  >
-                    <Sparkline data={m.spark} color={sparkColors[i % sparkColors.length]} height={28} />
-                  </div>
                 </div>
               ))}
             </div>

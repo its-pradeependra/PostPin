@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
 import { fetchBlogSitemap } from "@/lib/blog";
+import { fetchStates, fetchStateDetail } from "@/lib/pincode-directory";
 
 /**
  * Sitemap for all public, indexable routes — static pages plus every published
@@ -20,6 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/features", priority: 0.9, changeFrequency: "weekly" },
     { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
     { path: "/docs", priority: 0.9, changeFrequency: "weekly" },
+    { path: "/tools", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/tools/shipping-rate-calculator", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/tools/volumetric-weight-calculator", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/tools/pincode-lookup", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/pincodes", priority: 0.7, changeFrequency: "weekly" },
     { path: "/about", priority: 0.6, changeFrequency: "monthly" },
     { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
     { path: "/status", priority: 0.4, changeFrequency: "daily" },
@@ -44,5 +50,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticEntries, ...blogEntries];
+  // Pincode directory: state + district pages. Individual /pincode/<code>
+  // pages (19k+) are deliberately left to crawling via the district pages.
+  const states = (await fetchStates()) ?? [];
+  const stateEntries: MetadataRoute.Sitemap = states.map((s) => ({
+    url: `${site.url}/pincodes/${s.slug}`,
+    lastModified,
+    changeFrequency: "weekly",
+    priority: 0.6,
+  }));
+  const stateDetails = await Promise.all(states.map((s) => fetchStateDetail(s.slug)));
+  const districtEntries: MetadataRoute.Sitemap = stateDetails
+    .filter((d): d is NonNullable<typeof d> => Boolean(d))
+    .flatMap((d) =>
+      d.districts.map((dist) => ({
+        url: `${site.url}/pincodes/${d.slug}/${dist.slug}`,
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      })),
+    );
+
+  return [...staticEntries, ...blogEntries, ...stateEntries, ...districtEntries];
 }
