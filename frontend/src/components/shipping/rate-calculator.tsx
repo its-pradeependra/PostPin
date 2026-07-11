@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
 import { calculatePublicRate, lookupPincodeArea } from "@/lib/api/services/rates";
 import type { RateResult, ServiceLevel } from "@/lib/types";
+import { trackEvent } from "@/lib/analytics";
 
 const QUICK = [
   { code: "400001", city: "Mumbai" },
@@ -133,6 +134,7 @@ export function RateCalculator({
         declaredValue: cod ? 1499 : undefined,
       });
       setResult(r);
+      trackEvent("calculate_rate", { service, zone: r.zone, serviceable: r.serviceable });
       onResult?.(r, { origin, destination, weightGrams, service, cod });
     } catch {
       // Surface as "not serviceable" (e.g. invalid pincode / API unreachable).

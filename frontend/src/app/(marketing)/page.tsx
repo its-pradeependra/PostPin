@@ -4,9 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Icon, type IconName } from "@/components/icons";
+import dynamic from "next/dynamic";
 import { CodeTabs } from "@/components/shared/code-block";
-import { RateCalculator } from "@/components/shipping/rate-calculator";
 import { HeroApiMoment } from "@/components/marketing/hero-api-moment";
+
+// Below-the-fold + animation-heavy → keep it out of the initial JS so the hero
+// paints and becomes interactive faster (loads as its own chunk on scroll).
+const RateCalculator = dynamic(
+  () => import("@/components/shipping/rate-calculator").then((m) => m.RateCalculator),
+  { loading: () => <div className="h-[520px] w-full animate-pulse rounded-2xl border border-border bg-card/40" /> },
+);
 import { Reveal } from "@/components/marketing/reveal";
 import { LandingPlans } from "./landing-plans";
 import { site } from "@/lib/site";

@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,6 +84,7 @@ export default function PlansPage() {
       if (r.downgraded) {
         toast.success("Downgrade scheduled", { description: "You'll move to Free at the end of your current cycle." });
       } else {
+        trackEvent("purchase", { item_name: r.name });
         toast.success(`You're on the ${r.name} plan`, { description: "New limits apply immediately. An invoice has been issued." });
       }
     },

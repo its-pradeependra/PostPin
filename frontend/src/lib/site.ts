@@ -1,14 +1,14 @@
 /** Global site / brand configuration. Single source of truth for naming and nav.
  *
  *  The public domain is managed via env — set these in the production env:
- *    NEXT_PUBLIC_SITE_URL         e.g. https://postpin.creatibyte.in  (canonicals/sitemap/OG/JSON-LD)
- *    NEXT_PUBLIC_API_DISPLAY_URL  e.g. https://api.postpin.creatibyte.in/v1  (shown in docs/code samples)
+ *    NEXT_PUBLIC_SITE_URL         e.g. https://postpin.in  (canonicals/sitemap/OG/JSON-LD)
+ *    NEXT_PUBLIC_API_DISPLAY_URL  e.g. https://api.postpin.in/v1  (shown in docs/code samples)
  *    NEXT_PUBLIC_CONTACT_EMAIL / NEXT_PUBLIC_SUPPORT_EMAIL  (default to hello@/support@ the site host)
  */
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://postpin.creatibyte.in").replace(/\/+$/, "");
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://postpin.in").replace(/\/+$/, "");
 
-/** Bare host of the public site, e.g. "postpin.creatibyte.in". */
+/** Bare host of the public site, e.g. "postpin.in". */
 export const siteHost = new URL(SITE_URL).host;
 
 export const site = {

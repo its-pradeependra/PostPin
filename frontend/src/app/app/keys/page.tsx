@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
 import * as React from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -162,6 +163,7 @@ function CreateKeyDialog() {
     onSuccess: (res) => {
       setSecret(res.secret);
       void qc.invalidateQueries({ queryKey: ["keys"] });
+      trackEvent("api_key_created", { mode });
       toast.success("API key created — copy your secret now");
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.message : "Couldn't create key"),

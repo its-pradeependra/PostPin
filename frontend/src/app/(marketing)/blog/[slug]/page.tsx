@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/icons";
+import { BlogCtaButton } from "@/components/blog/blog-cta-button";
 import { fetchBlogPost, fetchBlogPosts, renderMarkdown } from "@/lib/blog";
 import { articleJsonLd, pageMetadata } from "@/lib/seo";
 import { site } from "@/lib/site";
@@ -118,9 +118,7 @@ export default async function BlogPostPage({ params }: Params) {
           {site.name} calculates shipping charges between any two Indian pincodes — free tier, no
           credit card.
         </p>
-        <Button asChild variant="secondary" className="mt-5" data-testid="blog-post-cta-btn">
-          <Link href="/signup">Get your free API key</Link>
-        </Button>
+        <BlogCtaButton slug={post.slug} />
       </aside>
 
       {related.length > 0 && (

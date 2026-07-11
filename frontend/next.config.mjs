@@ -1,7 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  // Tree-shake barrel packages so pages only ship the icons/charts/motion they
+  // actually use — big First-Load-JS win on icon-heavy pages (lucide has ~100
+  // icons in our registry; recharts + motion are large).
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "motion", "date-fns"],
+  },
   images: {
+    // Serve AVIF first (smaller than WebP), fall back to WebP.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "api.dicebear.com" },

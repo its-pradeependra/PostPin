@@ -15,6 +15,7 @@ import {
 import { CodeBlock, CodeTabs } from "@/components/shared/code-block";
 import { CopyButton } from "@/components/shared/copy-button";
 import { Icon } from "@/components/icons";
+import { DocsSectionTracker } from "@/components/docs/docs-section-tracker";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 
@@ -370,6 +371,7 @@ function Section({
 export default function DocsPage() {
   return (
     <div className="container mx-auto max-w-[1200px] px-4 py-10 sm:px-6 lg:py-14">
+      <DocsSectionTracker ids={NAV.map((n) => n.id)} />
       {/* Page heading + CTA */}
       <div className="mb-10 flex flex-col gap-5 border-b border-border pb-8 md:flex-row md:items-end md:justify-between">
         <div>

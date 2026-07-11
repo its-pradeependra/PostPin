@@ -11,10 +11,16 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import dynamic from "next/dynamic";
 import { Icon, type IconName } from "@/components/icons";
 import { CodeTabs } from "@/components/shared/code-block";
-import { RateCalculator } from "@/components/shipping/rate-calculator";
 import { SyncSnapshotCard, ZonesTable, RateCardIllustration } from "./features-live";
+
+// Animation-heavy, below the fold → lazy chunk (keeps initial JS lean).
+const RateCalculator = dynamic(
+  () => import("@/components/shipping/rate-calculator").then((m) => m.RateCalculator),
+  { loading: () => <div className="h-[520px] w-full animate-pulse rounded-2xl border border-border bg-card/40" /> },
+);
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 

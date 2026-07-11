@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -91,6 +92,7 @@ function SignupForm() {
     setLoading(true);
     try {
       await apiSignup({ email, password, name, company_name: company, marketing_consent: marketing });
+      trackEvent("sign_up", { method: "email" });
       toast.success("Account created", { description: "Check your inbox to verify your email." });
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {

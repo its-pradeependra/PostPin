@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,6 +39,7 @@ function LoginForm() {
 
   async function finishLogin(user: { isPlatformStaff: boolean }) {
     await refresh();
+    trackEvent("login", { method: "email" });
     toast.success("Logged in", { description: "Welcome back to Postpin." });
     router.push(postLoginPath(next, user.isPlatformStaff));
   }

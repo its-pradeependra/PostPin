@@ -1,5 +1,6 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
 import * as React from "react";
 import { toast } from "sonner";
 import { submitContactForm } from "@/lib/api/services/public";
@@ -125,6 +126,7 @@ export function ContactForm() {
       message: `${message.trim()}\n\n— Monthly volume: ${volumeLabel}`,
     })
       .then(() => {
+        trackEvent("generate_lead", { topic: interestLabel });
         toast.success("Thanks — we'll reply within 1 business day.");
         resetForm();
       })
