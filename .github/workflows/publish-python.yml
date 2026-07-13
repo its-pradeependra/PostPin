@@ -6,7 +6,7 @@ name: Publish Python SDK
 #
 # Requires a one-time "Trusted Publisher" (or pending publisher) on PyPI:
 #   Project: postpin | Owner: its-pradeependra | Repo: PostPin
-#   Workflow: publish-python.yml | Environment: (leave blank)
+#   Workflow: publish-python.yml | Environment: pypi
 
 on:
   push:
@@ -16,6 +16,7 @@ on:
 jobs:
   pypi:
     runs-on: ubuntu-latest
+    environment: pypi # must match the Environment name on the PyPI publisher
     permissions:
       id-token: write # required for Trusted Publishing
     steps:
