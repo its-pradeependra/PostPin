@@ -329,13 +329,48 @@ const ERROR_CODES: ErrorRow[] = [
   { status: "500", code: "internal_error", meaning: "Unexpected error. Safe to retry with backoff." },
 ];
 
-type SdkRow = { label: string; language: string; code: string };
+type SdkRow = {
+  label: string;
+  language: string;
+  code: string;
+  pkg: string;
+  registry: string;
+  href: string;
+};
 
 const SDK_INSTALLS: SdkRow[] = [
-  { label: "Node", language: "bash", code: "npm install @postpin/node" },
-  { label: "Python", language: "bash", code: "pip install postpin" },
-  { label: "PHP", language: "bash", code: "composer require its-pradeependra/postpin-php" },
-  { label: "Go", language: "bash", code: "go get github.com/its-pradeependra/postpin-go" },
+  {
+    label: "Node",
+    language: "bash",
+    code: "npm install @postpin/node",
+    pkg: "@postpin/node",
+    registry: "npm",
+    href: "https://www.npmjs.com/package/@postpin/node",
+  },
+  {
+    label: "Python",
+    language: "bash",
+    code: "pip install postpin",
+    pkg: "postpin",
+    registry: "PyPI",
+    href: "https://pypi.org/project/postpin/",
+  },
+  {
+    label: "PHP",
+    language: "bash",
+    code: "composer require its-pradeependra/postpin-php",
+    pkg: "its-pradeependra/postpin-php",
+    registry: "Packagist",
+    href: "https://packagist.org/packages/its-pradeependra/postpin-php",
+  },
+  {
+    label: "Go",
+    language: "bash",
+    code: "go get github.com/its-pradeependra/postpin-go",
+    pkg: "github.com/its-pradeependra/postpin-go",
+    registry: "pkg.go.dev",
+    href: "https://pkg.go.dev/github.com/its-pradeependra/postpin-go",
+  },
 ];
 
 type ChangeEntry = { version: string; date: string; tone: "gradient" | "info" | "muted"; items: string[] };
@@ -880,14 +915,27 @@ export default function DocsPage() {
             id="sdks"
             eyebrow="Tooling"
             title="SDKs"
-            description="Official, typed SDKs wrap authentication, retries and idempotency. Install your language and you're a few lines from a rate."
+            description="Four official, typed SDKs wrap authentication, retries, idempotency and webhook verification. All are published — install your language and you're a few lines from a rate."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               {SDK_INSTALLS.map((s) => (
                 <div key={s.label} className="space-y-2" data-testid={`docs-sdk-${s.label.toLowerCase()}`}>
-                  <div className="flex items-center gap-2">
-                    <Icon name="terminal" size={16} className="text-primary" />
-                    <p className="text-sm font-semibold text-foreground">{s.label}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Icon name="terminal" size={16} className="text-primary" />
+                      <p className="text-sm font-semibold text-foreground">{s.label}</p>
+                      <code className="font-mono text-xs text-muted-foreground">{s.pkg}</code>
+                    </div>
+                    <Link
+                      href={s.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid={`docs-sdk-${s.label.toLowerCase()}-link`}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      {s.registry}
+                      <Icon name="external" size={12} />
+                    </Link>
                   </div>
                   <CodeBlock
                     testId={`docs-sdk-${s.label.toLowerCase()}-code`}
@@ -899,7 +947,7 @@ export default function DocsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild variant="outline" className="group" data-testid="docs-sdk-github-btn">
-                <Link href="https://github.com/its-pradeependra" target="_blank" rel="noreferrer">
+                <Link href="https://github.com/its-pradeependra/PostPin" target="_blank" rel="noreferrer">
                   <Icon name="github" size={16} /> View on GitHub
                   <Icon name="external" size={14} className="text-muted-foreground" />
                 </Link>
