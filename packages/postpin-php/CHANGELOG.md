@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the `postpin/postpin-php` SDK are documented here. This project adheres to [Semantic Versioning](https://semver.org).
+All notable changes to the `its-pradeependra/postpin-php` SDK are documented here. This project adheres to [Semantic Versioning](https://semver.org).
 
 ## [0.1.0] — Unreleased
 

@@ -7,10 +7,11 @@
   "homepage": "https://postpin.in",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/postpin/postpin-node.git"
+    "url": "git+https://github.com/its-pradeependra/PostPin.git",
+    "directory": "packages/postpin-node"
   },
   "bugs": {
-    "url": "https://github.com/postpin/postpin-node/issues"
+    "url": "https://github.com/its-pradeependra/PostPin/issues"
   },
   "keywords": [
     "postpin",

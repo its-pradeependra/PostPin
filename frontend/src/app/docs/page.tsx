@@ -111,7 +111,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/postpin/postpin-go"
+	"github.com/its-pradeependra/postpin-go"
 )
 
 func main() {
@@ -334,8 +334,8 @@ type SdkRow = { label: string; language: string; code: string };
 const SDK_INSTALLS: SdkRow[] = [
   { label: "Node", language: "bash", code: "npm install @postpin/node" },
   { label: "Python", language: "bash", code: "pip install postpin" },
-  { label: "PHP", language: "bash", code: "composer require postpin/postpin-php" },
-  { label: "Go", language: "bash", code: "go get github.com/postpin/postpin-go" },
+  { label: "PHP", language: "bash", code: "composer require its-pradeependra/postpin-php" },
+  { label: "Go", language: "bash", code: "go get github.com/its-pradeependra/postpin-go" },
 ];
 
 type ChangeEntry = { version: string; date: string; tone: "gradient" | "info" | "muted"; items: string[] };
@@ -899,7 +899,7 @@ export default function DocsPage() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild variant="outline" className="group" data-testid="docs-sdk-github-btn">
-                <Link href="https://github.com/postpin" target="_blank" rel="noreferrer">
+                <Link href="https://github.com/its-pradeependra" target="_blank" rel="noreferrer">
                   <Icon name="github" size={16} /> View on GitHub
                   <Icon name="external" size={14} className="text-muted-foreground" />
                 </Link>

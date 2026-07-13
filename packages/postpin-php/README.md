@@ -1,4 +1,4 @@
-# postpin/postpin-php
+# its-pradeependra/postpin-php
 
 Official PHP SDK for the [Postpin](https://postpin.in) shipping-rate API — calculate courier charges between Indian pincodes, check serviceability, look up the pincode directory, and verify webhooks.
 
@@ -15,7 +15,7 @@ Official PHP SDK for the [Postpin](https://postpin.in) shipping-rate API — cal
 ## Install
 
 ```bash
-composer require postpin/postpin-php
+composer require its-pradeependra/postpin-php
 ```
 
 ## Quick start

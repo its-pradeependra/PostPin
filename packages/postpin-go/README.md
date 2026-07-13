@@ -15,7 +15,7 @@ Official Go SDK for the [Postpin](https://postpin.in) shipping-rate API — calc
 ## Install
 
 ```bash
-go get github.com/postpin/postpin-go
+go get github.com/its-pradeependra/postpin-go
 ```
 
 ## Quick start
@@ -29,7 +29,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/postpin/postpin-go"
+	"github.com/its-pradeependra/postpin-go"
 )
 
 func main() {

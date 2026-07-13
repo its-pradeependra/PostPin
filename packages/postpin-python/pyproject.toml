@@ -28,7 +28,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://postpin.in"
 Documentation = "https://postpin.in/docs"
-Source = "https://github.com/postpin/postpin-python"
+Source = "https://github.com/its-pradeependra/PostPin/tree/main/packages/postpin-python"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]

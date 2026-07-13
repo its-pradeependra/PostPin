@@ -1,0 +1,57 @@
+name: Split SDK repos
+
+# Mirrors packages/postpin-go and packages/postpin-php out to their own
+# read-only repos so Go's proxy and Packagist can consume them. You only ever
+# commit to THIS monorepo:
+#   - push to main            -> mirrors' `main` branches are updated
+#   - tag postpin-go/vX.Y.Z   -> mirror postpin-go gets a clean `vX.Y.Z` tag
+#   - tag postpin-php/vX.Y.Z  -> mirror postpin-php gets a clean `vX.Y.Z` tag
+#
+# Requires a repo secret SPLIT_TOKEN: a fine-grained PAT with Contents:read+write
+# on its-pradeependra/postpin-go and its-pradeependra/postpin-php only.
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'postpin-go/v*'
+      - 'postpin-php/v*'
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: packages/postpin-go
+            repo: postpin-go
+          - dir: packages/postpin-php
+            repo: postpin-php
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Extract the version (e.g. "v0.1.0") from a tag like "postpin-go/v0.1.0",
+      # and only apply it to the matching package's mirror.
+      - id: ver
+        run: |
+          if [[ "$GITHUB_REF" == "refs/tags/${{ matrix.repo }}/"* ]]; then
+            echo "tag=${GITHUB_REF##*/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Split ${{ matrix.dir }} -> its-pradeependra/${{ matrix.repo }}
+        uses: symplify/monorepo-split-github-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
+        with:
+          package_directory: ${{ matrix.dir }}
+          repository_organization: its-pradeependra
+          repository_name: ${{ matrix.repo }}
+          branch: main
+          tag: ${{ steps.ver.outputs.tag }}
+          user_name: postpin-bot
+          user_email: bot@postpin.in

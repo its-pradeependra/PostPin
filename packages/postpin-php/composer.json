@@ -1,5 +1,5 @@
 {
-    "name": "postpin/postpin-php",
+    "name": "its-pradeependra/postpin-php",
     "description": "Official PHP SDK for the Postpin shipping-rate API",
     "type": "library",
     "keywords": ["postpin", "shipping", "pincode", "logistics", "india", "courier", "rates"],
