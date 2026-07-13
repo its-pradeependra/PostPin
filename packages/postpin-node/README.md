@@ -1,5 +1,9 @@
 # @postpin/node
 
+[![npm version](https://img.shields.io/npm/v/@postpin/node)](https://www.npmjs.com/package/@postpin/node)
+[![npm downloads](https://img.shields.io/npm/dm/@postpin/node)](https://www.npmjs.com/package/@postpin/node)
+[![license](https://img.shields.io/npm/l/@postpin/node)](./LICENSE)
+
 Official Node.js & TypeScript SDK for the [Postpin](https://postpin.in) shipping-rate API — calculate courier charges between Indian pincodes, check serviceability, look up the pincode directory, and verify webhooks.
 
 - **Zero runtime dependencies** — uses the built-in `fetch` and `node:crypto`.

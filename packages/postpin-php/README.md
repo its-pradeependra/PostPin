@@ -1,5 +1,9 @@
 # its-pradeependra/postpin-php
 
+[![Packagist Version](https://img.shields.io/packagist/v/its-pradeependra/postpin-php)](https://packagist.org/packages/its-pradeependra/postpin-php)
+[![PHP Version](https://img.shields.io/packagist/php-v/its-pradeependra/postpin-php)](https://packagist.org/packages/its-pradeependra/postpin-php)
+[![license](https://img.shields.io/packagist/l/its-pradeependra/postpin-php)](./LICENSE)
+
 Official PHP SDK for the [Postpin](https://postpin.in) shipping-rate API — calculate courier charges between Indian pincodes, check serviceability, look up the pincode directory, and verify webhooks.
 
 - **Zero Composer dependencies** — uses `ext-curl` and `ext-json` only.

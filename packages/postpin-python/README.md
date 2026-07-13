@@ -1,5 +1,9 @@
 # postpin
 
+[![PyPI version](https://img.shields.io/pypi/v/postpin)](https://pypi.org/project/postpin/)
+[![Python versions](https://img.shields.io/pypi/pyversions/postpin)](https://pypi.org/project/postpin/)
+[![license](https://img.shields.io/pypi/l/postpin)](./LICENSE)
+
 Official Python SDK for the [Postpin](https://postpin.in) shipping-rate API — calculate courier charges between Indian pincodes, check serviceability, look up the pincode directory, and verify webhooks.
 
 - **Fully typed** — dataclass results and typed parameters; ships `py.typed`.

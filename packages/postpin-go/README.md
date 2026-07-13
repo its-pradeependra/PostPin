@@ -1,5 +1,8 @@
 # postpin-go
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/its-pradeependra/postpin-go.svg)](https://pkg.go.dev/github.com/its-pradeependra/postpin-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/its-pradeependra/postpin-go)](https://goreportcard.com/report/github.com/its-pradeependra/postpin-go)
+
 Official Go SDK for the [Postpin](https://postpin.in) shipping-rate API — calculate courier charges between Indian pincodes, check serviceability, look up the pincode directory, and verify webhooks.
 
 - **Zero dependencies** — standard library only.
