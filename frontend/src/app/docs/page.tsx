@@ -53,7 +53,9 @@ const RATE_BODY = `{
   "origin": "302001",
   "destination": "781001",
   "weight": 400,
-  "dimensions": { "length": 30, "width": 25, "height": 8, "unit": "cm" },
+  "length": 30,
+  "width": 25,
+  "height": 8,
   "service": "surface",
   "cod": true,
   "declared_value": 1499
@@ -64,59 +66,117 @@ const CURL_SNIPPET = `curl ${site.apiBase}/rates/calculate \\
   -H "Content-Type: application/json" \\
   -d '${RATE_BODY}'`;
 
-const JS_SNIPPET = `import Postpin from "@postpin/node";
+const JS_SNIPPET = `import { Postpin } from "@postpin/node";
 
-const postpin = new Postpin({ apiKey: process.env.POSTPIN_API_KEY });
+const postpin = new Postpin(process.env.POSTPIN_API_KEY);
 
 const rate = await postpin.rates.calculate({
   origin: "302001",
   destination: "781001",
-  weight: 400,
-  dimensions: { length: 30, width: 25, height: 8, unit: "cm" },
-  service: "surface",
+  weight: 400,          // grams
+  length: 30,           // cm (optional — enables volumetric weight)
+  width: 25,
+  height: 8,
+  service: "surface",   // "surface" | "express" | "same_day"
   cod: true,
-  declared_value: 1499,
+  declaredValue: 1499,  // rupees
 });
 
-console.log(rate.total, rate.zone); // 307.58 "special"`;
+console.log(rate.total, rate.zoneLabel); // 336.12 "Special / Remote"`;
 
 const PYTHON_SNIPPET = `import os
 from postpin import Postpin
 
-postpin = Postpin(api_key=os.environ["POSTPIN_API_KEY"])
+postpin = Postpin(os.environ["POSTPIN_API_KEY"])
 
 rate = postpin.rates.calculate(
     origin="302001",
     destination="781001",
-    weight=400,
-    dimensions={"length": 30, "width": 25, "height": 8, "unit": "cm"},
-    service="surface",
+    weight=400,          # grams
+    length=30,           # cm (optional — enables volumetric weight)
+    width=25,
+    height=8,
+    service="surface",   # "surface" | "express" | "same_day"
     cod=True,
-    declared_value=1499,
+    declared_value=1499, # rupees
 )
 
-print(rate.total, rate.zone)  # 307.58 "special"`;
+print(rate.total, rate.zone_label)  # 336.12 "Special / Remote"`;
+
+const GO_SNIPPET = `package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/postpin/postpin-go"
+)
+
+func main() {
+	client, err := postpin.New(os.Getenv("POSTPIN_API_KEY"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rate, err := client.Rates.Calculate(context.Background(), postpin.RateParams{
+		Origin:      "302001",
+		Destination: "781001",
+		Weight:      400, // grams
+		Service:     postpin.ServiceSurface,
+		COD:         true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(rate.Total, rate.ZoneLabel) // 336.12 Special / Remote
+}`;
+
+const PHP_SNIPPET = `<?php
+require 'vendor/autoload.php';
+
+use Postpin\\Client;
+
+$postpin = new Client(getenv('POSTPIN_API_KEY'));
+
+$rate = $postpin->rates->calculate([
+    'origin' => '302001',
+    'destination' => '781001',
+    'weight' => 400,            // grams
+    'length' => 30, 'width' => 25, 'height' => 8, // cm (optional)
+    'service' => 'surface',     // "surface" | "express" | "same_day"
+    'cod' => true,
+    'declared_value' => 1499,   // rupees
+]);
+
+echo $rate['total'] . ' ' . $rate['zoneLabel']; // 336.12 Special / Remote`;
 
 const RATE_RESPONSE = `{
-  "currency": "INR",
-  "zone": "special",
-  "zone_label": "Special / Remote",
-  "service": "surface",
-  "chargeable_weight_g": 1200,
-  "volumetric_weight_g": 1200,
-  "eta_days": [5, 9],
-  "breakdown": [
-    { "label": "Base charge",    "amount": 95.00, "hint": "Special / Remote · Surface" },
-    { "label": "Weight charge",  "amount": 108.00, "hint": "1.50 kg chargeable" },
-    { "label": "Fuel surcharge", "amount": 24.36, "hint": "12%" },
-    { "label": "COD handling",   "amount": 57.49, "hint": "₹35 + 1.5%" },
-    { "label": "GST",            "amount": 51.27, "hint": "18%" }
-  ],
-  "total": 336.12,
-  "origin":      { "pincode": "302001", "city": "Jaipur",   "state": "Rajasthan" },
-  "destination": { "pincode": "781001", "city": "Guwahati", "state": "Assam" },
-  "serviceable": true,
-  "meta": { "engine_ms": 11, "cached": false, "request_id": "req_7Yh2mKp" }
+  "data": {
+    "zone": "ne_jk",
+    "zoneLabel": "Special / Remote",
+    "service": "surface",
+    "serviceLabel": "Surface",
+    "chargeableWeightGrams": 1200,
+    "volumetricWeightGrams": 1200,
+    "etaDays": [5, 9],
+    "currency": "INR",
+    "breakdown": [
+      { "label": "Base charge",    "amount": 95.00,  "hint": "Special / Remote · Surface" },
+      { "label": "Weight charge",  "amount": 108.00, "hint": "1.50 kg chargeable" },
+      { "label": "Fuel surcharge", "amount": 24.36,  "hint": "12%" },
+      { "label": "COD handling",   "amount": 57.49,  "hint": "₹35 + 1.5%" },
+      { "label": "GST",            "amount": 51.27,  "hint": "18%" }
+    ],
+    "total": 336.12,
+    "totalPaise": 33612,
+    "origin":      { "pincode": "302001", "city": "Jaipur",   "state": "Rajasthan" },
+    "destination": { "pincode": "781001", "city": "Guwahati", "state": "Assam" },
+    "serviceable": true
+  },
+  "meta": { "request_id": "req_7Yh2mKp", "api_version": "v1", "cached": false, "engine_ms": 11 }
 }`;
 
 const SERVICEABILITY_CURL = `curl ${site.apiBase}/serviceability/781001 \\
@@ -130,7 +190,7 @@ const SERVICEABILITY_RESPONSE = `{
     "city": "Guwahati",
     "state": "Assam"
   },
-  "meta": { "request_id": "req_7Yh2mKp", "api_version": "v1" }
+  "meta": { "request_id": "req_7Yh2mKp", "api_version": "v1", "cached": false }
 }`;
 
 const PINCODES_CURL = `curl "${site.apiBase}/pincodes?q=jaipur&limit=5" \\
@@ -145,35 +205,47 @@ const PINCODES_RESPONSE = `{
 }`;
 
 const WEBHOOK_PAYLOAD = `POST /your-endpoint  HTTP/1.1
-Postpin-Signature: t=1718900000,v1=5257a869e7ec...
+X-Postpin-Signature: t=1718900000,v1=5257a869e7ec...
+X-Postpin-Event: rate.calculated
+X-Postpin-Event-Id: evt_2nKp7Yh
 Content-Type: application/json
+User-Agent: Postpin-Webhooks/1.0
 
 {
   "id": "evt_2nKp7Yh",
-  "type": "rate.calculated",
-  "created": 1718900000,
-  "livemode": true,
+  "event": "rate.calculated",
+  "created": "2026-06-20T18:13:20.000Z",
   "data": {
-    "request_id": "req_7Yh2mKp",
     "origin": "302001",
     "destination": "781001",
-    "zone": "special",
+    "zone": "ne_jk",
     "total": 336.12,
     "currency": "INR"
   }
 }`;
 
-const WEBHOOK_VERIFY = `import crypto from "node:crypto";
+const WEBHOOK_VERIFY = `import { Postpin } from "@postpin/node";
 
-function verify(rawBody, header, secret) {
-  const [t, v1] = header.split(",").map((p) => p.split("=")[1]);
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(\`\${t}.\${rawBody}\`)
-    .digest("hex");
-  // Constant-time compare; reject if t is older than 5 minutes.
-  return crypto.timingSafeEqual(Buffer.from(v1), Buffer.from(expected));
-}`;
+// Always verify against the RAW request body — never a re-serialized object.
+app.post("/webhooks/postpin", express.raw({ type: "application/json" }), (req, res) => {
+  let event;
+  try {
+    event = Postpin.webhooks.constructEvent(
+      req.body,                              // raw Buffer
+      req.headers["x-postpin-signature"],
+      process.env.POSTPIN_WEBHOOK_SECRET,
+    );
+  } catch {
+    return res.sendStatus(400); // bad signature or stale timestamp
+  }
+
+  switch (event.event) {
+    case "rate.calculated":
+      // handle event.data
+      break;
+  }
+  res.sendStatus(200);
+});`;
 
 type Param = {
   name: string;
@@ -185,18 +257,20 @@ type Param = {
 const RATE_PARAMS: Param[] = [
   { name: "origin", type: "string", required: true, desc: "Pickup pincode (6 digits)." },
   { name: "destination", type: "string", required: true, desc: "Delivery pincode (6 digits)." },
-  { name: "weight", type: "integer", required: true, desc: "Actual parcel weight in grams." },
+  { name: "weight", type: "integer", required: true, desc: "Actual parcel weight in grams (max 100000)." },
   {
-    name: "dimensions",
-    type: "object",
+    name: "length",
+    type: "number",
     required: false,
-    desc: "length, width, height (in cm). Used for volumetric weight = L×W×H/5000.",
+    desc: "Parcel length in cm. With width & height, drives volumetric weight = L×W×H/5000.",
   },
+  { name: "width", type: "number", required: false, desc: "Parcel width in cm." },
+  { name: "height", type: "number", required: false, desc: "Parcel height in cm." },
   {
     name: "service",
     type: "enum",
     required: false,
-    desc: "surface (default), air, express, or same_day.",
+    desc: "surface (default), express, or same_day.",
   },
   {
     name: "cod",
@@ -215,13 +289,19 @@ const RATE_PARAMS: Param[] = [
 type Field = { name: string; type: string; desc: string };
 
 const RESPONSE_FIELDS: Field[] = [
+  { name: "zone", type: "string", desc: "within_city · within_state · metro · roi · ne_jk." },
+  { name: "zoneLabel", type: "string", desc: "Local · Regional · Metro · National · Special / Remote." },
+  { name: "service", type: "string", desc: "The resolved service level." },
+  { name: "serviceLabel", type: "string", desc: "Human-readable service name." },
+  { name: "chargeableWeightGrams", type: "integer", desc: "max(actual, volumetric) in grams." },
+  { name: "volumetricWeightGrams", type: "integer", desc: "Volumetric weight in grams." },
+  { name: "etaDays", type: "[int, int]", desc: "Estimated delivery window, low–high." },
   { name: "currency", type: "string", desc: "Always INR." },
-  { name: "zone", type: "string", desc: "local · regional · metro · national · special." },
-  { name: "chargeable_weight_g", type: "integer", desc: "max(actual, volumetric) in grams." },
-  { name: "volumetric_weight_g", type: "integer", desc: "Volumetric weight in grams." },
-  { name: "eta_days", type: "[int, int]", desc: "Estimated delivery window, low–high." },
-  { name: "breakdown", type: "array", desc: "Itemised charge lines (label, amount, hint)." },
+  { name: "breakdown", type: "array", desc: "Itemised charge lines (label, amount, hint?)." },
   { name: "total", type: "number", desc: "Grand total in INR, GST inclusive." },
+  { name: "totalPaise", type: "integer", desc: "Grand total in paise (integer, no rounding drift)." },
+  { name: "origin", type: "object", desc: "{ pincode, city, state } of the pickup." },
+  { name: "destination", type: "object", desc: "{ pincode, city, state } of the delivery." },
   { name: "serviceable", type: "boolean", desc: "False when a pincode is unknown or off-network." },
 ];
 
@@ -229,23 +309,24 @@ type EventRow = { event: string; desc: string };
 
 const WEBHOOK_EVENTS: EventRow[] = [
   { event: "rate.calculated", desc: "A rate was successfully computed via the API." },
-  { event: "serviceability.checked", desc: "A serviceability lookup was performed." },
-  { event: "sync.completed", desc: "Nightly India Post pincode sync finished." },
-  { event: "sync.failed", desc: "A pincode sync run failed and needs attention." },
-  { event: "subscription.updated", desc: "Plan, status or limits changed for the tenant." },
+  { event: "key.created", desc: "A new API key was issued for the workspace." },
+  { event: "key.revoked", desc: "An API key was revoked." },
+  { event: "subscription.updated", desc: "Plan, status or limits changed for the workspace." },
   { event: "invoice.paid", desc: "A usage / subscription invoice was paid." },
+  { event: "sync.completed", desc: "An India Post pincode sync run finished." },
+  { event: "sync.failed", desc: "A pincode sync run failed and needs attention." },
 ];
 
 type ErrorRow = { status: string; code: string; meaning: string };
 
 const ERROR_CODES: ErrorRow[] = [
-  { status: "400", code: "invalid_request", meaning: "A required field is missing or malformed." },
-  { status: "401", code: "authentication_failed", meaning: "Missing, revoked or invalid API key." },
-  { status: "403", code: "domain_not_allowed", meaning: "Request origin is not in the key's allow-list." },
-  { status: "404", code: "pincode_not_found", meaning: "Pincode is unknown to the master." },
-  { status: "422", code: "not_serviceable", meaning: "Route exists but is not currently serviceable." },
+  { status: "400", code: "validation_error", meaning: "A field is missing or malformed. details lists the offending paths." },
+  { status: "401", code: "invalid_key", meaning: "Missing, invalid or expired API key (also missing_key, key_expired)." },
+  { status: "402", code: "quota_exceeded", meaning: "Monthly included-call quota exhausted. Upgrade your plan." },
+  { status: "403", code: "no_subscription", meaning: "The key's workspace has no active subscription." },
+  { status: "404", code: "not_found", meaning: "Pincode or resource is unknown to the master." },
   { status: "429", code: "rate_limited", meaning: "Plan RPM exceeded. Inspect Retry-After." },
-  { status: "500", code: "engine_error", meaning: "Unexpected error. Safe to retry with backoff." },
+  { status: "500", code: "internal_error", meaning: "Unexpected error. Safe to retry with backoff." },
 ];
 
 type SdkRow = { label: string; language: string; code: string };
@@ -466,7 +547,7 @@ export default function DocsPage() {
             <ol className="grid gap-3 sm:grid-cols-3">
               {[
                 { n: 1, t: "Grab a key", d: "Create a project and copy your pp_live_… key." },
-                { n: 2, t: "Send pincodes + parcel", d: "POST origin, destination, weight & dimensions." },
+                { n: 2, t: "Send pincodes + parcel", d: "POST origin, destination, weight & optional size." },
                 { n: 3, t: "Receive itemised INR", d: "Get zone, billable weight and a GST breakdown." },
               ].map((s) => (
                 <Card key={s.n} data-testid={`docs-quickstart-step-${s.n}`} className="rounded-2xl">
@@ -481,7 +562,7 @@ export default function DocsPage() {
               ))}
             </ol>
 
-            <EndpointBar method="POST" path="/rates" />
+            <EndpointBar method="POST" path="/rates/calculate" />
 
             <CodeTabs
               testId="docs-quickstart-code-tabs"
@@ -489,6 +570,8 @@ export default function DocsPage() {
                 { label: "cURL", language: "bash", code: CURL_SNIPPET },
                 { label: "JavaScript", language: "javascript", code: JS_SNIPPET },
                 { label: "Python", language: "python", code: PYTHON_SNIPPET },
+                { label: "Go", language: "go", code: GO_SNIPPET },
+                { label: "PHP", language: "php", code: PHP_SNIPPET },
               ]}
             />
           </Section>
@@ -525,12 +608,15 @@ export default function DocsPage() {
               <Card className="rounded-2xl">
                 <CardContent className="space-y-2 p-5">
                   <div className="flex items-center gap-2">
-                    <Icon name="globe" size={16} className="text-primary" />
-                    <p className="text-sm font-semibold text-foreground">Allowed domains</p>
+                    <Icon name="gauge" size={16} className="text-primary" />
+                    <p className="text-sm font-semibold text-foreground">Rate limits &amp; quota</p>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Restrict each key to specific domains or IPs. Requests from elsewhere return{" "}
-                    <code className="font-mono text-destructive">403 domain_not_allowed</code>.
+                    Every keyed response carries{" "}
+                    <code className="font-mono text-foreground">x-ratelimit-remaining</code> and{" "}
+                    <code className="font-mono text-foreground">x-quota-remaining</code>. On a{" "}
+                    <code className="font-mono text-foreground">429</code>, back off using{" "}
+                    <code className="font-mono text-foreground">Retry-After</code>.
                   </p>
                 </CardContent>
               </Card>
@@ -544,7 +630,7 @@ export default function DocsPage() {
             title="Rate API"
             description="Calculate an itemised shipping charge between two Indian pincodes. Returns the zone, billable weight (max of actual & volumetric) and a GST-inclusive breakdown."
           >
-            <EndpointBar method="POST" path="/rates" />
+            <EndpointBar method="POST" path="/rates/calculate" />
 
             <div>
               <h3 className="mb-3 text-sm font-semibold text-foreground">Request parameters</h3>
@@ -652,7 +738,7 @@ export default function DocsPage() {
             id="pincodes"
             eyebrow="Reference"
             title="Pincodes"
-            description="Search the India Post-synced pincode master by code or city. The master refreshes nightly at 00:30 IST; synced_at tells you the last refresh."
+            description="Search the India Post-synced pincode master by code or city name. Pass q (min 2 chars); a numeric q matches by pincode prefix, otherwise by city/district/state."
           >
             <EndpointBar method="GET" path="/pincodes" />
             <div className="grid gap-6 lg:grid-cols-2">
@@ -673,9 +759,9 @@ export default function DocsPage() {
             <div className="flex items-start gap-3 rounded-xl border border-info/30 bg-info/12 px-4 py-3 text-sm text-foreground">
               <Icon name="database" size={18} className="mt-0.5 shrink-0 text-info" />
               <p>
-                Results are paginated with <code className="font-mono">limit</code> (max 100) and a{" "}
-                <code className="font-mono">starting_after</code> cursor. The full master covers
-                19,000+ serviceable pincodes.
+                Results are capped by <code className="font-mono">limit</code> (1–10, default 5);{" "}
+                <code className="font-mono">meta.has_more</code> tells you when more matches exist.
+                The full master covers 19,000+ serviceable pincodes.
               </p>
             </div>
           </Section>
@@ -685,7 +771,7 @@ export default function DocsPage() {
             id="webhooks"
             eyebrow="Reference"
             title="Webhooks"
-            description="Subscribe to events and Postpin will POST a signed JSON payload to your endpoint. Always verify the Postpin-Signature header before trusting a payload."
+            description="Subscribe to events and Postpin will POST a signed JSON payload to your endpoint. Always verify the X-Postpin-Signature header against the raw body before trusting a payload."
           >
             <div>
               <h3 className="mb-3 text-sm font-semibold text-foreground">Event types</h3>
