@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { site, socialLinks } from "@/lib/site";
+import { site, siteHost, socialLinks } from "@/lib/site";
 
 /**
  * Keywords shared by every public page. Per-page keywords are appended so each
@@ -131,6 +131,8 @@ export function landingJsonLd() {
         "@type": "WebSite",
         "@id": `${site.url}/#website`,
         name: site.name,
+        // Google's site-name guidance: provide the domain as an alternate.
+        alternateName: siteHost,
         url: site.url,
         publisher: { "@id": `${site.url}/#organization` },
       },
