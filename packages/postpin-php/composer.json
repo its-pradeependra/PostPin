@@ -1,0 +1,35 @@
+{
+    "name": "postpin/postpin-php",
+    "description": "Official PHP SDK for the Postpin shipping-rate API",
+    "type": "library",
+    "keywords": ["postpin", "shipping", "pincode", "logistics", "india", "courier", "rates"],
+    "homepage": "https://postpin.in",
+    "license": "MIT",
+    "authors": [
+        { "name": "Postpin" }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Postpin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Postpin\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
