@@ -1,14 +1,16 @@
 name: Split SDK repos
 
-# Mirrors packages/postpin-go and packages/postpin-php out to their own
-# read-only repos so Go's proxy and Packagist can consume them. You only ever
-# commit to THIS monorepo:
-#   - push to main            -> mirrors' `main` branches are updated
-#   - tag postpin-go/vX.Y.Z   -> mirror postpin-go gets a clean `vX.Y.Z` tag
-#   - tag postpin-php/vX.Y.Z  -> mirror postpin-php gets a clean `vX.Y.Z` tag
+# Mirrors packages/postpin-{go,php,python} out to their own read-only public
+# repos (Go proxy consumes postpin-go; Packagist consumes postpin-php; the
+# postpin-python mirror is just a public code copy — PyPI still publishes from
+# THIS monorepo via publish-python.yml). You only ever commit to THIS monorepo:
+#   - push to main             -> mirrors' `main` branches are updated
+#   - tag postpin-go/vX.Y.Z     -> mirror postpin-go gets a clean `vX.Y.Z` tag
+#   - tag postpin-php/vX.Y.Z     -> mirror postpin-php gets a clean `vX.Y.Z` tag
+#   - tag postpin-python/vX.Y.Z -> mirror postpin-python gets a clean `vX.Y.Z` tag
 #
 # Requires a repo secret SPLIT_TOKEN: a fine-grained PAT with Contents:read+write
-# on its-pradeependra/postpin-go and its-pradeependra/postpin-php only.
+# on its-pradeependra/postpin-go, postpin-php and postpin-python only.
 
 on:
   push:
@@ -16,6 +18,7 @@ on:
     tags:
       - 'postpin-go/v*'
       - 'postpin-php/v*'
+      - 'postpin-python/v*'
 
 jobs:
   split:
@@ -28,6 +31,8 @@ jobs:
             repo: postpin-go
           - dir: packages/postpin-php
             repo: postpin-php
+          - dir: packages/postpin-python
+            repo: postpin-python
     steps:
       - uses: actions/checkout@v4
         with:
