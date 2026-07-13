@@ -261,7 +261,7 @@ export default async function LandingPage() {
         <SectionHeading
           eyebrow="How it works"
           title="From signup to shipping rate in three steps"
-          description="A developer-first API with the dashboard, docs and reliability you'd expect from Stripe, built for Indian logistics."
+          description="A developer-first shipping calculation API for India, with the dashboard, docs and reliability you'd expect from Stripe."
         />
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {STEPS.map((step, i) => (
@@ -311,7 +311,7 @@ export default async function LandingPage() {
         <SectionHeading
           eyebrow="Platform"
           title="Everything you need to charge for shipping"
-          description="Not just a calculator. A full logistics-pricing platform with the data, controls and analytics behind it."
+          description="Not just a calculator. A full shipping-calculation platform with the pincode data, pricing controls and analytics behind every quote."
         />
         {/* Bento with rhythm: featured cell (2-wide) + trio + full-width spotlight */}
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
