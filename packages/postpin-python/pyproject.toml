@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "postpin"
+version = "0.1.0"
+description = "Official Python SDK for the Postpin shipping-rate API"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Postpin" }]
+keywords = ["postpin", "shipping", "pincode", "logistics", "india", "courier", "rates"]
+dependencies = ["httpx>=0.27"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://postpin.in"
+Documentation = "https://postpin.in/docs"
+Source = "https://github.com/postpin/postpin-python"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/postpin"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
