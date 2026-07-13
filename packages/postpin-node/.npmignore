@@ -1,0 +1,10 @@
+# Publish only the built artifacts (see package.json "files"). This is a
+# belt-and-braces backup so source/tests never end up in the tarball.
+src/
+test/
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+coverage/
+.turbo/
+*.log

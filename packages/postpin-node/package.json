@@ -1,0 +1,65 @@
+{
+  "name": "@postpin/node",
+  "version": "0.1.0",
+  "description": "Official Node.js & TypeScript SDK for the Postpin shipping-rate API — pincode-to-pincode shipping charges for India.",
+  "license": "MIT",
+  "author": "Postpin",
+  "homepage": "https://postpin.in",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/postpin/postpin-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/postpin/postpin-node/issues"
+  },
+  "keywords": [
+    "postpin",
+    "shipping",
+    "shipping-rate",
+    "shipping-calculator",
+    "india",
+    "pincode",
+    "logistics",
+    "courier",
+    "api",
+    "sdk"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
